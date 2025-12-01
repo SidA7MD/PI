@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const School = require('../models/School');
 
 // Fonction pour générer un token JWT
 const generateToken = (id) => {
@@ -27,7 +28,7 @@ exports.register = async (req, res) => {
     }
 
     // Vérifier que le rôle est valide
-    if (!['admin', 'teacher', 'parent'].includes(role)) {
+    if (!['superadmin', 'school', 'teacher', 'parent'].includes(role)) {
       return res.status(400).json({ message: 'Rôle invalide' });
     }
 
@@ -57,20 +58,29 @@ exports.register = async (req, res) => {
   }
 };
 
-// @desc    Connexion d'un utilisateur
+
+// @desc    Connexion d'un utilisateur (superadmin avec username, school avec email)
 // @route   POST /api/auth/login
 // @access  Public
 exports.login = async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { email, username, password } = req.body;
 
     // Vérifier que tous les champs sont présents
-    if (!username || !password) {
-      return res.status(400).json({ message: 'Tous les champs sont requis' });
+    if (!password || (!email && !username)) {
+      return res.status(400).json({ message: 'Email ou nom d\'utilisateur et mot de passe sont requis' });
     }
 
-    // Vérifier si l'utilisateur existe
-    const user = await User.findOne({ username }).select('+password');
+    // Rechercher l'utilisateur par email (pour les écoles) ou username (pour superadmin)
+    let user;
+    if (email) {
+      // Login avec email pour les écoles
+      user = await User.findOne({ email: email.toLowerCase(), role: 'school' }).select('+password');
+    } else {
+      // Login avec username pour superadmin
+      user = await User.findOne({ username, role: 'superadmin' }).select('+password');
+    }
+
     if (!user) {
       return res.status(401).json({ message: 'Identifiants invalides' });
     }
@@ -84,14 +94,22 @@ exports.login = async (req, res) => {
     // Générer le token
     const token = generateToken(user._id);
 
+    // Préparer la réponse selon le rôle
+    const userResponse = {
+      id: user._id,
+      role: user.role,
+    };
+
+    if (user.role === 'school') {
+      userResponse.email = user.email;
+      userResponse.school = user.school;
+    } else if (user.role === 'superadmin') {
+      userResponse.username = user.username;
+    }
+
     res.status(200).json({
       message: 'Connexion réussie',
-      user: {
-        id: user._id,
-        username: user.username,
-        phone: user.phone,
-        role: user.role,
-      },
+      user: userResponse,
       token,
     });
   } catch (error) {

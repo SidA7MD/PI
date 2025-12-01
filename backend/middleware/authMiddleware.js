@@ -31,9 +31,27 @@ exports.protect = async (req, res, next) => {
   }
 };
 
-// Middleware pour vérifier le rôle admin
+// Middleware pour vérifier le rôle superadmin
+exports.superAdminOnly = (req, res, next) => {
+  if (req.user && req.user.role === 'superadmin') {
+    next();
+  } else {
+    res.status(403).json({ message: 'Accès refusé : super administrateur requis' });
+  }
+};
+
+// Middleware pour vérifier le rôle school
+exports.schoolOnly = (req, res, next) => {
+  if (req.user && req.user.role === 'school') {
+    next();
+  } else {
+    res.status(403).json({ message: 'Accès refusé : compte école requis' });
+  }
+};
+
+// Middleware pour vérifier le rôle admin (ancien, pour compatibilité)
 exports.adminOnly = (req, res, next) => {
-  if (req.user && req.user.role === 'admin') {
+  if (req.user && (req.user.role === 'admin' || req.user.role === 'school')) {
     next();
   } else {
     res.status(403).json({ message: 'Accès refusé : administrateur requis' });

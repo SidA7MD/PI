@@ -11,16 +11,16 @@ const { protect, authorize } = require('../middleware/authMiddleware');
 // Toutes les routes nécessitent une authentification
 router.use(protect);
 
-// Obtenir tous les élèves (Admin seulement)
-router.get('/', authorize('admin'), getAllStudents);
+// Obtenir tous les élèves (School seulement)
+router.get('/', authorize('school'), getAllStudents);
 
-// Obtenir un élève par ID (Admin, Teacher, Parent)
-router.get('/:id', authorize('admin', 'teacher', 'parent'), getStudentById);
+// Obtenir un élève par ID (School, Teacher, Parent)
+router.get('/:id', authorize('school', 'teacher', 'parent'), getStudentById);
 
-// Mettre à jour un élève (Admin seulement)
-router.put('/:id', authorize('admin'), updateStudent);
+// Mettre à jour un élève (School seulement)
+router.put('/:id', authorize('school'), updateStudent);
 
-// Supprimer un élève (Admin seulement)
-router.delete('/:id', authorize('admin'), deleteStudent);
+// Supprimer un élève (School seulement)
+router.delete('/:id', authorize('school'), deleteStudent);
 
 module.exports = router;

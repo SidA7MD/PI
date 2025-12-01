@@ -17,10 +17,10 @@ router.get('/', getAllClasses);
 // Obtenir une classe par ID
 router.get('/:id', getClassById);
 
-// Mettre à jour une classe (Admin seulement)
-router.put('/:id', authorize('admin'), updateClass);
+// Mettre à jour une classe (School seulement)
+router.put('/:id', authorize('school'), updateClass);
 
-// Supprimer une classe (Admin seulement)
-router.delete('/:id', authorize('admin'), deleteClass);
+// Supprimer une classe (School seulement)
+router.delete('/:id', authorize('school'), deleteClass);
 
 module.exports = router;

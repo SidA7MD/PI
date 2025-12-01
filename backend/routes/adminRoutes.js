@@ -1,28 +1,28 @@
 const express = require('express');
 const router = express.Router();
 const {
-  createSchool,
   createTeacher,
+  getTeachers,
+  getTeacherById,
+  updateTeacher,
+  deleteTeacher,
   createClass,
   createStudent,
   assignStudentToClass,
   assignTeacherToClass,
-  getSchools,
-  getTeachers,
 } = require('../controllers/adminController');
-const { protect, adminOnly } = require('../middleware/authMiddleware');
+const { protect, schoolOnly } = require('../middleware/authMiddleware');
 
-// Toutes les routes nécessitent une authentification et le rôle admin
+// Toutes les routes nécessitent une authentification et le rôle school
 router.use(protect);
-router.use(adminOnly);
-
-// Gestion des écoles
-router.post('/create-school', createSchool);
-router.get('/schools', getSchools);
+router.use(schoolOnly);
 
 // Gestion des professeurs
 router.post('/create-teacher', createTeacher);
 router.get('/teachers', getTeachers);
+router.get('/teachers/:id', getTeacherById);
+router.put('/teachers/:id', updateTeacher);
+router.delete('/teachers/:id', deleteTeacher);
 
 // Gestion des classes
 router.post('/create-class', createClass);

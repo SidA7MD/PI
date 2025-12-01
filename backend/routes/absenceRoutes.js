@@ -11,16 +11,17 @@ const { protect, authorize } = require('../middleware/authMiddleware');
 // Toutes les routes nécessitent une authentification
 router.use(protect);
 
-// Obtenir toutes les absences (Admin seulement)
-router.get('/', authorize('admin'), getAllAbsences);
+// Routes spécifiques avant routes paramétrées
+// Obtenir les statistiques d'absences (School seulement)
+router.get('/stats', authorize('school'), getAbsenceStats);
 
-// Obtenir les statistiques d'absences (Admin seulement)
-router.get('/stats', authorize('admin'), getAbsenceStats);
+// Obtenir toutes les absences (School seulement)
+router.get('/', authorize('school'), getAllAbsences);
 
 // Obtenir une absence par ID
 router.get('/:id', getAbsenceById);
 
-// Supprimer une absence (Admin ou Teacher propriétaire)
-router.delete('/:id', authorize('admin', 'teacher'), deleteAbsence);
+// Supprimer une absence (School ou Teacher propriétaire)
+router.delete('/:id', authorize('school', 'teacher'), deleteAbsence);
 
 module.exports = router;

@@ -1,18 +1,24 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema(
   {
     username: {
       type: String,
-      required: [true, "Le nom d'utilisateur est requis"],
+      required: function() {
+        return this.role !== 'school'; // Username not required for schools (use email instead)
+      },
       unique: true,
+      sparse: true,
       trim: true,
     },
     phone: {
       type: String,
-      required: [true, 'Le numéro de téléphone est requis'],
+      required: function() {
+        return this.role !== 'school'; // Phone not required for schools
+      },
       unique: true,
+      sparse: true,
     },
     password: {
       type: String,
@@ -21,8 +27,15 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['admin', 'teacher', 'parent'],
+      enum: ['superadmin', 'school', 'teacher', 'parent'],
       required: true,
+    },
+    email: {
+      type: String,
+      unique: true,
+      sparse: true, // Allows null/undefined for non-school users
+      trim: true,
+      lowercase: true,
     },
     // Pour les professeurs : classes assignées
     classes: [

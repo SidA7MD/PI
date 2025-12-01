@@ -37,9 +37,13 @@ const schoolSchema = new mongoose.Schema(
     phone: {
       type: String,
     },
-    // Email
+    // Email (pour connexion)
     email: {
       type: String,
+      required: [true, "L'email de l'école est requis"],
+      unique: true,
+      lowercase: true,
+      trim: true,
     },
     active: {
       type: Boolean,
