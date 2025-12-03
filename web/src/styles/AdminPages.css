@@ -1,8 +1,12 @@
 /* Common styles for admin pages */
 .admin-page {
-  padding: 30px;
-  background-color: #f5f7fa;
+  flex: 1;
+  padding: 32px;
   min-height: calc(100vh - 70px);
+  max-width: 100%;
+  margin: 0 auto;
+  width: 100%;
+  background: #f7fafc;
 }
 
 .page-header {
@@ -245,4 +249,3 @@
   font-size: 14px;
   border: 1px solid #cfc;
 }
-

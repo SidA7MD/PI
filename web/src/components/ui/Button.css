@@ -1,0 +1,384 @@
+/* src/components/ui/Button.css */
+
+/* ============================================
+   BASE BUTTON STYLES
+   ============================================ */
+
+.modern-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-family: inherit;
+  font-weight: var(--font-medium);
+  line-height: 1;
+  border: none;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+  text-decoration: none;
+  user-select: none;
+}
+
+.modern-btn:focus-visible {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 2px;
+}
+
+.modern-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ============================================
+   BUTTON SIZES
+   ============================================ */
+
+.modern-btn--sm {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  min-height: 32px;
+}
+
+.modern-btn--default {
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--text-base);
+  min-height: 40px;
+}
+
+.modern-btn--lg {
+  padding: var(--space-4) var(--space-6);
+  font-size: var(--text-lg);
+  min-height: 48px;
+}
+
+.modern-btn--xl {
+  padding: var(--space-5) var(--space-8);
+  font-size: var(--text-xl);
+  min-height: 56px;
+}
+
+/* ============================================
+   BUTTON VARIANTS
+   ============================================ */
+
+/* Primary Button */
+.modern-btn--primary {
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-700) 100%);
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.modern-btn--primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.modern-btn--primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Secondary Button */
+.modern-btn--secondary {
+  background: var(--gray-100);
+  color: var(--text-primary);
+  border: 1px solid var(--border-light);
+}
+
+.modern-btn--secondary:hover:not(:disabled) {
+  background: var(--gray-200);
+  border-color: var(--border-medium);
+}
+
+/* Outline Button */
+.modern-btn--outline {
+  background: transparent;
+  color: var(--primary-600);
+  border: 2px solid var(--primary-500);
+}
+
+.modern-btn--outline:hover:not(:disabled) {
+  background: var(--primary-50);
+  border-color: var(--primary-600);
+  color: var(--primary-700);
+}
+
+/* Ghost Button */
+.modern-btn--ghost {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.modern-btn--ghost:hover:not(:disabled) {
+  background: var(--gray-100);
+  color: var(--text-primary);
+}
+
+/* Success Button */
+.modern-btn--success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.modern-btn--success:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Danger Button */
+.modern-btn--danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.modern-btn--danger:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Warning Button */
+.modern-btn--warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.modern-btn--warning:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Link Button */
+.modern-btn--link {
+  background: transparent;
+  color: var(--primary-600);
+  padding: 0;
+  min-height: auto;
+}
+
+.modern-btn--link:hover:not(:disabled) {
+  color: var(--primary-700);
+  text-decoration: underline;
+}
+
+/* ============================================
+   BUTTON STATES
+   ============================================ */
+
+/* Loading State */
+.modern-btn--loading {
+  color: transparent;
+  pointer-events: none;
+}
+
+.modern-btn__spinner {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+.modern-btn--secondary .modern-btn__spinner,
+.modern-btn--ghost .modern-btn__spinner {
+  border-color: var(--gray-300);
+  border-top-color: var(--primary-500);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================
+   BUTTON LAYOUT
+   ============================================ */
+
+/* Full Width */
+.modern-btn--full-width {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Icon Only */
+.modern-btn--icon-only {
+  padding: var(--space-3);
+  aspect-ratio: 1;
+}
+
+.modern-btn--icon-only.modern-btn--sm {
+  padding: var(--space-2);
+}
+
+.modern-btn--icon-only.modern-btn--lg {
+  padding: var(--space-4);
+}
+
+.modern-btn--icon-only.modern-btn--xl {
+  padding: var(--space-5);
+}
+
+/* Icon Button (circular) */
+.modern-btn--icon-button {
+  border-radius: var(--radius-full);
+  padding: var(--space-3);
+  aspect-ratio: 1;
+}
+
+/* ============================================
+   BUTTON ELEMENTS
+   ============================================ */
+
+.modern-btn__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2em;
+}
+
+.modern-btn__icon--left {
+  margin-right: calc(var(--space-1) * -1);
+}
+
+.modern-btn__icon--right {
+  margin-left: calc(var(--space-1) * -1);
+}
+
+.modern-btn__text {
+  display: inline-block;
+}
+
+/* ============================================
+   BUTTON GROUP
+   ============================================ */
+
+.modern-btn-group {
+  display: inline-flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.modern-btn-group .modern-btn {
+  margin: 0;
+}
+
+/* Connected Button Group */
+.modern-btn-group--connected {
+  gap: 0;
+}
+
+.modern-btn-group--connected .modern-btn {
+  border-radius: 0;
+  margin-left: -1px;
+}
+
+.modern-btn-group--connected .modern-btn:first-child {
+  border-top-left-radius: var(--radius-lg);
+  border-bottom-left-radius: var(--radius-lg);
+  margin-left: 0;
+}
+
+.modern-btn-group--connected .modern-btn:last-child {
+  border-top-right-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
+}
+
+/* ============================================
+   RIPPLE EFFECT
+   ============================================ */
+
+.modern-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.modern-btn:active:not(:disabled)::before {
+  width: 300px;
+  height: 300px;
+}
+
+.modern-btn--secondary::before,
+.modern-btn--ghost::before,
+.modern-btn--outline::before {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 768px) {
+  .modern-btn {
+    font-size: var(--text-sm);
+  }
+
+  .modern-btn--lg {
+    padding: var(--space-3) var(--space-5);
+    font-size: var(--text-base);
+    min-height: 44px;
+  }
+
+  .modern-btn--xl {
+    padding: var(--space-4) var(--space-6);
+    font-size: var(--text-lg);
+    min-height: 52px;
+  }
+}
+
+/* ============================================
+   SPECIAL VARIANTS
+   ============================================ */
+
+/* Gradient Button with Animated Background */
+.modern-btn--gradient-animated {
+  background: linear-gradient(
+    135deg,
+    var(--primary-500),
+    var(--primary-600),
+    var(--primary-700),
+    var(--primary-600)
+  );
+  background-size: 300% 300%;
+  animation: gradient-shift 3s ease infinite;
+}
+
+@keyframes gradient-shift {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Glass Button */
+.modern-btn--glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.modern-btn--glass:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+}

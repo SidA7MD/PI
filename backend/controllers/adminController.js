@@ -4,6 +4,10 @@ const Class = require('../models/Class');
 const Student = require('../models/Student');
 const generateStudentCode = require('../utils/generateStudentCode');
 
+// ============================================
+// SUPER ADMIN - SCHOOL MANAGEMENT
+// ============================================
+
 // @desc    Créer une école (Super Admin seulement)
 // @route   POST /api/superadmin/create-school
 // @access  Private/SuperAdmin
@@ -12,8 +16,8 @@ exports.createSchool = async (req, res) => {
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
-      return res.status(400).json({ 
-        message: "Le nom de l'école, l'email et le mot de passe sont requis" 
+      return res.status(400).json({
+        message: "Le nom de l'école, l'email et le mot de passe sont requis",
       });
     }
 
@@ -56,16 +60,97 @@ exports.createSchool = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error('Error in createSchool:', error);
     res.status(500).json({ message: 'Erreur serveur', error: error.message });
   }
 };
 
-// @desc    Créer un professeur
+// @desc    Obtenir toutes les écoles (Super Admin seulement)
+// @route   GET /api/superadmin/schools
+// @access  Private/SuperAdmin
+exports.getAllSchools = async (req, res) => {
+  try {
+    const schools = await School.find()
+      .populate('admins', 'email role')
+      .populate('teachers', 'username phone')
+      .populate('classes', 'name level')
+      .select('-__v')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      count: schools.length,
+      schools,
+    });
+  } catch (error) {
+    console.error('Error in getAllSchools:', error);
+    res.status(500).json({ message: 'Erreur serveur', error: error.message });
+  }
+};
+
+// ============================================
+// SCHOOL ADMIN - TEACHER MANAGEMENT
+// ============================================
+
+// @desc    Get all teachers for a school
+// @route   GET /api/admin/teachers
+// @access  Private/School
+exports.getTeachers = async (req, res) => {
+  try {
+    const schoolUser = await User.findById(req.user._id);
+
+    if (!schoolUser.school) {
+      return res.status(400).json({ message: 'Aucune école associée' });
+    }
+
+    const teachers = await User.find({
+      role: 'teacher',
+      school: schoolUser.school,
+    }).populate('classes', 'name level');
+
+    res.status(200).json({
+      count: teachers.length,
+      teachers,
+    });
+  } catch (error) {
+    console.error('Error in getTeachers:', error);
+    res.status(500).json({ message: 'Erreur serveur', error: error.message });
+  }
+};
+
+// @desc    Get a single teacher by ID
+// @route   GET /api/admin/teachers/:id
+// @access  Private/School
+exports.getTeacherById = async (req, res) => {
+  try {
+    const schoolUser = await User.findById(req.user._id);
+    const teacher = await User.findById(req.params.id)
+      .populate('classes', 'name level')
+      .populate('school', 'name');
+
+    if (!teacher) {
+      return res.status(404).json({ message: 'Professeur non trouvé' });
+    }
+
+    // Vérifier que le professeur appartient à l'école
+    if (teacher.school && teacher.school._id.toString() !== schoolUser.school.toString()) {
+      return res.status(403).json({ message: "Vous n'avez pas accès à ce professeur" });
+    }
+
+    res.status(200).json({
+      teacher,
+    });
+  } catch (error) {
+    console.error('Error in getTeacherById:', error);
+    res.status(500).json({ message: 'Erreur serveur', error: error.message });
+  }
+};
+
+// @desc    Create a new teacher and optionally assign to class
 // @route   POST /api/admin/create-teacher
-// @access  Private/Admin
+// @access  Private/School
 exports.createTeacher = async (req, res) => {
   try {
-    const { username, phone, password } = req.body;
+    const { username, phone, password, classId } = req.body;
 
     if (!username || !phone || !password) {
       return res.status(400).json({ message: 'Tous les champs sont requis' });
@@ -74,7 +159,7 @@ exports.createTeacher = async (req, res) => {
     // Vérifier que l'école existe
     const schoolUser = await User.findById(req.user._id);
     if (!schoolUser.school) {
-      return res.status(400).json({ message: "Aucune école associée" });
+      return res.status(400).json({ message: 'Aucune école associée' });
     }
 
     // Vérifier si le professeur existe déjà
@@ -97,6 +182,29 @@ exports.createTeacher = async (req, res) => {
       $push: { teachers: teacher._id },
     });
 
+    // Si classId est fourni, assigner le professeur à la classe
+    if (classId && classId !== '') {
+      const classObj = await Class.findOne({
+        _id: classId,
+        school: schoolUser.school,
+      });
+
+      if (classObj) {
+        // Ajouter la classe au professeur
+        if (!teacher.classes) teacher.classes = [];
+        if (!teacher.classes.includes(classId)) {
+          teacher.classes.push(classId);
+          await teacher.save();
+        }
+
+        // Ajouter le professeur à la classe
+        if (!classObj.teachers.includes(teacher._id)) {
+          classObj.teachers.push(teacher._id);
+          await classObj.save();
+        }
+      }
+    }
+
     res.status(201).json({
       message: 'Professeur créé avec succès',
       teacher: {
@@ -107,9 +215,155 @@ exports.createTeacher = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error('Error in createTeacher:', error);
     res.status(500).json({ message: 'Erreur serveur', error: error.message });
   }
 };
+
+// @desc    Update a teacher and manage class assignment
+// @route   PUT /api/admin/teachers/:id
+// @access  Private/School
+exports.updateTeacher = async (req, res) => {
+  try {
+    const { username, phone, password, classId } = req.body;
+    const schoolUser = await User.findById(req.user._id);
+
+    const teacher = await User.findById(req.params.id);
+
+    if (!teacher) {
+      return res.status(404).json({ message: 'Professeur non trouvé' });
+    }
+
+    // Vérifier que le professeur appartient à l'école
+    if (teacher.school.toString() !== schoolUser.school.toString()) {
+      return res.status(403).json({ message: "Vous n'avez pas accès à ce professeur" });
+    }
+
+    // Vérifier que le rôle est toujours teacher
+    if (teacher.role !== 'teacher') {
+      return res.status(400).json({ message: "Cet utilisateur n'est pas un professeur" });
+    }
+
+    // Mettre à jour les champs
+    if (username) {
+      // Vérifier si le nouveau username est disponible
+      const usernameExists = await User.findOne({
+        username,
+        _id: { $ne: teacher._id },
+      });
+      if (usernameExists) {
+        return res.status(400).json({ message: "Ce nom d'utilisateur est déjà utilisé" });
+      }
+      teacher.username = username;
+    }
+
+    if (phone) {
+      // Vérifier si le nouveau téléphone est disponible
+      const phoneExists = await User.findOne({
+        phone,
+        _id: { $ne: teacher._id },
+      });
+      if (phoneExists) {
+        return res.status(400).json({ message: 'Ce numéro de téléphone est déjà utilisé' });
+      }
+      teacher.phone = phone;
+    }
+
+    if (password && password.trim() !== '') {
+      teacher.password = password; // Le hash sera fait automatiquement par le middleware
+    }
+
+    await teacher.save();
+
+    // Gérer l'assignation de classe
+    // D'abord, retirer le professeur de toutes les classes de cette école
+    await Class.updateMany({ school: schoolUser.school }, { $pull: { teachers: teacher._id } });
+
+    // Réinitialiser les classes du professeur
+    teacher.classes = [];
+
+    // Ensuite, si classId est fourni et non vide, assigner à la nouvelle classe
+    if (classId && classId !== '') {
+      const classObj = await Class.findOne({
+        _id: classId,
+        school: schoolUser.school,
+      });
+
+      if (classObj) {
+        // Ajouter la classe au professeur
+        teacher.classes.push(classId);
+        await teacher.save();
+
+        // Ajouter le professeur à la classe
+        if (!classObj.teachers.includes(teacher._id)) {
+          classObj.teachers.push(teacher._id);
+          await classObj.save();
+        }
+      }
+    } else {
+      // Si pas de classe spécifiée, juste sauvegarder le professeur sans classes
+      await teacher.save();
+    }
+
+    const updatedTeacher = await User.findById(teacher._id)
+      .populate('classes', 'name level')
+      .select('-password');
+
+    res.status(200).json({
+      message: 'Professeur mis à jour avec succès',
+      teacher: updatedTeacher,
+    });
+  } catch (error) {
+    console.error('Error in updateTeacher:', error);
+    res.status(500).json({ message: 'Erreur serveur', error: error.message });
+  }
+};
+
+// @desc    Delete a teacher
+// @route   DELETE /api/admin/teachers/:id
+// @access  Private/School
+exports.deleteTeacher = async (req, res) => {
+  try {
+    const schoolUser = await User.findById(req.user._id);
+    const teacher = await User.findById(req.params.id);
+
+    if (!teacher) {
+      return res.status(404).json({ message: 'Professeur non trouvé' });
+    }
+
+    // Vérifier que le professeur appartient à l'école
+    if (teacher.school.toString() !== schoolUser.school.toString()) {
+      return res.status(403).json({ message: "Vous n'avez pas accès à ce professeur" });
+    }
+
+    // Vérifier que le rôle est teacher
+    if (teacher.role !== 'teacher') {
+      return res.status(400).json({ message: "Cet utilisateur n'est pas un professeur" });
+    }
+
+    // Retirer le professeur de l'école
+    await School.findByIdAndUpdate(schoolUser.school, {
+      $pull: { teachers: teacher._id },
+    });
+
+    // Retirer le professeur de toutes les classes
+    await Class.updateMany({ teachers: teacher._id }, { $pull: { teachers: teacher._id } });
+
+    // Supprimer le professeur
+    await teacher.deleteOne();
+
+    res.status(200).json({
+      message: 'Professeur supprimé avec succès',
+    });
+  } catch (error) {
+    console.error('Error in deleteTeacher:', error);
+    res.status(500).json({ message: 'Erreur serveur', error: error.message });
+  }
+};
+
+// ============================================
+// SCHOOL ADMIN - CLASS MANAGEMENT
+// ============================================
 
 // @desc    Créer une classe
 // @route   POST /api/admin/create-class
@@ -125,7 +379,7 @@ exports.createClass = async (req, res) => {
     // Vérifier que l'école existe
     const schoolUser = await User.findById(req.user._id);
     if (!schoolUser.school) {
-      return res.status(400).json({ message: "Aucune école associée" });
+      return res.status(400).json({ message: 'Aucune école associée' });
     }
 
     // Créer la classe
@@ -141,17 +395,21 @@ exports.createClass = async (req, res) => {
       $push: { classes: classObj._id },
     });
 
-    const createdClass = await Class.findById(classObj._id)
-      .populate('school', 'name');
+    const createdClass = await Class.findById(classObj._id).populate('school', 'name');
 
     res.status(201).json({
       message: 'Classe créée avec succès',
       class: createdClass,
     });
   } catch (error) {
+    console.error('Error in createClass:', error);
     res.status(500).json({ message: 'Erreur serveur', error: error.message });
   }
 };
+
+// ============================================
+// SCHOOL ADMIN - STUDENT MANAGEMENT
+// ============================================
 
 // @desc    Créer un élève
 // @route   POST /api/admin/create-student
@@ -167,7 +425,7 @@ exports.createStudent = async (req, res) => {
     // Vérifier que l'école existe
     const schoolUser = await User.findById(req.user._id);
     if (!schoolUser.school) {
-      return res.status(400).json({ message: "Aucune école associée" });
+      return res.status(400).json({ message: 'Aucune école associée' });
     }
 
     // Vérifier que la classe appartient à l'école si spécifiée
@@ -216,9 +474,14 @@ exports.createStudent = async (req, res) => {
       student: createdStudent,
     });
   } catch (error) {
+    console.error('Error in createStudent:', error);
     res.status(500).json({ message: 'Erreur serveur', error: error.message });
   }
 };
+
+// ============================================
+// SCHOOL ADMIN - ASSIGNMENTS
+// ============================================
 
 // @desc    Assigner un élève à une classe
 // @route   POST /api/admin/assign-student-to-class
@@ -242,10 +505,10 @@ exports.assignStudentToClass = async (req, res) => {
 
     // Vérifier que l'élève et la classe appartiennent à l'école
     if (student.school.toString() !== schoolUser.school.toString()) {
-      return res.status(403).json({ message: 'Cet élève n\'appartient pas à votre école' });
+      return res.status(403).json({ message: "Cet élève n'appartient pas à votre école" });
     }
     if (classObj.school.toString() !== schoolUser.school.toString()) {
-      return res.status(403).json({ message: 'Cette classe n\'appartient pas à votre école' });
+      return res.status(403).json({ message: "Cette classe n'appartient pas à votre école" });
     }
 
     // Retirer l'élève de son ancienne classe si applicable
@@ -274,6 +537,7 @@ exports.assignStudentToClass = async (req, res) => {
       student: updatedStudent,
     });
   } catch (error) {
+    console.error('Error in assignStudentToClass:', error);
     res.status(500).json({ message: 'Erreur serveur', error: error.message });
   }
 };
@@ -300,10 +564,10 @@ exports.assignTeacherToClass = async (req, res) => {
 
     // Vérifier que le professeur et la classe appartiennent à l'école
     if (teacher.school.toString() !== schoolUser.school.toString()) {
-      return res.status(403).json({ message: 'Ce professeur n\'appartient pas à votre école' });
+      return res.status(403).json({ message: "Ce professeur n'appartient pas à votre école" });
     }
     if (classObj.school.toString() !== schoolUser.school.toString()) {
-      return res.status(403).json({ message: 'Cette classe n\'appartient pas à votre école' });
+      return res.status(403).json({ message: "Cette classe n'appartient pas à votre école" });
     }
 
     // Assigner la classe au professeur
@@ -331,191 +595,7 @@ exports.assignTeacherToClass = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({ message: 'Erreur serveur', error: error.message });
-  }
-};
-
-// @desc    Obtenir toutes les écoles (Super Admin seulement)
-// @route   GET /api/superadmin/schools
-// @access  Private/SuperAdmin
-exports.getAllSchools = async (req, res) => {
-  try {
-    const schools = await School.find()
-      .populate('admins', 'email role')
-      .populate('teachers', 'username phone')
-      .populate('classes', 'name level')
-      .select('-__v')
-      .sort({ createdAt: -1 });
-
-    res.status(200).json({
-      count: schools.length,
-      schools,
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Erreur serveur', error: error.message });
-  }
-};
-
-// @desc    Obtenir tous les professeurs
-// @route   GET /api/admin/teachers
-// @access  Private/School
-exports.getTeachers = async (req, res) => {
-  try {
-    const schoolUser = await User.findById(req.user._id);
-
-    if (!schoolUser.school) {
-      return res.status(400).json({ message: 'Aucune école associée' });
-    }
-
-    const teachers = await User.find({
-      role: 'teacher',
-      school: schoolUser.school,
-    }).populate('classes', 'name level');
-
-    res.status(200).json({
-      count: teachers.length,
-      teachers,
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Erreur serveur', error: error.message });
-  }
-};
-
-// @desc    Obtenir un professeur par ID
-// @route   GET /api/admin/teachers/:id
-// @access  Private/School
-exports.getTeacherById = async (req, res) => {
-  try {
-    const schoolUser = await User.findById(req.user._id);
-    const teacher = await User.findById(req.params.id)
-      .populate('classes', 'name level')
-      .populate('school', 'name');
-
-    if (!teacher) {
-      return res.status(404).json({ message: 'Professeur non trouvé' });
-    }
-
-    // Vérifier que le professeur appartient à l'école
-    if (teacher.school.toString() !== schoolUser.school.toString()) {
-      return res.status(403).json({ message: 'Vous n\'avez pas accès à ce professeur' });
-    }
-
-    res.status(200).json({
-      teacher,
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Erreur serveur', error: error.message });
-  }
-};
-
-// @desc    Mettre à jour un professeur
-// @route   PUT /api/admin/teachers/:id
-// @access  Private/School
-exports.updateTeacher = async (req, res) => {
-  try {
-    const { username, phone, password } = req.body;
-    const schoolUser = await User.findById(req.user._id);
-
-    const teacher = await User.findById(req.params.id);
-
-    if (!teacher) {
-      return res.status(404).json({ message: 'Professeur non trouvé' });
-    }
-
-    // Vérifier que le professeur appartient à l'école
-    if (teacher.school.toString() !== schoolUser.school.toString()) {
-      return res.status(403).json({ message: 'Vous n\'avez pas accès à ce professeur' });
-    }
-
-    // Vérifier que le rôle est toujours teacher
-    if (teacher.role !== 'teacher') {
-      return res.status(400).json({ message: 'Cet utilisateur n\'est pas un professeur' });
-    }
-
-    // Mettre à jour les champs
-    if (username) {
-      // Vérifier si le nouveau username est disponible
-      const usernameExists = await User.findOne({ 
-        username, 
-        _id: { $ne: teacher._id } 
-      });
-      if (usernameExists) {
-        return res.status(400).json({ message: 'Ce nom d\'utilisateur est déjà utilisé' });
-      }
-      teacher.username = username;
-    }
-    
-    if (phone) {
-      // Vérifier si le nouveau téléphone est disponible
-      const phoneExists = await User.findOne({ 
-        phone, 
-        _id: { $ne: teacher._id } 
-      });
-      if (phoneExists) {
-        return res.status(400).json({ message: 'Ce numéro de téléphone est déjà utilisé' });
-      }
-      teacher.phone = phone;
-    }
-    
-    if (password) {
-      teacher.password = password; // Le hash sera fait automatiquement par le middleware
-    }
-
-    await teacher.save();
-
-    const updatedTeacher = await User.findById(teacher._id)
-      .populate('classes', 'name level')
-      .select('-password');
-
-    res.status(200).json({
-      message: 'Professeur mis à jour avec succès',
-      teacher: updatedTeacher,
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Erreur serveur', error: error.message });
-  }
-};
-
-// @desc    Supprimer un professeur
-// @route   DELETE /api/admin/teachers/:id
-// @access  Private/School
-exports.deleteTeacher = async (req, res) => {
-  try {
-    const schoolUser = await User.findById(req.user._id);
-    const teacher = await User.findById(req.params.id);
-
-    if (!teacher) {
-      return res.status(404).json({ message: 'Professeur non trouvé' });
-    }
-
-    // Vérifier que le professeur appartient à l'école
-    if (teacher.school.toString() !== schoolUser.school.toString()) {
-      return res.status(403).json({ message: 'Vous n\'avez pas accès à ce professeur' });
-    }
-
-    // Vérifier que le rôle est teacher
-    if (teacher.role !== 'teacher') {
-      return res.status(400).json({ message: 'Cet utilisateur n\'est pas un professeur' });
-    }
-
-    // Retirer le professeur de l'école
-    await School.findByIdAndUpdate(schoolUser.school, {
-      $pull: { teachers: teacher._id },
-    });
-
-    // Retirer le professeur de toutes les classes
-    await Class.updateMany(
-      { teachers: teacher._id },
-      { $pull: { teachers: teacher._id } }
-    );
-
-    // Supprimer le professeur
-    await teacher.deleteOne();
-
-    res.status(200).json({
-      message: 'Professeur supprimé avec succès',
-    });
-  } catch (error) {
+    console.error('Error in assignTeacherToClass:', error);
     res.status(500).json({ message: 'Erreur serveur', error: error.message });
   }
 };

@@ -1,6 +1,6 @@
 // src/pages/Login.jsx
-import React, { useState, useContext } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useContext, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import '../styles/Login.css';
 
@@ -20,7 +20,7 @@ const Login = () => {
     setLoading(true);
     try {
       await login(loginType === 'school' ? email : username, password, loginType);
-      
+
       // Redirect based on role will be handled by App.jsx
       navigate('/dashboard');
     } catch (err) {
@@ -38,7 +38,7 @@ const Login = () => {
           <p>Connectez-vous à votre compte</p>
         </div>
         {error && <div className="error-message">{error}</div>}
-        
+
         <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
           <button
             type="button"

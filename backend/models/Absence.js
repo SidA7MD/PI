@@ -26,21 +26,23 @@ const absenceSchema = new mongoose.Schema(
       required: true,
       default: Date.now,
     },
-    // Statut : absent, présent, retard
+    // Statut : justified ou unjustified
     status: {
       type: String,
-      enum: ['absent', 'présent', 'retard'],
+      enum: ['justified', 'unjustified'],
       required: true,
+      default: 'unjustified',
+    },
+    // Type d'absence (optionnel)
+    absenceType: {
+      type: String,
+      enum: ['absent', 'présent', 'retard'],
+      default: 'absent',
     },
     // Motif (optionnel)
     reason: {
       type: String,
       trim: true,
-    },
-    // Justifié ou non
-    justified: {
-      type: Boolean,
-      default: false,
     },
     // Notes additionnelles
     notes: {
@@ -61,5 +63,6 @@ const absenceSchema = new mongoose.Schema(
 // Index pour améliorer les performances des requêtes
 absenceSchema.index({ student: 1, date: -1 });
 absenceSchema.index({ class: 1, date: -1 });
+absenceSchema.index({ status: 1 });
 
 module.exports = mongoose.model('Absence', absenceSchema);
