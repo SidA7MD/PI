@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../src/context/AuthContext';
 import { useTheme } from '../../src/context/ThemeContext';
@@ -48,59 +48,97 @@ export default function ParentHomeScreen() {
         setRefreshing(false);
     }, []);
 
+    const getTimeBasedGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour < 12) return 'Bonjour';
+        if (hour < 18) return 'Bon après-midi';
+        return 'Bonsoir';
+    };
+
+    const getGreetingEmoji = () => {
+        const hour = new Date().getHours();
+        if (hour < 12) return '☀️';
+        if (hour < 18) return '👋';
+        return '🌙';
+    };
+
     const StatCard = ({ icon, value, label, color, onPress }: any) => (
         <TouchableOpacity 
-            style={[styles.statCard, { backgroundColor: colors.background.card }]} 
+            style={[styles.statCard, { backgroundColor: colors.background.card }]}
             onPress={onPress}
             activeOpacity={0.7}
+            disabled={!onPress}
         >
-            <View style={[styles.statIconContainer, { backgroundColor: color + '15' }]}>
-                <Ionicons name={icon} size={24} color={color} />
+            <View style={[styles.statContent]}>
+                <View style={[styles.statIconContainer, { backgroundColor: color + '15' }]}>
+                    <Ionicons name={icon} size={24} color={color} />
+                </View>
+                <View>
+                    <Text style={[styles.statValue, { color: colors.text.primary }]}>{value}</Text>
+                    <Text style={[styles.statLabel, { color: colors.text.secondary }]}>{label}</Text>
+                </View>
             </View>
-            <Text style={[styles.statValue, { color: colors.text.primary }]}>{value}</Text>
-            <Text style={[styles.statLabel, { color: colors.text.secondary }]}>{label}</Text>
         </TouchableOpacity>
     );
 
-    const ChildCard = ({ child }: any) => (
-        <Card style={styles.childCard}>
-            <View style={styles.childHeader}>
-                <Avatar
-                    name={`${child.firstName} ${child.lastName}`}
-                    size="medium"
-                />
-                <View style={styles.childInfo}>
-                    <Text style={[styles.childName, { color: colors.text.primary }]}>
-                        {child.firstName} {child.lastName}
-                    </Text>
-                    {child.class && (
-                        <View style={styles.classInfo}>
-                            <Ionicons name="school-outline" size={14} color={colors.text.tertiary} />
-                            <Text style={[styles.classText, { color: colors.text.secondary }]}>
-                                {child.class.name} - {child.class.level}
+    const ChildCard = ({ child }: any) => {
+        const attendanceRate = child.totalAbsences > 0 
+            ? Math.max(0, 100 - (child.totalAbsences / 30 * 100))
+            : 100;
+        const attendanceColor = attendanceRate >= 90 ? colors.success : attendanceRate >= 75 ? colors.warning : colors.danger;
+
+        return (
+            <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => router.push('/(parent)/absences')}
+            >
+                <Card style={styles.childCard}>
+                    <View style={styles.childHeader}>
+                        <Avatar
+                            name={`${child.firstName} ${child.lastName}`}
+                            size="medium"
+                        />
+                        <View style={styles.childInfo}>
+                            <Text style={[styles.childName, { color: colors.text.primary }]}>
+                                {child.firstName} {child.lastName}
+                            </Text>
+                            {child.class && (
+                                <View style={styles.classInfo}>
+                                    <Ionicons name="school" size={14} color={colors.primary} />
+                                    <Text style={[styles.classText, { color: colors.text.secondary }]}>
+                                        {child.class.name} • {child.class.level}
+                                    </Text>
+                                </View>
+                            )}
+                        </View>
+                        <View style={[styles.attendanceBadge, { backgroundColor: attendanceColor + '15' }]}>
+                            <Ionicons name="checkmark-circle" size={16} color={attendanceColor} />
+                            <Text style={[styles.attendanceText, { color: attendanceColor }]}>
+                                {Math.round(attendanceRate)}%
                             </Text>
                         </View>
-                    )}
-                </View>
-            </View>
-            
-            <View style={styles.childStats}>
-                <View style={styles.childStat}>
-                    <Ionicons name="calendar-outline" size={16} color={colors.warning} />
-                    <Text style={[styles.childStatText, { color: colors.text.secondary }]}>
-                        {child.totalAbsences} absence{child.totalAbsences !== 1 ? 's' : ''}
-                    </Text>
-                </View>
-                {child.recentAbsences > 0 && (
-                    <View style={[styles.badge, { backgroundColor: colors.warning + '20' }]}>
-                        <Text style={[styles.badgeText, { color: colors.warning }]}>
-                            {child.recentAbsences} cette semaine
-                        </Text>
                     </View>
-                )}
-            </View>
-        </Card>
-    );
+                    
+                    <View style={styles.childFooter}>
+                        <View style={styles.childStat}>
+                            <Ionicons name="calendar-outline" size={16} color={colors.text.tertiary} />
+                            <Text style={[styles.childStatText, { color: colors.text.secondary }]}>
+                                {child.totalAbsences} absence{child.totalAbsences !== 1 ? 's' : ''} au total
+                            </Text>
+                        </View>
+                        {child.recentAbsences > 0 && (
+                            <View style={[styles.recentBadge, { backgroundColor: colors.danger + '15' }]}>
+                                <Ionicons name="alert-circle" size={12} color={colors.danger} />
+                                <Text style={[styles.recentText, { color: colors.danger }]}>
+                                    {child.recentAbsences} cette semaine
+                                </Text>
+                            </View>
+                        )}
+                    </View>
+                </Card>
+            </TouchableOpacity>
+        );
+    };
 
     if (loading) {
         return (
@@ -114,7 +152,9 @@ export default function ParentHomeScreen() {
     }
 
     return (
-        <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: colors.background.secondary }]}>
+        <>
+            <SafeAreaView style={{ flex: 0, backgroundColor: colors.primary }} />
+            <View style={[styles.container, { backgroundColor: colors.background.secondary }]}>
             <ScrollView 
                 contentContainerStyle={{ paddingBottom: spacing['2xl'] }}
                 showsVerticalScrollIndicator={false}
@@ -130,10 +170,29 @@ export default function ParentHomeScreen() {
                 {/* Premium Header */}
                 <LinearGradient
                     colors={[colors.primary, colors.primaryDark]}
-                    style={[styles.header, { paddingTop: spacing.lg }]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={[styles.header, { paddingTop: insets.top + spacing.lg }]}
                 >
-                    <Text style={styles.greeting}>{t('welcome')}, {user?.username}! 👋</Text>
-                    <Text style={styles.subtitle}>{t('childrenDashboard')}</Text>
+                    <View style={styles.headerContent}>
+                        <View>
+                            <Text style={styles.greeting}>
+                                {getTimeBasedGreeting()} {getGreetingEmoji()}
+                            </Text>
+                            <Text style={styles.userName}>{user?.username || 'Parent'}</Text>
+                        </View>
+                        <TouchableOpacity 
+                            style={styles.profileButton}
+                            onPress={() => router.push('/(parent)/profile')}
+                        >
+                            <LinearGradient
+                                colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.15)']}
+                                style={styles.profileGradient}
+                            >
+                                <Ionicons name="person" size={20} color="#FFF" />
+                            </LinearGradient>
+                        </TouchableOpacity>
+                    </View>
                 </LinearGradient>
 
                 {/* Stats Cards */}
@@ -162,7 +221,7 @@ export default function ParentHomeScreen() {
                         />
                         <StatCard
                             icon="stats-chart"
-                            value={stats?.totalChildren ? Math.round((1 - (stats.recentAbsences / (stats.totalChildren * 5))) * 100) : 100}
+                            value={stats?.totalChildren ? Math.round((1 - (stats.recentAbsences / (stats.totalChildren * 5))) * 100) + '%' : '100%'}
                             label={t('attendanceRate')}
                             color={colors.success}
                         />
@@ -172,13 +231,19 @@ export default function ParentHomeScreen() {
                 {/* Children Section */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
-                            {t('myChildren')}
-                        </Text>
-                        <TouchableOpacity onPress={() => router.push('/(parent)/link-child')}>
-                            <View style={styles.addButton}>
-                                <Ionicons name="add-circle" size={24} color={colors.primary} />
-                            </View>
+                        <View>
+                            <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
+                                {t('myChildren')}
+                            </Text>
+                            <Text style={[styles.sectionSubtitle, { color: colors.text.tertiary }]}>
+                                {stats?.children?.length || 0} enfant{(stats?.children?.length || 0) !== 1 ? 's' : ''} lié{(stats?.children?.length || 0) !== 1 ? 's' : ''}
+                            </Text>
+                        </View>
+                        <TouchableOpacity 
+                            style={[styles.addButton, { backgroundColor: colors.primary + '15' }]}
+                            onPress={() => router.push('/(parent)/link-child')}
+                        >
+                            <Ionicons name="add" size={24} color={colors.primary} />
                         </TouchableOpacity>
                     </View>
 
@@ -195,17 +260,19 @@ export default function ParentHomeScreen() {
                         ))
                     ) : (
                         <Card style={styles.emptyCard}>
-                            <Ionicons name="people-outline" size={48} color={colors.text.tertiary} />
+                            <View style={[styles.emptyIcon, { backgroundColor: colors.primary + '10' }]}>
+                                <Ionicons name="people-outline" size={48} color={colors.primary} />
+                            </View>
                             <Text style={[styles.emptyTitle, { color: colors.text.primary }]}>
-                                {t('noChildren')}
+                                Aucun enfant lié
                             </Text>
                             <Text style={[styles.emptyText, { color: colors.text.secondary }]}>
-                                Demandez le code unique à l'école de votre enfant pour le lier à votre compte
+                                Commencez par lier votre premier enfant pour suivre ses absences et son assiduité
                             </Text>
                             <Button
-                                title="Lier un enfant"
+                                title="Lier mon premier enfant"
                                 onPress={() => router.push('/(parent)/link-child')}
-                                style={{ marginTop: spacing.md }}
+                                style={styles.emptyButton}
                                 icon={<Ionicons name="link" size={20} color="#FFF" />}
                             />
                         </Card>
@@ -218,39 +285,44 @@ export default function ParentHomeScreen() {
                         <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
                             Actions rapides
                         </Text>
-                        <Card style={styles.quickActions}>
+                        <View style={styles.quickActionsGrid}>
                             <TouchableOpacity 
-                                style={styles.quickAction}
+                                style={[styles.quickActionCard, { backgroundColor: colors.background.card }]}
                                 onPress={() => router.push('/(parent)/absences')}
+                                activeOpacity={0.7}
                             >
-                                <View style={[styles.quickActionIcon, { backgroundColor: colors.warning + '15' }]}>
-                                    <Ionicons name="calendar" size={24} color={colors.warning} />
+                                <View style={[styles.quickActionContent]}>
+                                    <View style={[styles.quickActionIcon, { backgroundColor: colors.danger + '15' }]}>
+                                        <Ionicons name="calendar" size={24} color={colors.danger} />
+                                    </View>
+                                    <View>
+                                        <Text style={[styles.quickActionTitle, { color: colors.text.primary }]}>Absences</Text>
+                                        <Text style={[styles.quickActionDesc, { color: colors.text.secondary }]}>Voir l'historique</Text>
+                                    </View>
                                 </View>
-                                <Text style={[styles.quickActionText, { color: colors.text.primary }]}>
-                                    Voir les absences
-                                </Text>
-                                <Ionicons name="chevron-forward" size={20} color={colors.text.tertiary} />
                             </TouchableOpacity>
-                            
-                            <View style={[styles.divider, { backgroundColor: colors.border.light }]} />
                             
                             <TouchableOpacity 
-                                style={styles.quickAction}
+                                style={[styles.quickActionCard, { backgroundColor: colors.background.card }]}
                                 onPress={() => router.push('/(parent)/link-child')}
+                                activeOpacity={0.7}
                             >
-                                <View style={[styles.quickActionIcon, { backgroundColor: colors.primary + '15' }]}>
-                                    <Ionicons name="person-add" size={24} color={colors.primary} />
+                                <View style={[styles.quickActionContent]}>
+                                    <View style={[styles.quickActionIcon, { backgroundColor: colors.primary + '15' }]}>
+                                        <Ionicons name="person-add" size={24} color={colors.primary} />
+                                    </View>
+                                    <View>
+                                        <Text style={[styles.quickActionTitle, { color: colors.text.primary }]}>Lier un enfant</Text>
+                                        <Text style={[styles.quickActionDesc, { color: colors.text.secondary }]}>Ajouter un nouveau</Text>
+                                    </View>
                                 </View>
-                                <Text style={[styles.quickActionText, { color: colors.text.primary }]}>
-                                  {t('addChild')}
-                            </Text>
-                                <Ionicons name="chevron-forward" size={20} color={colors.text.tertiary} />
                             </TouchableOpacity>
-                        </Card>
+                        </View>
                     </View>
                 )}
             </ScrollView>
-        </SafeAreaView>
+        </View>
+        </>
     );
 }
 
@@ -269,22 +341,41 @@ const styles = StyleSheet.create({
     header: {
         paddingBottom: spacing.xl,
         paddingHorizontal: spacing.xl,
-        borderBottomLeftRadius: 24,
-        borderBottomRightRadius: 24,
+        borderBottomLeftRadius: 32,
+        borderBottomRightRadius: 32,
+    },
+    headerContent: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
     greeting: {
-        fontSize: 28,
-        fontWeight: '700',
-        color: '#FFF',
-        marginBottom: spacing.xs,
-    },
-    subtitle: {
         fontSize: 16,
+        fontWeight: '600',
         color: 'rgba(255,255,255,0.9)',
+        marginBottom: 4,
+    },
+    userName: {
+        fontSize: 28,
+        fontWeight: '800',
+        color: '#FFF',
+    },
+    profileButton: {
+        borderRadius: 14,
+        overflow: 'hidden',
+    },
+    profileGradient: {
+        width: 48,
+        height: 48,
+        borderRadius: 14,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 2,
+        borderColor: 'rgba(255,255,255,0.2)',
     },
     statsContainer: {
         paddingHorizontal: spacing.lg,
-        marginTop: -spacing.xl,
+        marginTop: -28,
         marginBottom: spacing.md,
     },
     statsRow: {
@@ -294,31 +385,35 @@ const styles = StyleSheet.create({
     },
     statCard: {
         flex: 1,
-        padding: spacing.lg,
-        borderRadius: 16,
-        alignItems: 'center',
+        borderRadius: 20,
+        overflow: 'hidden',
         ...shadows.md,
     },
+    statContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: spacing.md,
+        gap: spacing.md,
+    },
     statIconContainer: {
-        width: 48,
-        height: 48,
+        width: 42,
+        height: 42,
         borderRadius: 12,
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: spacing.sm,
     },
     statValue: {
-        fontSize: 28,
+        fontSize: 20,
         fontWeight: '700',
-        marginBottom: spacing.xs,
+        marginBottom: 0,
     },
     statLabel: {
         fontSize: 12,
-        textAlign: 'center',
+        fontWeight: '500',
     },
     section: {
         paddingHorizontal: spacing.lg,
-        marginBottom: spacing.lg,
+        marginBottom: spacing.xl,
     },
     sectionHeader: {
         flexDirection: 'row',
@@ -327,19 +422,29 @@ const styles = StyleSheet.create({
         marginBottom: spacing.md,
     },
     sectionTitle: {
-        fontSize: 20,
+        fontSize: 22,
         fontWeight: '700',
+        marginBottom: 2,
+    },
+    sectionSubtitle: {
+        fontSize: 13,
+        fontWeight: '500',
     },
     addButton: {
-        padding: spacing.xs,
+        width: 44,
+        height: 44,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     childCard: {
         padding: spacing.lg,
         marginBottom: spacing.md,
-        borderRadius: 16,
+        borderRadius: 20,
     },
     childHeader: {
         flexDirection: 'row',
+        alignItems: 'center',
         marginBottom: spacing.md,
     },
     childInfo: {
@@ -349,18 +454,31 @@ const styles = StyleSheet.create({
     },
     childName: {
         fontSize: 18,
-        fontWeight: '600',
-        marginBottom: spacing.xs,
+        fontWeight: '700',
+        marginBottom: 4,
     },
     classInfo: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 4,
+        gap: 6,
     },
     classText: {
         fontSize: 14,
+        fontWeight: '500',
     },
-    childStats: {
+    attendanceBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 12,
+    },
+    attendanceText: {
+        fontSize: 14,
+        fontWeight: '700',
+    },
+    childFooter: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -371,69 +489,91 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     childStatText: {
-        fontSize: 14,
+        fontSize: 13,
+        fontWeight: '500',
     },
-    badge: {
-        paddingHorizontal: spacing.sm,
-        paddingVertical: spacing.xs,
-        borderRadius: 12,
+    recentBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 10,
     },
-    badgeText: {
-        fontSize: 12,
+    recentText: {
+        fontSize: 11,
         fontWeight: '600',
     },
     emptyCard: {
-        padding: spacing.xl,
+        padding: spacing.xl * 1.5,
         alignItems: 'center',
-        borderRadius: 16,
+        borderRadius: 20,
+    },
+    emptyIcon: {
+        width: 96,
+        height: 96,
+        borderRadius: 48,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: spacing.lg,
     },
     emptyTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        marginTop: spacing.md,
+        fontSize: 20,
+        fontWeight: '700',
         marginBottom: spacing.xs,
     },
     emptyText: {
         fontSize: 14,
         textAlign: 'center',
         lineHeight: 20,
+        marginBottom: spacing.sm,
     },
-    quickActions: {
-        padding: 0,
+    emptyButton: {
+        marginTop: spacing.md,
+    },
+    quickActionsGrid: {
+        flexDirection: 'row',
+        gap: spacing.md,
+    },
+    quickActionCard: {
+        flex: 1,
+        borderRadius: 20,
         overflow: 'hidden',
-        borderRadius: 16,
+        ...shadows.md,
     },
-    quickAction: {
+    quickActionContent: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: spacing.lg,
+        padding: spacing.md,
+        gap: spacing.md,
+        minHeight: 80,
     },
     quickActionIcon: {
-        width: 48,
-        height: 48,
+        width: 42,
+        height: 42,
         borderRadius: 12,
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: spacing.md,
     },
-    quickActionText: {
-        flex: 1,
-        fontSize: 16,
+    quickActionTitle: {
+        fontSize: 15,
+        fontWeight: '600',
+        marginBottom: 2,
+    },
+    quickActionDesc: {
+        fontSize: 12,
         fontWeight: '500',
-    },
-    divider: {
-        height: 1,
-        marginHorizontal: spacing.lg,
     },
     errorCard: {
         flexDirection: 'row',
         padding: spacing.md,
-        borderRadius: 12,
+        borderRadius: 16,
         marginBottom: spacing.md,
         gap: spacing.sm,
     },
     errorText: {
         flex: 1,
         fontSize: 14,
+        fontWeight: '500',
     },
 });

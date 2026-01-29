@@ -186,7 +186,9 @@ const AbsencesScreen = () => {
     }
 
     return (
-        <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: colors.background.secondary }]}>
+        <>
+            <SafeAreaView style={{ flex: 0, backgroundColor: colors.primary }} />
+            <View style={[styles.container, { backgroundColor: colors.background.secondary }]}>
             <ScrollView
                 contentContainerStyle={{ paddingBottom: spacing['2xl'] }}
                 showsVerticalScrollIndicator={false}
@@ -202,7 +204,7 @@ const AbsencesScreen = () => {
                 {/* Premium Header */}
                 <LinearGradient
                     colors={[colors.primary, colors.primaryDark]}
-                    style={[styles.header, { paddingTop: spacing.lg }]}
+                    style={styles.header}
                 >
                     <Text style={styles.headerTitle}>{t('absences')}</Text>
                     <Text style={styles.headerSubtitle}>
@@ -287,7 +289,8 @@ const AbsencesScreen = () => {
                     )}
                 </View>
             </ScrollView>
-        </SafeAreaView>
+        </View>
+        </>
     );
 };
 
@@ -304,6 +307,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     header: {
+        paddingTop: 48,
         paddingBottom: spacing.xl,
         paddingHorizontal: spacing.xl,
         borderBottomLeftRadius: 24,

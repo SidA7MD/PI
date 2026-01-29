@@ -1,6 +1,6 @@
 export const lightColors = {
     primary: '#4F46E5', // Indigo 600
-    primaryDark: '#3730A3', // Indigo 800
+    primaryDark: '#4F46E5', // Indigo 800
     primaryLight: '#818CF8', // Indigo 400
 
     secondary: '#8B5CF6',
@@ -50,7 +50,7 @@ export const lightColors = {
 
 export const darkColors = {
     primary: '#4F46E5', // Indigo 600
-    primaryDark: '#3730A3', // Indigo 800
+    primaryDark: '#4F46E5', // Indigo 800
     primaryLight: '#818CF8', // Indigo 400
 
     secondary: '#8B5CF6',

@@ -8,7 +8,7 @@ import Constants from 'expo-constants';
 // Example: EXPO_PUBLIC_API_URL=http://192.168.1.100:5002/api
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 
                 Constants.expoConfig?.extra?.apiUrl || 
-                'http://10.17.12.218:5001/api';  // Default - uses port 5002 matching backend
+                'http://10.17.12.218:5001/api';  // Default - uses port 5001 matching backend
 
 console.log('🔧 API Configuration:');
 console.log('📍 API_URL:', API_URL);

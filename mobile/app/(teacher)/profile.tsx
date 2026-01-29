@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../src/context/ThemeContext';
 import { useAuth } from '../../src/context/AuthContext';
 import { useLanguage } from '../../src/context/LanguageContext';
@@ -48,7 +48,9 @@ export default function TeacherProfileScreen() {
     );
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.background.secondary }]}>
+        <>
+            <SafeAreaView style={{ flex: 0, backgroundColor: colors.primary }} />
+            <View style={[styles.container, { backgroundColor: colors.background.secondary }]}>
             <ScrollView 
                 contentContainerStyle={{ paddingBottom: spacing['2xl'] }}
                 showsVerticalScrollIndicator={false}
@@ -225,6 +227,7 @@ export default function TeacherProfileScreen() {
                 />
             </ScrollView>
         </View>
+        </>
     );
 }
 

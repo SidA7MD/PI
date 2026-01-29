@@ -6,7 +6,7 @@ import { useTheme } from '../../src/context/ThemeContext';
 import { spacing, shadows } from '../../src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 
 import { useLanguage } from '../../src/context/LanguageContext';
 
@@ -25,7 +25,9 @@ export default function NotificationsScreen() {
     };
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.background.secondary }]}>
+        <>
+            <SafeAreaView style={{ flex: 0, backgroundColor: colors.primary }} />
+            <View style={[styles.container, { backgroundColor: colors.background.secondary }]}>
              {/* Styled Header matching History/Pointer specs */}
              <LinearGradient
                 colors={[colors.primary, colors.primaryDark]}
@@ -89,6 +91,7 @@ export default function NotificationsScreen() {
                 }
             />
         </View>
+        </>
     );
 }
 

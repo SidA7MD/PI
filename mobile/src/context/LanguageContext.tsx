@@ -24,6 +24,7 @@ const translations = {
     loading: 'Chargement',
     error: 'Erreur',
     success: 'Succès',
+    locale: 'fr-FR',
     save: 'Enregistrer',
     cancel: 'Annuler',
     delete: 'Supprimer',
@@ -53,7 +54,12 @@ const translations = {
     totalChildren: 'Enfant(s)',
     totalAbsences: 'Absences totales',
     thisWeek: 'Cette semaine',
+    thisWeekCount: 'cette semaine',
     attendanceRate: 'Taux de présence',
+    quickActions: 'Actions rapides',
+    viewAbsencesSubtitle: 'Voir les absences',
+    linkChildSubtitle: 'Lier un enfant',
+    linkChildHelp: 'Demandez le code unique à l\'école de votre enfant pour le lier à votre compte',
     noChildren: 'Aucun enfant lié',
     noAbsences: 'Aucune absence',
     viewAbsences: 'Voir les absences',
@@ -212,6 +218,14 @@ const translations = {
     registerError: 'Erreur lors de l\'inscription',
     passwordLength: 'Au moins 6 caractères',
     usernameLength: 'Au moins 3 caractères requis',
+    
+    // Additional Teacher Home
+    markAttendanceDesc: 'Gérer la présence',
+    historyDesc: 'Consulter les relevés',
+    notificationsDesc: 'Consulter les notifications',
+    viewProfile: 'Voir le profil',
+    todaySummary: 'Résumé du jour', 
+    quickActions: 'Actions rapides',
   },
   ar: {
     // Common
@@ -220,6 +234,7 @@ const translations = {
     loading: 'جاري التحميل',
     error: 'خطأ',
     success: 'نجح',
+    locale: 'ar-EG', // Arabic locale for dates
     save: 'حفظ',
     cancel: 'إلغاء',
     delete: 'حذف',
@@ -249,7 +264,12 @@ const translations = {
     totalChildren: 'أطفال',
     totalAbsences: 'مجموع الغيابات',
     thisWeek: 'هذا الأسبوع',
+    thisWeekCount: 'هذا الأسبوع',
     attendanceRate: 'معدل الحضور',
+    quickActions: 'إجراءات سريعة',
+    viewAbsencesSubtitle: 'عرض الغيابات',
+    linkChildSubtitle: 'ربط طفل',
+    linkChildHelp: 'اطلب الرمز الفريد من مدرسة طفلك لربطه بحسابك',
     noChildren: 'لا يوجد أطفال مرتبطون',
     noAbsences: 'لا توجد غيابات',
     viewAbsences: 'عرض الغيابات',
@@ -408,6 +428,14 @@ const translations = {
     registerError: 'خطأ أثناء التسجيل',
     passwordLength: '6 أحرف على الأقل',
     usernameLength: '3 أحرف على الأقل مطلوبة',
+
+    // Additional Teacher Home
+    markAttendanceDesc: 'إدارة الحضور',
+    historyDesc: 'عرض السجلات',
+    notificationsDesc: 'عرض الإشعارات',
+    viewProfile: 'عرض الملف الشخصي',
+    todaySummary: 'ملخص اليوم',
+    quickActions: 'إجراءات سريعة',
   }
 } as const;
 

@@ -47,7 +47,9 @@ export default function ParentProfileScreen() {
     );
 
     return (
-        <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: colors.background.secondary }]}>
+        <>
+            <SafeAreaView style={{ flex: 0, backgroundColor: colors.primary }} />
+            <View style={[styles.container, { backgroundColor: colors.background.secondary }]}>
             <ScrollView 
                 contentContainerStyle={{ paddingBottom: spacing['2xl'] }}
                 showsVerticalScrollIndicator={false}
@@ -55,7 +57,7 @@ export default function ParentProfileScreen() {
                 {/* Premium Header */}
                 <LinearGradient
                     colors={[colors.primary, colors.primaryDark]}
-                    style={[styles.header, { paddingTop: spacing.lg }]}
+                    style={styles.header}
                 >
                     <View style={styles.headerContent}>
                         <Text style={styles.headerTitle}>{t('profile')}</Text>
@@ -139,7 +141,6 @@ export default function ParentProfileScreen() {
                                 onPress={() => setLanguage('fr')}
                                 activeOpacity={0.7}
                             >
-                                <Text style={styles.flagEmoji}>🇫🇷</Text>
                                 <Text style={[
                                     styles.languageText,
                                     { color: language === 'fr' ? colors.primary : colors.text.secondary }
@@ -162,7 +163,6 @@ export default function ParentProfileScreen() {
                                 onPress={() => setLanguage('ar')}
                                 activeOpacity={0.7}
                             >
-                                <Text style={styles.flagEmoji}>🇲🇦</Text>
                                 <Text style={[
                                     styles.languageText,
                                     styles.arabicText,
@@ -246,7 +246,8 @@ export default function ParentProfileScreen() {
                     icon={<Ionicons name="log-out-outline" size={20} color={colors.danger} />}
                 />
             </ScrollView>
-        </SafeAreaView>
+        </View>
+        </>
     );
 }
 
@@ -255,6 +256,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     header: {
+        paddingTop: 48,
         paddingBottom: 60, // Extra space for overlap
         paddingHorizontal: spacing.xl,
         borderBottomLeftRadius: 16,
@@ -383,8 +385,8 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: spacing.xs,
-        padding: spacing.md,
+        gap: spacing.sm,
+        padding: spacing.lg,
         borderRadius: 12,
         borderWidth: 2,
     },
@@ -392,8 +394,9 @@ const styles = StyleSheet.create({
         fontSize: 24,
     },
     languageText: {
-        fontSize: 16,
-        fontWeight: '600',
+        fontSize: 17,
+        fontWeight: '700',
+        letterSpacing: 0.3,
     },
     arabicText: {
         fontFamily: 'System',
