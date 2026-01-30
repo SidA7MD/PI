@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "SchoolAbsence",
-    "slug": "school-absence",
+    "name": "Kbarwilly",
+    "slug": "kbarwilly",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "school-absence",
+    "scheme": "kbarwilly",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "extra": {
@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.schoolabsence.app"
+      "bundleIdentifier": "com.kbarwilly.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -23,7 +23,7 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "package": "com.schoolabsence.app",
+      "package": "com.kbarwilly.app",
       "permissions": [
         "NOTIFICATIONS",
         "VIBRATE"

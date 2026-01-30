@@ -7,10 +7,17 @@ export const validatePhone = (phone: string): boolean => {
     // Remove spaces, dashes, dots
     const cleanPhone = phone.replace(/[\s\-\.]/g, '');
     
-    // Check if it's a valid phone number (8-15 digits)
-    // Supports formats like: 0612345678, +33612345678, etc.
-    const phoneRegex = /^(\+)?[0-9]{8,15}$/;
-    return phoneRegex.test(cleanPhone);
+    // Mauritanian phone numbers: +222 followed by 8 digits
+    // Support formats: +222XXXXXXXX or XXXXXXXX (8 digits without country code)
+    
+    // Check if it starts with +222
+    if (cleanPhone.startsWith('+222')) {
+        // Must be exactly +222 followed by 8 digits
+        return /^\+222[0-9]{8}$/.test(cleanPhone);
+    }
+    
+    // If no country code, must be exactly 8 digits (will be prepended with +222)
+    return /^[0-9]{8}$/.test(cleanPhone);
 };
 
 export const validatePassword = (password: string): { valid: boolean; message?: string } => {

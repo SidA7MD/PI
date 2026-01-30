@@ -14,7 +14,8 @@ const teacherRoutes = require('./routes/teacherRoutes');
 const studentRoutes = require('./routes/studentRoutes');
 const classRoutes = require('./routes/classRoutes');
 const absenceRoutes = require('./routes/absenceRoutes');
-const notificationRoutes = require('./routes/notificationRoutes'); // 🆕 AJOUTEZ CETTE LIGNE
+const notificationRoutes = require('./routes/notificationRoutes');
+const otpRoutes = require('./routes/otp');
 
 const app = express();
 
@@ -48,6 +49,7 @@ app.use('/api/student', studentRoutes);
 app.use('/api/class', classRoutes);
 app.use('/api/absence', absenceRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/otp', otpRoutes);
 
 // Health check endpoint
 app.get('/api/test', (req, res) => {
@@ -59,7 +61,7 @@ app.get('/api/test', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.json({ message: 'API de gestion des absences scolaires' });
+  res.json({ message: 'API Kbarwilly - Gestion des absences scolaires en Mauritanie' });
 });
 
 app.use((req, res) => {

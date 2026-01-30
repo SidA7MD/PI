@@ -1,7 +1,7 @@
 {
-  "name": "absence-management-backend",
+  "name": "kbarwilly-backend",
   "version": "1.0.0",
-  "description": "Backend pour gestion des absences scolaires",
+  "description": "Backend Kbarwilly - Gestion des absences scolaires en Mauritanie",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

@@ -33,6 +33,7 @@ interface InputProps {
     large?: boolean;
     centered?: boolean;
     style?: ViewStyle;
+    prefix?: string; // For phone numbers: +222
 }
 
 export const Input: FC<InputProps> = ({
@@ -55,6 +56,7 @@ export const Input: FC<InputProps> = ({
     multiline,
     numberOfLines,
     maxLength,
+    prefix,
 }) => {
     const { colors } = useTheme();
     const [isFocused, setIsFocused] = useState(false);
@@ -94,7 +96,7 @@ export const Input: FC<InputProps> = ({
                     fontWeight: '500',
                     color: colors.text.secondary,
                     marginBottom: spacing.xs,
-                    textAlign: I18nManager.isRTL ? 'left' : 'left' // Keep labels LTR oriented usually or aligned to start? Actually labels usually follow content direction.
+                    textAlign: 'left', // Always left-aligned for consistency
                 }}>
                     {label}
                 </Text>
@@ -102,6 +104,16 @@ export const Input: FC<InputProps> = ({
 
             <View style={containerStyle}>
                 {leftIcon && <View style={{ marginEnd: spacing.sm }}>{leftIcon}</View>}
+                
+                {prefix && (
+                    <Text style={{
+                        fontSize: large ? 18 : 16,
+                        color: colors.text.secondary,
+                        marginEnd: spacing.xs,
+                    }}>
+                        {prefix}
+                    </Text>
+                )}
 
                 <TextInput
                     style={inputStyle}

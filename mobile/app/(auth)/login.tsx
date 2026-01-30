@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/context/AuthContext';
 import { useTheme } from '../../src/context/ThemeContext';
 import { useLanguage } from '../../src/context/LanguageContext';
 import { Button } from '../../src/components/ui/Button';
 import { Input } from '../../src/components/ui/Input';
-import { spacing } from '../../src/theme';
+import { spacing, shadows } from '../../src/theme';
 
 export default function LoginScreen() {
     const router = useRouter();
@@ -46,74 +48,99 @@ export default function LoginScreen() {
     };
 
     return (
-        <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={[styles.container, { backgroundColor: colors.background.primary }]}
-        >
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.header}>
-                    <Ionicons name="school" size={64} color={colors.primary} />
-                    <Text style={[styles.title, { color: colors.text.primary }]}>
-                        {t('appName')}
-                    </Text>
-                    <Text style={[styles.subtitle, { color: colors.text.secondary }]}>
-                        {t('appSubtitle')}
-                    </Text>
-                </View>
+        <>
+            <SafeAreaView style={{ flex: 0, backgroundColor: colors.primary }} />
+            <StatusBar barStyle="light-content" />
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={[styles.container, { backgroundColor: colors.background.secondary }]}
+            >
+                <ScrollView 
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    {/* Gradient Header */}
+                    <LinearGradient
+                        colors={[colors.primary, colors.primaryDark]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.header}
+                    >
+                        <View style={styles.logoContainer}>
+                            <Text style={styles.logoText}>Kbarwilly</Text>
+                            <Text style={styles.subtitle}>
+                                {t('appSubtitle')}
+                            </Text>
+                        </View>
+                    </LinearGradient>
 
-                <View style={styles.form}>
-                    <Input
-                        label={t('identifierLabel')}
-                        value={identifier}
-                        onChange={setIdentifier}
-                        placeholder={t('identifierPlaceholder')}
-                        autoCapitalize="none"
-                        error={error}
-                    />
+                    {/* Form Card */}
+                    <View style={styles.formContainer}>
+                        <View style={[styles.formCard, { backgroundColor: colors.background.card, ...shadows.lg }]}>
+                            <Text style={[styles.formTitle, { color: colors.text.primary }]}>
+                                {t('loginTitle')}
+                            </Text>
+                            <Text style={[styles.formSubtitle, { color: colors.text.secondary }]}>
+                                {t('welcomeBack') || 'Bienvenue'}
+                            </Text>
 
-                    <Input
-                        label={t('passwordLabel')}
-                        value={password}
-                        onChange={setPassword}
-                        placeholder={t('passwordPlaceholder')}
-                        secureTextEntry={!showPassword}
-                        rightIcon={
-                            <Ionicons
-                                name={showPassword ? 'eye-off' : 'eye'}
-                                size={20}
-                                color={colors.text.tertiary}
-                            />
-                        }
-                        onRightIconPress={() => setShowPassword(!showPassword)}
-                        style={{ marginTop: spacing.md }}
-                    />
+                            <View style={styles.form}>
+                                <Input
+                                    label={t('identifierLabel')}
+                                    value={identifier}
+                                    onChange={setIdentifier}
+                                    placeholder={t('identifierPlaceholder')}
+                                    autoCapitalize="none"
+                                    error={error}
+                                />
 
-                    <Button
-                        title={t('loginTitle')}
-                        onPress={handleLogin}
-                        loading={loading}
-                        fullWidth
-                        style={{ marginTop: spacing.xl }}
-                    />
+                                <Input
+                                    label={t('passwordLabel')}
+                                    value={password}
+                                    onChange={setPassword}
+                                    placeholder={t('passwordPlaceholder')}
+                                    secureTextEntry={!showPassword}
+                                    rightIcon={
+                                        <Ionicons
+                                            name={showPassword ? 'eye-off' : 'eye'}
+                                            size={20}
+                                            color={colors.text.tertiary}
+                                        />
+                                    }
+                                    onRightIconPress={() => setShowPassword(!showPassword)}
+                                    style={{ marginTop: spacing.md }}
+                                />
 
-                    <Button
-                        title={t('createAccount')}
-                        onPress={() => router.push('/(auth)/register')}
-                        variant="outline"
-                        fullWidth
-                        style={{ marginTop: spacing.md }}
-                    />
+                                <Button
+                                    title={t('loginTitle')}
+                                    onPress={handleLogin}
+                                    loading={loading}
+                                    fullWidth
+                                    style={{ marginTop: spacing.xl }}
+                                />
 
-                    <Button
-                        title={t('forgotPassword')}
-                        onPress={() => router.push('/(auth)/forgot-password')}
-                        variant="ghost"
-                        fullWidth
-                        style={{ marginTop: spacing.sm }}
-                    />
-                </View>
-            </ScrollView>
-        </KeyboardAvoidingView>
+                                <Button
+                                    title={t('createAccount')}
+                                    onPress={() => router.push('/(auth)/register')}
+                                    variant="outline"
+                                    fullWidth
+                                    style={{ marginTop: spacing.md }}
+                                />
+
+                                <Button
+                                    title={t('forgotPassword')}
+                                    onPress={() => router.push('/(auth)/forgot-password')}
+                                    variant="ghost"
+                                    fullWidth
+                                    style={{ marginTop: spacing.sm }}
+                                />
+                            </View>
+                        </View>
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </>
     );
 }
 
@@ -123,21 +150,56 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         flexGrow: 1,
-        justifyContent: 'center',
-        padding: spacing.xl,
     },
     header: {
+        paddingTop: spacing.xl,
+        paddingBottom: spacing['3xl'],
+        paddingHorizontal: spacing.xl,
+        borderBottomLeftRadius: 32,
+        borderBottomRightRadius: 32,
+    },
+    logoContainer: {
         alignItems: 'center',
-        marginBottom: spacing['2xl'],
+    },
+    logoText: {
+        fontSize: 48,
+        fontWeight: '900',
+        color: '#FFF',
+        marginBottom: spacing.md,
+        letterSpacing: 1,
+        textShadowColor: 'rgba(0,0,0,0.3)',
+        textShadowOffset: { width: 0, height: 2 },
+        textShadowRadius: 4,
     },
     title: {
         fontSize: 32,
-        fontWeight: '700',
-        marginTop: spacing.md,
+        fontWeight: '800',
+        color: '#FFF',
+        marginBottom: spacing.xs,
     },
     subtitle: {
         fontSize: 16,
-        marginTop: spacing.xs,
+        color: 'rgba(255,255,255,0.9)',
+        fontWeight: '500',
+    },
+    formContainer: {
+        flex: 1,
+        marginTop: -40,
+        paddingHorizontal: spacing.lg,
+    },
+    formCard: {
+        borderRadius: 24,
+        padding: spacing.xl,
+        marginBottom: spacing.xl,
+    },
+    formTitle: {
+        fontSize: 24,
+        fontWeight: '700',
+        marginBottom: spacing.xs,
+    },
+    formSubtitle: {
+        fontSize: 14,
+        marginBottom: spacing.xl,
     },
     form: {
         width: '100%',

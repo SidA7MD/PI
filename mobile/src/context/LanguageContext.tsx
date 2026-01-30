@@ -202,8 +202,8 @@ const translations = {
     count: 'Nombre',
     
     // Auth
-    appName: 'SchoolAbsence',
-    appSubtitle: 'Gestion des absences scolaires',
+    appName: 'Kbarwilly',
+    appSubtitle: 'Gestion des absences scolaires en Mauritanie',
     loginTitle: 'Se connecter',
     registerTitle: 'Créer un compte parent',
     registerSubtitle: 'Suivez les absences de vos enfants',
@@ -216,7 +216,7 @@ const translations = {
     usernameLabel: 'Nom d\'utilisateur *',
     usernamePlaceholder: 'Votre nom d\'utilisateur',
     phoneLabel: 'Téléphone *',
-    phonePlaceholder: '06 12 34 56 78',
+    phonePlaceholder: 'XX XX XX XX',
     emailLabel: 'Email (optionnel)',
     emailPlaceholder: 'votre@email.com',
     forgotPassword: 'Mot de passe oublié ?',
@@ -233,6 +233,15 @@ const translations = {
     registerError: 'Erreur lors de l\'inscription',
     passwordLength: 'Au moins 6 caractères',
     usernameLength: 'Au moins 3 caractères requis',
+    welcomeBack: 'Bienvenue de retour',
+    forgotPasswordTitle: 'Mot de passe oublié ?',
+    forgotPasswordSubtitle: 'Entrez votre email pour recevoir un lien de réinitialisation',
+    enterEmailPrompt: 'Veuillez entrer votre email',
+    sendResetLink: 'Envoyer le lien',
+    emailSent: 'Email envoyé !',
+    checkEmailInbox: 'Consultez votre boîte email pour réinitialiser votre mot de passe',
+    backToLogin: 'Retour à la connexion',
+    emailSendError: 'Erreur lors de l\'envoi de l\'email',
     
     // Additional Teacher Home
     markAttendanceDesc: 'Gérer la présence',
@@ -416,8 +425,8 @@ const translations = {
     count: 'العدد',
     
     // Auth
-    appName: 'SchoolAbsence',
-    appSubtitle: 'إدارة الغياب المدرسي',
+    appName: 'Kbarwilly',
+    appSubtitle: 'إدارة الغياب المدرسي في موريتانيا',
     loginTitle: 'تسجيل الدخول',
     registerTitle: 'إنشاء حساب ولي أمر',
     registerSubtitle: 'تابع غيابات أطفالك',
@@ -430,7 +439,7 @@ const translations = {
     usernameLabel: 'اسم المستخدم *',
     usernamePlaceholder: 'اسم المستخدم الخاص بك',
     phoneLabel: 'الهاتف *',
-    phonePlaceholder: '06 12 34 56 78',
+    phonePlaceholder: 'XX XX XX XX',
     emailLabel: 'البريد الإلكتروني (اختياري)',
     emailPlaceholder: 'name@email.com',
     forgotPassword: 'نسيت كلمة المرور؟',
@@ -447,6 +456,15 @@ const translations = {
     registerError: 'خطأ أثناء التسجيل',
     passwordLength: '6 أحرف على الأقل',
     usernameLength: '3 أحرف على الأقل مطلوبة',
+    welcomeBack: 'مرحبا بعودتك',
+    forgotPasswordTitle: 'نسيت كلمة المرور؟',
+    forgotPasswordSubtitle: 'أدخل بريدك الإلكتروني لتلقي رابط إعادة التعيين',
+    enterEmailPrompt: 'يرجى إدخال بريدك الإلكتروني',
+    sendResetLink: 'إرسال الرابط',
+    emailSent: 'تم إرسال البريد الإلكتروني!',
+    checkEmailInbox: 'تحقق من صندوق بريدك الإلكتروني لإعادة تعيين كلمة المرور',
+    backToLogin: 'العودة إلى تسجيل الدخول',
+    emailSendError: 'خطأ في إرسال البريد الإلكتروني',
 
     // Additional Teacher Home
     markAttendanceDesc: 'إدارة الحضور',
@@ -630,8 +648,8 @@ const translations = {
     count: 'Count',
     
     // Auth
-    appName: 'SchoolAbsence',
-    appSubtitle: 'School Absence Management',
+    appName: 'Kbarwilly',
+    appSubtitle: 'School Absence Management in Mauritania',
     loginTitle: 'Login',
     registerTitle: 'Create Parent Account',
     registerSubtitle: 'Track your children\'s absences',
@@ -644,7 +662,7 @@ const translations = {
     usernameLabel: 'Username *',
     usernamePlaceholder: 'Your username',
     phoneLabel: 'Phone *',
-    phonePlaceholder: '06 12 34 56 78',
+    phonePlaceholder: 'XX XX XX XX',
     emailLabel: 'Email (optional)',
     emailPlaceholder: 'name@email.com',
     forgotPassword: 'Forgot Password?',
@@ -661,6 +679,15 @@ const translations = {
     registerError: 'Registration Error',
     passwordLength: 'At least 6 characters',
     usernameLength: 'At least 3 characters required',
+    welcomeBack: 'Welcome back',
+    forgotPasswordTitle: 'Forgot Password?',
+    forgotPasswordSubtitle: 'Enter your email to receive a reset link',
+    enterEmailPrompt: 'Please enter your email',
+    sendResetLink: 'Send Reset Link',
+    emailSent: 'Email Sent!',
+    checkEmailInbox: 'Check your email inbox to reset your password',
+    backToLogin: 'Back to Login',
+    emailSendError: 'Error sending email',
     
     // Additional Teacher Home
     markAttendanceDesc: 'Manage Attendance',
