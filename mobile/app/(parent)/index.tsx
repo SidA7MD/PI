@@ -50,9 +50,9 @@ export default function ParentHomeScreen() {
 
     const getTimeBasedGreeting = () => {
         const hour = new Date().getHours();
-        if (hour < 12) return 'Bonjour';
-        if (hour < 18) return 'Bon après-midi';
-        return 'Bonsoir';
+        if (hour < 12) return t('hello'); // Simplified to generic hello or specific if keys existed
+        if (hour < 18) return t('welcome');
+        return t('welcome');
     };
 
     const getGreetingEmoji = () => {
@@ -123,14 +123,14 @@ export default function ParentHomeScreen() {
                         <View style={styles.childStat}>
                             <Ionicons name="calendar-outline" size={16} color={colors.text.tertiary} />
                             <Text style={[styles.childStatText, { color: colors.text.secondary }]}>
-                                {child.totalAbsences} absence{child.totalAbsences !== 1 ? 's' : ''} au total
+                                {child.totalAbsences} {t('absences').toLowerCase()} {t('total').toLowerCase()}
                             </Text>
                         </View>
                         {child.recentAbsences > 0 && (
                             <View style={[styles.recentBadge, { backgroundColor: colors.danger + '15' }]}>
                                 <Ionicons name="alert-circle" size={12} color={colors.danger} />
                                 <Text style={[styles.recentText, { color: colors.danger }]}>
-                                    {child.recentAbsences} cette semaine
+                                    {child.recentAbsences} {t('thisWeekCount')}
                                 </Text>
                             </View>
                         )}
@@ -236,7 +236,7 @@ export default function ParentHomeScreen() {
                                 {t('myChildren')}
                             </Text>
                             <Text style={[styles.sectionSubtitle, { color: colors.text.tertiary }]}>
-                                {stats?.children?.length || 0} enfant{(stats?.children?.length || 0) !== 1 ? 's' : ''} lié{(stats?.children?.length || 0) !== 1 ? 's' : ''}
+                                {stats?.children?.length || 0} {t('totalChildren')}
                             </Text>
                         </View>
                         <TouchableOpacity 
@@ -264,13 +264,13 @@ export default function ParentHomeScreen() {
                                 <Ionicons name="people-outline" size={48} color={colors.primary} />
                             </View>
                             <Text style={[styles.emptyTitle, { color: colors.text.primary }]}>
-                                Aucun enfant lié
+                                {t('noChildrenLinked')}
                             </Text>
                             <Text style={[styles.emptyText, { color: colors.text.secondary }]}>
-                                Commencez par lier votre premier enfant pour suivre ses absences et son assiduité
+                                {t('startLinking')}
                             </Text>
                             <Button
-                                title="Lier mon premier enfant"
+                                title={t('linkFirstChild')}
                                 onPress={() => router.push('/(parent)/link-child')}
                                 style={styles.emptyButton}
                                 icon={<Ionicons name="link" size={20} color="#FFF" />}
@@ -283,7 +283,7 @@ export default function ParentHomeScreen() {
                 {stats?.children && stats.children.length > 0 && (
                     <View style={styles.section}>
                         <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
-                            Actions rapides
+                            {t('quickActions')}
                         </Text>
                         <View style={styles.quickActionsGrid}>
                             <TouchableOpacity 
@@ -296,8 +296,8 @@ export default function ParentHomeScreen() {
                                         <Ionicons name="calendar" size={24} color={colors.danger} />
                                     </View>
                                     <View>
-                                        <Text style={[styles.quickActionTitle, { color: colors.text.primary }]}>Absences</Text>
-                                        <Text style={[styles.quickActionDesc, { color: colors.text.secondary }]}>Voir l'historique</Text>
+                                        <Text style={[styles.quickActionTitle, { color: colors.text.primary }]}>{t('absences')}</Text>
+                                        <Text style={[styles.quickActionDesc, { color: colors.text.secondary }]}>{t('viewHistory')}</Text>
                                     </View>
                                 </View>
                             </TouchableOpacity>
@@ -312,8 +312,8 @@ export default function ParentHomeScreen() {
                                         <Ionicons name="person-add" size={24} color={colors.primary} />
                                     </View>
                                     <View>
-                                        <Text style={[styles.quickActionTitle, { color: colors.text.primary }]}>Lier un enfant</Text>
-                                        <Text style={[styles.quickActionDesc, { color: colors.text.secondary }]}>Ajouter un nouveau</Text>
+                                        <Text style={[styles.quickActionTitle, { color: colors.text.primary }]}>{t('linkChild')}</Text>
+                                        <Text style={[styles.quickActionDesc, { color: colors.text.secondary }]}>{t('addNew')}</Text>
                                     </View>
                                 </View>
                             </TouchableOpacity>

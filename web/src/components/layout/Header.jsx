@@ -27,15 +27,19 @@ const Header = () => {
         </Link>
         <div className="header-user">
           {user?.username && (
-            <div className="user-info">
+            <Link to="/profile" className="user-info" style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className="user-avatar">
-                {getInitials(user.username)}
+                {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt="Avatar" style={{width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover'}} />
+                ) : (
+                    getInitials(user.username)
+                )}
               </div>
               <div className="user-details">
                 <span className="user-name">{user.username}</span>
                 <span className="user-role">{user.role}</span>
               </div>
-            </div>
+            </Link>
           )}
           <button onClick={handleLogout} className="logout-button">
             Déconnexion

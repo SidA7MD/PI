@@ -2,13 +2,23 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { I18nManager, Alert } from 'react-native';
 
-type Language = 'fr' | 'ar';
+import { LanguageOption } from '../types/ProfileTypes';
+
+export const SUPPORTED_LANGUAGES: LanguageOption[] = [
+  { code: 'fr', name: 'Français', nativeName: 'Français', isRTL: false },
+  { code: 'ar', name: 'Arabic', nativeName: 'العربية', isRTL: true },
+  { code: 'en', name: 'English', nativeName: 'English', isRTL: false },
+  { code: 'es', name: 'Spanish', nativeName: 'Español', isRTL: false },
+];
+
+export type LanguageCode = 'fr' | 'ar' | 'en' | 'es';
 
 interface LanguageContextType {
-  language: Language;
-  setLanguage: (lang: Language) => Promise<void>;
+  language: LanguageCode;
+  setLanguage: (lang: LanguageCode) => Promise<void>;
   isRTL: boolean;
   t: (key: string) => string;
+  availableLanguages: LanguageOption[];
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -60,6 +70,11 @@ const translations = {
     viewAbsencesSubtitle: 'Voir les absences',
     linkChildSubtitle: 'Lier un enfant',
     linkChildHelp: 'Demandez le code unique à l\'école de votre enfant pour le lier à votre compte',
+    viewHistory: 'Voir l\'historique',
+    addNew: 'Ajouter un nouveau',
+    noChildrenLinked: 'Aucun enfant lié',
+    startLinking: 'Commencez par lier votre premier enfant pour suivre ses absences et son assiduité',
+    linkFirstChild: 'Lier mon premier enfant',
     noChildren: 'Aucun enfant lié',
     noAbsences: 'Aucune absence',
     viewAbsences: 'Voir les absences',
@@ -224,8 +239,7 @@ const translations = {
     historyDesc: 'Consulter les relevés',
     notificationsDesc: 'Consulter les notifications',
     viewProfile: 'Voir le profil',
-    todaySummary: 'Résumé du jour', 
-    quickActions: 'Actions rapides',
+    todaySummary: 'Résumé du jour',
   },
   ar: {
     // Common
@@ -270,6 +284,11 @@ const translations = {
     viewAbsencesSubtitle: 'عرض الغيابات',
     linkChildSubtitle: 'ربط طفل',
     linkChildHelp: 'اطلب الرمز الفريد من مدرسة طفلك لربطه بحسابك',
+    viewHistory: 'عرض السجل',
+    addNew: 'إضافة جديد',
+    noChildrenLinked: 'لا يوجد أطفال مرتبطون',
+    startLinking: 'ابدأ بربط طفلك الأول لمتابعة غيابه وحضوره',
+    linkFirstChild: 'ربط طفلي الأول',
     noChildren: 'لا يوجد أطفال مرتبطون',
     noAbsences: 'لا توجد غيابات',
     viewAbsences: 'عرض الغيابات',
@@ -435,14 +454,239 @@ const translations = {
     notificationsDesc: 'عرض الإشعارات',
     viewProfile: 'عرض الملف الشخصي',
     todaySummary: 'ملخص اليوم',
-    quickActions: 'إجراءات سريعة',
+  },
+  en: {
+    // Common
+    welcome: 'Welcome',
+    hello: 'Hello',
+    loading: 'Loading',
+    error: 'Error',
+    success: 'Success',
+    locale: 'en-US',
+    save: 'Save',
+    cancel: 'Cancel',
+    delete: 'Delete',
+    edit: 'Edit',
+    add: 'Add',
+    search: 'Search',
+    logout: 'Logout',
+    yes: 'Yes',
+    no: 'No',
+    ok: 'OK',
+    
+    // Navigation
+    home: 'Home',
+    profile: 'Profile',
+    settings: 'Settings',
+    notifications: 'Notifications',
+    history: 'History',
+    back: 'Back',
+    next: 'Next',
+    previous: 'Previous',
+    
+    // Parent specific
+    myChildren: 'My Children',
+    absences: 'Absences',
+    linkChild: 'Link Child',
+    childrenDashboard: 'Parent Dashboard',
+    totalChildren: 'Child(ren)',
+    totalAbsences: 'Total Absences',
+    thisWeek: 'This week',
+    thisWeekCount: 'this week',
+    attendanceRate: 'Attendance Rate',
+    quickActions: 'Quick Actions',
+    viewAbsencesSubtitle: 'View absences',
+    linkChildSubtitle: 'Link a child',
+    linkChildHelp: 'Ask for the unique code from your child\'s school to link them to your account',
+    viewHistory: 'View History',
+    addNew: 'Add New',
+    noChildrenLinked: 'No children linked',
+    startLinking: 'Start by linking your first child to track their absences',
+    linkFirstChild: 'Link my first child',
+    noChildren: 'No children linked',
+    noAbsences: 'No absences',
+    viewAbsences: 'View Absences',
+    addChild: 'Add Child',
+    enterCode: 'Enter Code',
+    uniqueCode: 'Unique Code',
+    submitCode: 'Submit Code',
+    
+    // Teacher specific
+    myClasses: 'My Classes',
+    markAttendance: 'Mark Attendance',
+    students: 'Students',
+    classes: 'Classes',
+    attendance: 'Attendance',
+    absent: 'Absent',
+    late: 'Late',
+    justified: 'Justified',
+    present: 'Present',
+    selectClass: 'Select Class',
+    selectDate: 'Select Date',
+    markAbsent: 'Mark Absent',
+    saveAttendance: 'Save',
+    allPresent: 'All Present',
+    
+    // Profile
+    personalInfo: 'Personal Information',
+    contactInfo: 'Contact Information',
+    email: 'Email',
+    phone: 'Phone',
+    address: 'Address',
+    
+    // Settings
+    theme: 'Theme',
+    language: 'Language',
+    darkMode: 'Dark',
+    lightMode: 'Light',
+    french: 'Français',
+    arabic: 'Arabic',
+    
+    // Security
+    security: 'Security',
+    changePassword: 'Change Password',
+    privacy: 'Privacy',
+    
+    // Support
+    support: 'Support',
+    help: 'Help',
+    about: 'About',
+    version: 'Version',
+    
+    // Dates
+    today: 'Today',
+    yesterday: 'Yesterday',
+    thisMonth: 'This Month',
+    date: 'Date',
+    time: 'Time',
+    
+    // Actions
+    confirm: 'Confirm',
+    close: 'Close',
+    refresh: 'Refresh',
+    filter: 'Filter',
+    sort: 'Sort',
+    
+    // Messages
+    noData: 'No data available',
+    loadingData: 'Loading data...',
+    refreshing: 'Refreshing...',
+    errorOccurred: 'An error occurred',
+    tryAgain: 'Try Again',
+    
+    // Status
+    active: 'Active',
+    inactive: 'Inactive',
+    pending: 'Pending',
+    completed: 'Completed',
+    
+    // Notifications
+    notificationsTitle: 'Notifications',
+    noNotifications: 'No notifications',
+    markAsRead: 'Mark as read',
+    markAllRead: 'Mark all as read',
+    deleteAll: 'Delete all',
+    unreadNotifications: 'Unread',
+    readNotifications: 'Read',
+    
+    // Absences
+    absenceDetails: 'Absence Details',
+    reason: 'Reason',
+    status: 'Status',
+    duration: 'Duration',
+    class: 'Class',
+    student: 'Student',
+    teacher: 'Teacher',
+    addReason: 'Add Reason',
+    justify: 'Justify',
+    unjustified: 'Unjustified',
+    
+    // History
+    absenceHistory: 'Absence History',
+    filterByClass: 'Filter by class',
+    filterByDate: 'Filter by date',
+    filterByStatus: 'Filter by status',
+    allClasses: 'All Classes',
+    allStatuses: 'All Statuses',
+    
+    // Link Child
+    linkChildTitle: 'Link Child',
+    enterChildCode: 'Enter child\'s unique code',
+    codeProvided: 'Code provided by school',
+    linkButton: 'Link Child',
+    invalidCode: 'Invalid code',
+    childLinked: 'Child linked successfully',
+    
+    // Empty states
+    noStudents: 'No students',
+    noClasses: 'No classes',
+    noHistory: 'No history',
+    startMarking: 'Start Marking',
+    
+    // Stats
+    total: 'Total',
+    recent: 'Recent',
+    percentage: 'Percentage',
+    count: 'Count',
+    
+    // Auth
+    appName: 'SchoolAbsence',
+    appSubtitle: 'School Absence Management',
+    loginTitle: 'Login',
+    registerTitle: 'Create Parent Account',
+    registerSubtitle: 'Track your children\'s absences',
+    identifierLabel: 'Phone, Email or Username',
+    identifierPlaceholder: 'Enter your identifier',
+    passwordLabel: 'Password',
+    passwordPlaceholder: 'Enter your password',
+    confirmPasswordLabel: 'Confirm Password',
+    confirmPasswordPlaceholder: 'Re-type your password',
+    usernameLabel: 'Username *',
+    usernamePlaceholder: 'Your username',
+    phoneLabel: 'Phone *',
+    phonePlaceholder: '06 12 34 56 78',
+    emailLabel: 'Email (optional)',
+    emailPlaceholder: 'name@email.com',
+    forgotPassword: 'Forgot Password?',
+    createAccount: 'Create Account',
+    alreadyHaveAccount: 'Already have an account? Login',
+    teacherAccountNote: 'Teacher accounts must be created via web portal',
+    loginError: 'Login Error',
+    fillAllFields: 'Please fill all fields',
+    usernameRequired: 'Username required',
+    phoneRequired: 'Phone required',
+    invalidPhone: 'Invalid phone number',
+    invalidEmail: 'Invalid email',
+    passwordMismatch: 'Passwords do not match',
+    registerError: 'Registration Error',
+    passwordLength: 'At least 6 characters',
+    usernameLength: 'At least 3 characters required',
+    
+    // Additional Teacher Home
+    markAttendanceDesc: 'Manage Attendance',
+    historyDesc: 'View Records',
+    notificationsDesc: 'View Notifications',
+    viewProfile: 'View Profile',
+    todaySummary: 'Today\'s Summary',
+  },
+  es: {
+      // Minimal Spanish fallback for now
+      welcome: 'Bienvenido',
+      hello: 'Hola',
+      loading: 'Cargando',
+      error: 'Error',
+      success: 'Éxito',
+      locale: 'es-ES',
+      save: 'Guardar',
+      cancel: 'Cancelar',
+      // ... (We can expand later)
   }
 } as const;
 
 type TranslationKey = keyof typeof translations.fr;
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [language, setLanguageState] = useState<Language>('fr');
+  const [language, setLanguageState] = useState<LanguageCode>('fr');
   const [isRTL, setIsRTL] = useState(false);
 
   useEffect(() => {
@@ -451,8 +695,8 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const loadLanguage = async () => {
     try {
-      const savedLanguage = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
-      if (savedLanguage === 'ar' || savedLanguage === 'fr') {
+      const savedLanguage = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY) as LanguageCode | null;
+      if (savedLanguage && SUPPORTED_LANGUAGES.some(l => l.code === savedLanguage)) {
         setLanguageState(savedLanguage);
         setIsRTL(savedLanguage === 'ar');
       }
@@ -461,7 +705,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   };
 
-  const setLanguage = async (lang: Language): Promise<void> => {
+  const setLanguage = async (lang: LanguageCode): Promise<void> => {
     try {
       await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
       setLanguageState(lang);
@@ -487,7 +731,8 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const t = (key: string): string => {
     const translationKey = key as TranslationKey;
-    return translations[language][translationKey] || key;
+    // @ts-ignore - Handle missing keys in other languages gracefully
+    return translations[language]?.[translationKey] || translations['fr'][translationKey] || key;
   };
 
   const value: LanguageContextType = {
@@ -495,6 +740,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     setLanguage,
     isRTL,
     t,
+    availableLanguages: SUPPORTED_LANGUAGES,
   };
 
   return (

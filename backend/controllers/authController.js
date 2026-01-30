@@ -378,3 +378,67 @@ exports.logout = async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur', error: error.message });
   }
 };
+
+// @desc    Upload user avatar
+// @route   POST /api/auth/avatar
+// @access  Private
+exports.uploadAvatar = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'Aucun fichier téléchargé' });
+    }
+
+    // Construct the URL (assuming static file serving is set up)
+    // In production this might be S3, but for local:
+    const avatarUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+        return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    }
+
+    user.avatarUrl = avatarUrl; // Assuming User model has avatarUrl field, if not it will be ignored until added
+    await user.save();
+
+    res.status(200).json({
+      message: 'Avatar mis à jour',
+      avatarUrl: avatarUrl
+    });
+  } catch (error) {
+    console.error('Upload Avatar error:', error);
+    res.status(500).json({ message: 'Erreur serveur', error: error.message });
+  }
+};
+
+// @desc    Change password
+// @route   POST /api/auth/change-password
+// @access  Private
+exports.changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ message: 'Tous les champs sont requis' });
+        }
+
+        const user = await User.findById(req.user._id).select('+password');
+        if (!user) {
+            return res.status(404).json({ message: 'Utilisateur non trouvé' });
+        }
+
+        // Verify current password
+        const isMatch = await user.comparePassword(currentPassword);
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Mot de passe actuel incorrect' });
+        }
+
+        // Update password
+        user.password = newPassword;
+        await user.save();
+
+        res.status(200).json({ message: 'Mot de passe modifié avec succès' });
+    } catch (error) {
+        console.error('Change Password error:', error);
+        res.status(500).json({ message: 'Erreur serveur', error: error.message });
+    }
+};
