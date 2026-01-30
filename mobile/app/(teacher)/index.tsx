@@ -313,7 +313,7 @@ export default function TeacherHomeScreen() {
                 <View style={styles.summaryRow}>
                   <View style={styles.summaryItem}>
                     <Text style={[styles.summaryValue, { color: colors.success }]}>
-                      {stats.todayStats.present || 0}
+                      {stats?.todayStats?.presents || 0}
                     </Text>
                     <Text style={[styles.summaryLabel, { color: colors.text.secondary }]}>
                       {t('present') || 'Present'}
@@ -322,7 +322,7 @@ export default function TeacherHomeScreen() {
                   <View style={styles.summaryDivider} />
                   <View style={styles.summaryItem}>
                     <Text style={[styles.summaryValue, { color: colors.danger }]}>
-                      {stats.todayStats.absences || 0}
+                      {stats?.todayStats?.absences || 0}
                     </Text>
                     <Text style={[styles.summaryLabel, { color: colors.text.secondary }]}>
                       {t('absent') || 'Absent'}
@@ -331,7 +331,7 @@ export default function TeacherHomeScreen() {
                   <View style={styles.summaryDivider} />
                   <View style={styles.summaryItem}>
                     <Text style={[styles.summaryValue, { color: colors.warning }]}>
-                      {stats.todayStats.late || 0}
+                      {stats?.todayStats?.lates || 0}
                     </Text>
                     <Text style={[styles.summaryLabel, { color: colors.text.secondary }]}>
                       {t('late') || 'Late'}

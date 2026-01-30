@@ -1,12 +1,12 @@
 import { FC, ReactNode } from 'react';
-import { View, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, ViewStyle, StyleProp } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { spacing, borderRadius, shadows } from '../../theme';
 
 interface CardProps {
     children: ReactNode;
     onPress?: () => void;
-    style?: ViewStyle;
+    style?: StyleProp<ViewStyle>;
     noPadding?: boolean;
 }
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../src/context/ThemeContext';
 import { Card } from '../../src/components/ui/Card';
@@ -13,6 +13,7 @@ import { useLanguage } from '../../src/context/LanguageContext';
 const AbsencesScreen = () => {
     const { colors } = useTheme();
     const { t } = useLanguage();
+    const insets = useSafeAreaInsets();
 
     const [absences, setAbsences] = useState<any[]>([]);
     const [children, setChildren] = useState<any[]>([]);
@@ -187,7 +188,6 @@ const AbsencesScreen = () => {
 
     return (
         <>
-            <SafeAreaView style={{ flex: 0, backgroundColor: colors.primary }} />
             <View style={[styles.container, { backgroundColor: colors.background.secondary }]}>
             <ScrollView
                 contentContainerStyle={{ paddingBottom: spacing['2xl'] }}
@@ -204,12 +204,14 @@ const AbsencesScreen = () => {
                 {/* Premium Header */}
                 <LinearGradient
                     colors={[colors.primary, colors.primaryDark]}
-                    style={styles.header}
+                    style={[styles.header, { paddingTop: insets.top + spacing.lg, paddingBottom: spacing['2xl'] }]}
                 >
-                    <Text style={styles.headerTitle}>{t('absences')}</Text>
-                    <Text style={styles.headerSubtitle}>
-                        {filteredAbsences.length} {filteredAbsences.length !== 1 ? t('absences').toLowerCase() : t('absences').toLowerCase()}
-                    </Text>
+                    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+                        <Text style={styles.headerTitle}>{t('absences')}</Text>
+                        <Text style={styles.headerSubtitle}>
+                            {filteredAbsences.length} {filteredAbsences.length !== 1 ? t('absences').toLowerCase() : t('absences').toLowerCase()}
+                        </Text>
+                    </View>
                 </LinearGradient>
 
                 {/* Filters */}
@@ -307,21 +309,21 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     header: {
-        paddingTop: 48,
-        paddingBottom: spacing.xl,
-        paddingHorizontal: spacing.xl,
-        borderBottomLeftRadius: 24,
-        borderBottomRightRadius: 24,
+        borderBottomLeftRadius: 16,
+        borderBottomRightRadius: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(0,0,0,0.05)',
+        zIndex: 10,
     },
     headerTitle: {
-        fontSize: 28,
+        fontSize: 20,
         fontWeight: '700',
         color: '#FFF',
-        marginBottom: spacing.xs,
     },
     headerSubtitle: {
-        fontSize: 16,
-        color: 'rgba(255,255,255,0.9)',
+        fontSize: 14,
+        marginTop: 4,
+        color: 'rgba(255,255,255,0.8)',
     },
     filtersContainer: {
         marginTop: spacing.md,

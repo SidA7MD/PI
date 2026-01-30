@@ -33,6 +33,7 @@ interface InputProps {
     large?: boolean;
     centered?: boolean;
     style?: ViewStyle;
+    inputStyle?: TextStyle;
     prefix?: string; // For phone numbers: +222
 }
 
@@ -49,6 +50,7 @@ export const Input: FC<InputProps> = ({
     large,
     centered,
     style,
+    inputStyle: customInputStyle,
     secureTextEntry,
     keyboardType,
     autoCapitalize,
@@ -86,6 +88,7 @@ export const Input: FC<InputProps> = ({
         color: colors.text.primary,
         textAlign: centered ? 'center' : (I18nManager.isRTL ? 'right' : 'left'),
         ...(multiline && { textAlignVertical: 'top', paddingTop: spacing.sm }),
+        ...customInputStyle,
     };
 
     return (
