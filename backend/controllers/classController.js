@@ -2,6 +2,7 @@ const Class = require('../models/Class');
 const User = require('../models/User');
 const School = require('../models/School');
 const Student = require('../models/Student');
+const mongoose = require('mongoose');
 
 // @desc    Obtenir toutes les classes
 // @route   GET /api/class
@@ -50,9 +51,13 @@ exports.getClassById = async (req, res) => {
 // @route   PUT /api/class/:id
 // @access  Private/School
 exports.updateClass = async (req, res) => {
+  console.log('\n========== UPDATE CLASS DEBUG ==========');
+  console.log('Request body:', JSON.stringify(req.body, null, 2));
+  console.log('Class ID:', req.params.id);
   try {
     const { name, level, schoolYear, active } = req.body;
     const schoolUser = await User.findById(req.user._id);
+    console.log('School user ID:', schoolUser?._id, 'School:', schoolUser?.school);
 
     const classObj = await Class.findById(req.params.id);
 
@@ -70,6 +75,42 @@ exports.updateClass = async (req, res) => {
     if (level) classObj.level = level;
     if (schoolYear) classObj.schoolYear = schoolYear;
     if (active !== undefined) classObj.active = active;
+
+    // Gérer l'assignation des professeurs (tableau d'IDs)
+    console.log('Teachers from request:', req.body.teachers);
+    console.log('Is array:', Array.isArray(req.body.teachers));
+    if (req.body.teachers && Array.isArray(req.body.teachers)) {
+      console.log('Entering teacher assignment block...');
+      try {
+        const newTeacherIds = req.body.teachers.map(id => new mongoose.Types.ObjectId(id));
+        const classId = classObj._id;
+
+        console.log(`Syncing teachers for class ${classObj.name}. Teachers:`, newTeacherIds);
+
+        // 1. Retirer ce cours des professeurs qui ne sont PLUS dans la liste
+        const pullRes = await User.updateMany(
+          { 
+            classes: classId, 
+            _id: { $nin: newTeacherIds }
+          }, 
+          { $pull: { classes: classId } }
+        );
+        console.log('Pull result (teachers):', pullRes.modifiedCount);
+
+        // 2. Ajouter ce cours aux nouveaux professeurs
+        const pushRes = await User.updateMany(
+          { 
+            _id: { $in: newTeacherIds }
+          }, 
+          { $addToSet: { classes: classId } }
+        );
+        console.log('Push result (teachers):', pushRes.modifiedCount);
+
+        classObj.teachers = newTeacherIds;
+      } catch (castErr) {
+        console.error('Error casting teacher IDs:', castErr);
+      }
+    }
 
     await classObj.save();
 
@@ -115,10 +156,10 @@ exports.deleteClass = async (req, res) => {
       { $pull: { classes: classObj._id } }
     );
 
-    // Retirer tous les élèves de la classe
+    // Retirer la classe de tous les élèves
     await Student.updateMany(
-      { class: classObj._id },
-      { $unset: { class: 1 } }
+      { classes: classObj._id },
+      { $pull: { classes: classObj._id } }
     );
 
     await classObj.deleteOne();

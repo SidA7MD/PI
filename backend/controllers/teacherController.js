@@ -88,7 +88,7 @@ exports.markAbsence = async (req, res) => {
 
     // Vérifier que l'élève appartient à cette classe
     const student = await Student.findById(studentId).populate('parent');
-    if (!student || student.class.toString() !== classId) {
+    if (!student || !student.classes.some(c => c.toString() === classId.toString())) {
       return res.status(404).json({ message: 'Élève non trouvé dans cette classe' });
     }
 
@@ -217,7 +217,7 @@ exports.getTeacherStats = async (req, res) => {
     const classIds = teacher.classes.map(c => c._id);
     
     // Count total students
-    const totalStudents = await Student.countDocuments({ class: { $in: classIds } });
+    const totalStudents = await Student.countDocuments({ classes: { $in: classIds } });
     
     // Today's stats
     const today = new Date();
@@ -255,7 +255,7 @@ exports.getTeacherStats = async (req, res) => {
     // Classes with student counts
     const classesWithCounts = await Promise.all(
       teacher.classes.map(async (cls) => {
-        const studentCount = await Student.countDocuments({ class: cls._id });
+        const studentCount = await Student.countDocuments({ classes: cls._id });
         const todayClassAbsences = todayAbsences.filter(a => a.class.toString() === cls._id.toString());
         return {
           _id: cls._id,

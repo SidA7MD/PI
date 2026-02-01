@@ -19,7 +19,7 @@ import TeacherDashboard from './pages/TeacherDashboard';
 import TeacherAttendance from './pages/TeacherAttendance';
 import TeacherHistory from './pages/TeacherHistory';
 import ParentDashboard from './pages/ParentDashboard';
-import ParentDashboard from './pages/ParentDashboard';
+
 import ParentAbsences from './pages/ParentAbsences';
 import Profile from './pages/Profile';
 

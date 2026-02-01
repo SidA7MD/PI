@@ -188,26 +188,26 @@ exports.createTeacher = async (req, res) => {
       $push: { teachers: teacher._id },
     });
 
-    // Si classId est fourni, assigner le professeur à la classe
-    if (classId && classId !== '') {
-      const classObj = await Class.findOne({
-        _id: classId,
-        school: schoolUser.school,
-      });
+    // Si des classes sont fournies, assigner le professeur
+    if (req.body.classes && Array.isArray(req.body.classes)) {
+      try {
+        const classIds = req.body.classes.map(id => new mongoose.Types.ObjectId(id));
+        const teacherId = teacher._id;
+        
+        console.log(`Syncing classes for NEW teacher ${teacher.username}. Classes:`, classIds);
 
-      if (classObj) {
-        // Ajouter la classe au professeur
-        if (!teacher.classes) teacher.classes = [];
-        if (!teacher.classes.includes(classId)) {
-          teacher.classes.push(classId);
-          await teacher.save();
-        }
+        // Mettre à jour le professeur
+        teacher.classes = classIds;
+        await teacher.save();
 
-        // Ajouter le professeur à la classe
-        if (!classObj.teachers.includes(teacher._id)) {
-          classObj.teachers.push(teacher._id);
-          await classObj.save();
-        }
+        // Mettre à jour les classes (ajouter le prof)
+        const syncRes = await Class.updateMany(
+          { _id: { $in: classIds } },
+          { $addToSet: { teachers: teacherId } }
+        );
+        console.log('Push result (classes for new teacher):', syncRes.modifiedCount);
+      } catch (castErr) {
+        console.error('Error casting class IDs in createTeacher:', castErr);
       }
     }
 
@@ -282,33 +282,43 @@ exports.updateTeacher = async (req, res) => {
     await teacher.save();
 
     // Gérer l'assignation de classe
-    // D'abord, retirer le professeur de toutes les classes de cette école
-    await Class.updateMany({ school: schoolUser.school }, { $pull: { teachers: teacher._id } });
+    // Gérer l'assignation de classes (tableau d'IDs)
+    if (req.body.classes && Array.isArray(req.body.classes)) {
+      try {
+        const newClassIds = req.body.classes.map(id => new mongoose.Types.ObjectId(id));
+        const teacherId = teacher._id;
 
-    // Réinitialiser les classes du professeur
-    teacher.classes = [];
+        console.log(`Syncing classes for teacher ${teacher.username}. Classes:`, newClassIds);
 
-    // Ensuite, si classId est fourni et non vide, assigner à la nouvelle classe
-    if (classId && classId !== '') {
-      const classObj = await Class.findOne({
-        _id: classId,
-        school: schoolUser.school,
-      });
+        // 1. Retirer le professeur des classes qui ne sont PLUS dans la liste
+        const pullRes = await Class.updateMany(
+          { 
+            teachers: teacherId, 
+            _id: { $nin: newClassIds }
+          }, 
+          { $pull: { teachers: teacherId } }
+        );
+        console.log('Pull result (classes):', pullRes.modifiedCount);
 
-      if (classObj) {
-        // Ajouter la classe au professeur
-        teacher.classes.push(classId);
+        // 2. Ajouter le professeur aux nouvelles classes
+        const pushRes = await Class.updateMany(
+          { 
+            _id: { $in: newClassIds }
+          }, 
+          { $addToSet: { teachers: teacherId } }
+        );
+        console.log('Push result (classes):', pushRes.modifiedCount);
+
+        // 3. Mettre à jour la liste des classes du professeur
+        teacher.classes = newClassIds;
         await teacher.save();
-
-        // Ajouter le professeur à la classe
-        if (!classObj.teachers.includes(teacher._id)) {
-          classObj.teachers.push(teacher._id);
-          await classObj.save();
-        }
+      } catch (castErr) {
+        console.error('Error casting class IDs in updateTeacher:', castErr);
       }
-    } else {
-      // Si pas de classe spécifiée, juste sauvegarder le professeur sans classes
-      await teacher.save();
+    } else if (classId) {
+       // Backward compatibility for single classId
+       // Logic removed to encourage array usage, or keep if needed:
+       // For now, assume frontend updates to send classes array
     }
 
     const updatedTeacher = await User.findById(teacher._id)
@@ -401,7 +411,34 @@ exports.createClass = async (req, res) => {
       $push: { classes: classObj._id },
     });
 
-    const createdClass = await Class.findById(classObj._id).populate('school', 'name');
+    // Si des professeurs sont fournis, les assigner
+    if (req.body.teachers && Array.isArray(req.body.teachers)) {
+      try {
+        const teacherIds = req.body.teachers.map(id => new mongoose.Types.ObjectId(id));
+        const classId = classObj._id;
+        
+        console.log(`Syncing teachers for NEW class ${classObj.name}. Teachers:`, teacherIds);
+
+        // Mettre à jour la classe avec les professeurs
+        classObj.teachers = teacherIds;
+        await classObj.save();
+
+        // Mettre à jour les professeurs pour ajouter cette classe
+        const syncRes = await User.updateMany(
+          { 
+            _id: { $in: teacherIds }
+          },
+          { $addToSet: { classes: classId } }
+        );
+        console.log('Push result (teachers in new class):', syncRes.modifiedCount);
+      } catch (castErr) {
+        console.error('Error casting teacher IDs in createClass:', castErr);
+      }
+    }
+
+    const createdClass = await Class.findById(classObj._id)
+      .populate('teachers', 'username phone')
+      .populate('school', 'name');
 
     res.status(201).json({
       message: 'Classe créée avec succès',
@@ -422,7 +459,8 @@ exports.createClass = async (req, res) => {
 // @access  Private/School
 exports.createStudent = async (req, res) => {
   try {
-    const { firstName, lastName, dateOfBirth, classId } = req.body;
+    const { firstName, lastName, dateOfBirth, classes } = req.body;
+    // Note: 'classes' attendaient un tableau d'IDs
 
     if (!firstName || !lastName) {
       return res.status(400).json({ message: 'Le prénom et le nom sont requis' });
@@ -432,14 +470,6 @@ exports.createStudent = async (req, res) => {
     const schoolUser = await User.findById(req.user._id);
     if (!schoolUser.school) {
       return res.status(400).json({ message: 'Aucune école associée' });
-    }
-
-    // Vérifier que la classe appartient à l'école si spécifiée
-    if (classId) {
-      const classObj = await Class.findById(classId);
-      if (!classObj || classObj.school.toString() !== schoolUser.school.toString()) {
-        return res.status(400).json({ message: "Cette classe n'appartient pas à votre école" });
-      }
     }
 
     // Générer un code unique
@@ -460,19 +490,20 @@ exports.createStudent = async (req, res) => {
       lastName,
       dateOfBirth,
       uniqueCode,
-      class: classId || null,
+      classes: classes || [],
       school: schoolUser.school,
     });
 
-    // Si une classe est spécifiée, ajouter l'élève à la classe
-    if (classId) {
-      await Class.findByIdAndUpdate(classId, {
-        $push: { students: student._id },
-      });
+    // Ajouter l'élève aux classes spécifiées
+    if (classes && Array.isArray(classes) && classes.length > 0) {
+      await Class.updateMany(
+        { _id: { $in: classes }, school: schoolUser.school },
+        { $addToSet: { students: student._id } }
+      );
     }
 
     const createdStudent = await Student.findById(student._id)
-      .populate('class', 'name level')
+      .populate('classes', 'name level')
       .populate('school', 'name');
 
     res.status(201).json({
@@ -517,25 +548,22 @@ exports.assignStudentToClass = async (req, res) => {
       return res.status(403).json({ message: "Cette classe n'appartient pas à votre école" });
     }
 
-    // Retirer l'élève de son ancienne classe si applicable
-    if (student.class) {
-      await Class.findByIdAndUpdate(student.class, {
-        $pull: { students: studentId },
-      });
+    // Vérifier si l'élève est déjà dans la classe
+    if (student.classes && student.classes.includes(classId)) {
+       return res.status(400).json({ message: "L'élève est déjà dans cette classe" });
     }
 
-    // Assigner l'élève à la classe
-    student.class = classId;
+    // Assigner l'élève à la classe (ajouter à la liste)
+    student.classes.push(classId);
     await student.save();
 
     // Ajouter l'élève à la liste des élèves de la classe
-    if (!classObj.students.includes(studentId)) {
-      classObj.students.push(studentId);
-      await classObj.save();
-    }
+    await Class.findByIdAndUpdate(classId, {
+      $addToSet: { students: studentId }
+    });
 
     const updatedStudent = await Student.findById(studentId)
-      .populate('class', 'name level')
+      .populate('classes', 'name level')
       .populate('school', 'name');
 
     res.status(200).json({

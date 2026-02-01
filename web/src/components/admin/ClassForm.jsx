@@ -6,7 +6,8 @@ import api from '../../services/api';
 const ClassForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ name: '', level: '', schoolYear: '' });
+  const [formData, setFormData] = useState({ name: '', level: '', schoolYear: '', teachers: [] });
+  const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -21,29 +22,50 @@ const ClassForm = () => {
   }, []);
 
   useEffect(() => {
-    if (id) {
-      const loadClass = async () => {
-        try {
+    const loadData = async () => {
+      try {
+        const teachersRes = await api.get('/admin/teachers');
+        setTeachers(teachersRes.data.teachers || []);
+
+        if (id) {
           const cls = await api.get(`/class/${id}`);
           setFormData({
             name: cls.data.class?.name || '',
             level: cls.data.class?.level || '',
             schoolYear: cls.data.class?.schoolYear || '',
+            teachers: cls.data.class?.teachers?.map(t => String(t._id || t)) || [],
           });
-        } catch (err) {
-          console.error('Erreur', err);
         }
-      };
-      loadClass();
-    }
+      } catch (err) {
+        console.error('Erreur', err);
+        setError('Erreur lors du chargement des données');
+      }
+    };
+    loadData();
   }, [id]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleTeacherToggle = (teacherId) => {
+    setFormData(prev => {
+      const currentTeachers = prev.teachers || [];
+      // Ensure strict string comparison
+      const strId = String(teacherId);
+      const exists = currentTeachers.some(id => String(id) === strId);
+      
+      if (exists) {
+        return { ...prev, teachers: currentTeachers.filter(id => String(id) !== strId) };
+      } else {
+        return { ...prev, teachers: [...currentTeachers, strId] };
+      }
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('Submitting ClassForm:', formData);
     setLoading(true);
     try {
       setError('');
@@ -202,6 +224,40 @@ const ClassForm = () => {
               onFocus={(e) => e.target.style.borderColor = '#4299e1'}
               onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
             />
+          </div>
+          <div style={{ marginBottom: isMobile ? '20px' : '24px', width: '100%' }}>
+            <label style={styles.label}>Professeurs assignés</label>
+            <div style={{ 
+              border: '1px solid #e2e8f0', 
+              borderRadius: '8px', 
+              padding: '12px',
+              maxHeight: '200px',
+              overflowY: 'auto',
+              background: '#f8fafc'
+            }}>
+              {teachers.length === 0 ? (
+                 <p style={{ color: '#718096', fontSize: '14px', margin: 0 }}>Aucun professeur disponible</p>
+              ) : (
+                teachers.map(t => (
+                  <label key={t._id} style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    marginBottom: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    padding: '4px 0'
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.teachers && formData.teachers.some(id => String(id) === String(t._id))}
+                      onChange={() => handleTeacherToggle(t._id)}
+                      style={{ marginRight: '10px', width: '16px', height: '16px' }}
+                    />
+                    <span>{t.username}</span>
+                  </label>
+                ))
+              )}
+            </div>
           </div>
           <div style={styles.formActions}>
             <button

@@ -1,6 +1,7 @@
 const Student = require('../models/Student');
 const User = require('../models/User');
 const Class = require('../models/Class');
+const mongoose = require('mongoose');
 
 // @desc    Obtenir tous les élèves
 // @route   GET /api/student
@@ -14,7 +15,7 @@ exports.getAllStudents = async (req, res) => {
     }
 
     const students = await Student.find({ school: schoolUser.school })
-      .populate('class', 'name level')
+      .populate('classes', 'name level')
       .populate('parent', 'username phone')
       .sort({ lastName: 1 });
 
@@ -33,7 +34,7 @@ exports.getAllStudents = async (req, res) => {
 exports.getStudentById = async (req, res) => {
   try {
     const student = await Student.findById(req.params.id)
-      .populate('class', 'name level')
+      .populate('classes', 'name level')
       .populate('parent', 'username phone')
       .populate('school', 'name');
 
@@ -53,9 +54,13 @@ exports.getStudentById = async (req, res) => {
 // @route   PUT /api/student/:id
 // @access  Private/School
 exports.updateStudent = async (req, res) => {
+  console.log('\n========== UPDATE STUDENT DEBUG ==========');
+  console.log('Request body:', JSON.stringify(req.body, null, 2));
+  console.log('Student ID:', req.params.id);
   try {
     const { firstName, lastName, dateOfBirth, active, classId } = req.body;
     const schoolUser = await User.findById(req.user._id);
+    console.log('School user ID:', schoolUser?._id, 'School:', schoolUser?.school);
 
     const student = await Student.findById(req.params.id);
 
@@ -75,38 +80,56 @@ exports.updateStudent = async (req, res) => {
     if (active !== undefined) student.active = active;
     
     // Gérer le changement de classe
-    if (classId !== undefined) {
-      const oldClassId = student.class;
-      
-      // Retirer l'élève de l'ancienne classe
-      if (oldClassId) {
-        await Class.findByIdAndUpdate(oldClassId, {
-          $pull: { students: student._id },
-        });
+    // Gérer le changement de classes (tableau d'IDs)
+    console.log('Classes from request:', req.body.classes);
+    console.log('Is array:', Array.isArray(req.body.classes));
+    if (req.body.classes && Array.isArray(req.body.classes)) {
+      console.log('Entering class assignment block...');
+      try {
+        const newClassIds = req.body.classes.map(id => new mongoose.Types.ObjectId(id));
+        const studentId = student._id;
+
+        console.log(`Syncing classes for student ${student.firstName}. New classes:`, newClassIds);
+
+        // 1. Retirer l'élève des classes qui ne sont PLUS dans la liste
+        const pullRes = await Class.updateMany(
+          { 
+            students: studentId, 
+            _id: { $nin: newClassIds }
+          }, 
+          { $pull: { students: studentId } }
+        );
+        console.log(`Removed student ${studentId} from ${pullRes.modifiedCount} classes`);
+
+        // 2. Ajouter l'élève aux nouvelles classes
+        const pushRes = await Class.updateMany(
+          { 
+            _id: { $in: newClassIds }
+          }, 
+          { $addToSet: { students: studentId } }
+        );
+        console.log(`Added student ${studentId} to ${pushRes.modifiedCount} classes`);
+
+        student.classes = newClassIds;
+      } catch (castErr) {
+        console.error('Error casting class IDs in updateStudent:', castErr);
       }
-      
-      // Assigner à la nouvelle classe
-      if (classId) {
-        // Vérifier que la classe appartient à l'école
-        const newClass = await Class.findById(classId);
-        if (!newClass || newClass.school.toString() !== schoolUser.school.toString()) {
-          return res.status(403).json({ message: 'Cette classe n\'appartient pas à votre école' });
+    } else if (classId) {
+      // Legacy backward compatibility for single classId
+      try {
+        const cId = new mongoose.Types.ObjectId(classId);
+        if (!student.classes) student.classes = [];
+        if (!student.classes.some(id => id.toString() === cId.toString())) {
+          student.classes.push(cId);
+          await Class.findByIdAndUpdate(cId, { $addToSet: { students: student._id } });
         }
-        
-        student.class = classId;
-        await Class.findByIdAndUpdate(classId, {
-          $addToSet: { students: student._id },
-        });
-      } else {
-        // Retirer de la classe (classId est null ou vide)
-        student.class = null;
-      }
+      } catch (err) {}
     }
 
     await student.save();
 
     const updatedStudent = await Student.findById(student._id)
-      .populate('class', 'name level')
+      .populate('classes', 'name level')
       .populate('parent', 'username phone');
 
     res.status(200).json({
@@ -134,6 +157,9 @@ exports.deleteStudent = async (req, res) => {
     if (student.school.toString() !== schoolUser.school.toString()) {
       return res.status(403).json({ message: 'Vous n\'avez pas accès à cet élève' });
     }
+
+    // Retirer l'élève de toutes les classes
+    await Class.updateMany({ students: student._id }, { $pull: { students: student._id } });
 
     await student.deleteOne();
 

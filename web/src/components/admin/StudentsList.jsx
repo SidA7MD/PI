@@ -181,7 +181,7 @@ const StudentsList = () => {
                       fontSize: '13px',
                       color: '#718096',
                     }}>
-                      {s.class?.name || 'Non assigné'}
+                      {s.classes?.map(c => c.name).join(', ') || s.class?.name || 'Non assigné'}
                     </div>
                   </div>
                   <Link
@@ -369,7 +369,7 @@ const StudentsList = () => {
                         color: '#2d3748',
                         verticalAlign: 'middle',
                       }}>
-                        {s.class?.name || 'Non assigné'}
+                        {s.classes?.map(c => c.name).join(', ') || s.class?.name || 'Non assigné'}
                       </td>
                       <td style={{
                         padding: '20px 24px',

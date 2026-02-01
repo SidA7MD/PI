@@ -70,14 +70,14 @@ export default function LinkChildScreen() {
                         </View>
                     </LinearGradient>
 
-                    {/* Floating Form Card */}
-                    <View style={styles.formContainer}>
+                    {/* Main Content */}
+                    <View style={styles.content}>
                         <Card style={{ ...styles.formCard, backgroundColor: colors.background.card }}>
                             <Input
-                                label={t('childCodeLabel') || "Code élève"}
+                                label={t('childCodeLabel')}
                                 value={uniqueCode}
                                 onChange={setUniqueCode}
-                                placeholder="Ex: ABC123XYZ"
+                                placeholder={t('childCodePlaceholder')}
                                 autoCapitalize="characters"
                                 maxLength={10}
                                 large
@@ -108,7 +108,7 @@ export default function LinkChildScreen() {
                         <View style={styles.helpContainer}>
                             <Ionicons name="information-circle-outline" size={20} color={colors.text.tertiary} />
                             <Text style={[styles.helpText, { color: colors.text.secondary }]}>
-                                {t('askTags') || "Demandez ce code à l'administration de l'école"}
+                                {t('askAdminCode')}
                             </Text>
                         </View>
                     </View>
@@ -124,11 +124,12 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         flexGrow: 1,
+        paddingBottom: spacing['2xl'],
     },
     header: {
         paddingBottom: spacing['2xl'],
-        borderBottomLeftRadius: 16,
-        borderBottomRightRadius: 16,
+        borderBottomLeftRadius: 24, // Matched with Teacher Dashboard
+        borderBottomRightRadius: 24,
         borderBottomWidth: 1,
         borderBottomColor: 'rgba(0,0,0,0.05)',
         zIndex: 10,
@@ -139,11 +140,8 @@ const styles = StyleSheet.create({
         width: '100%',
         justifyContent: 'center',
     },
-    iconContainer: {
-        display: 'none', // Hide icon to match other screens
-    },
     title: {
-        fontSize: 20,
+        fontSize: 22, // Slightly larger for better readability
         fontWeight: '700',
         color: '#FFF',
         textAlign: 'center',
@@ -155,14 +153,16 @@ const styles = StyleSheet.create({
         marginTop: 4,
         maxWidth: '90%',
     },
-    formContainer: {
-        flex: 1,
-        paddingHorizontal: spacing.lg,
-        paddingTop: spacing.xl,
+    content: {
+        flex: 1, // Take remaining space to allow vertical centering
+        justifyContent: 'center', // Center vertically
+        padding: spacing.lg,
+        marginTop: -spacing.xl, // Keep slight overlap with header
+        paddingBottom: spacing['2xl'], // Add bottom padding to balance visual weight
     },
     formCard: {
         padding: spacing.xl,
-        borderRadius: 24,
+        borderRadius: 20,
         ...shadows.lg,
     },
     helpContainer: {
@@ -177,5 +177,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
         textAlign: 'center',
         flex: 1,
+        lineHeight: 20,
     },
 });

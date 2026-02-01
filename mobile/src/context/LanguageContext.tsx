@@ -188,6 +188,9 @@ const translations = {
     linkButton: 'Lier l\'enfant',
     invalidCode: 'Code invalide',
     childLinked: 'Enfant lié avec succès',
+    childCodeLabel: 'Code Élève',
+    childCodePlaceholder: 'Ex : ABC123XYZ',
+    askAdminCode: 'Demandez ce code à l\'administration de l\'école',
     
     // Empty states
     noStudents: 'Aucun élève',
@@ -249,6 +252,8 @@ const translations = {
     notificationsDesc: 'Consulter les notifications',
     viewProfile: 'Voir le profil',
     todaySummary: 'Résumé du jour',
+    profileUpdated: 'Profil mis à jour avec succès',
+    avatarUpdated: 'Photo de profil mise à jour',
   },
   ar: {
     // Common
@@ -411,6 +416,9 @@ const translations = {
     linkButton: 'ربط الطفل',
     invalidCode: 'رمز غير صالح',
     childLinked: 'تم ربط الطفل بنجاح',
+    childCodeLabel: 'رمز الطالب',
+    childCodePlaceholder: 'مثال: ABC123XYZ',
+    askAdminCode: 'اطلب هذا الرمز من إدارة المدرسة',
     
     // Empty states
     noStudents: 'لا يوجد طلاب',
@@ -472,6 +480,8 @@ const translations = {
     notificationsDesc: 'عرض الإشعارات',
     viewProfile: 'عرض الملف الشخصي',
     todaySummary: 'ملخص اليوم',
+    profileUpdated: 'تم تحديث الملف الشخصي بنجاح',
+    avatarUpdated: 'تم تحديث صورة الملف الشخصي',
   },
   en: {
     // Common
@@ -634,6 +644,9 @@ const translations = {
     linkButton: 'Link Child',
     invalidCode: 'Invalid code',
     childLinked: 'Child linked successfully',
+    childCodeLabel: 'Student Code',
+    childCodePlaceholder: 'Ex: ABC123XYZ',
+    askAdminCode: 'Ask school administration for this code',
     
     // Empty states
     noStudents: 'No students',
@@ -695,6 +708,8 @@ const translations = {
     notificationsDesc: 'View Notifications',
     viewProfile: 'View Profile',
     todaySummary: 'Today\'s Summary',
+    profileUpdated: 'Profile updated successfully',
+    avatarUpdated: 'Profile photo updated',
   },
   es: {
       // Minimal Spanish fallback for now

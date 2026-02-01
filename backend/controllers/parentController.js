@@ -57,7 +57,7 @@ exports.getMyStudents = async (req, res) => {
   try {
     const parent = await User.findById(req.user._id).populate({
       path: 'students',
-      populate: { path: 'class', select: 'name level' },
+      populate: { path: 'classes', select: 'name level' },
     });
 
     res.status(200).json({
@@ -129,7 +129,7 @@ exports.getParentStats = async (req, res) => {
   try {
     const parent = await User.findById(req.user._id).populate({
       path: 'students',
-      populate: { path: 'class', select: 'name level' },
+      populate: { path: 'classes', select: 'name level' },
     });
 
     // Récupérer toutes les absences des enfants
@@ -157,7 +157,7 @@ exports.getParentStats = async (req, res) => {
         id: student._id,
         firstName: student.firstName,
         lastName: student.lastName,
-        class: student.class,
+        classes: student.classes,
         uniqueCode: student.uniqueCode,
         totalAbsences: studentAbsences.length,
         recentAbsences: studentAbsences.filter(

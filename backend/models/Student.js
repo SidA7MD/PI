@@ -18,11 +18,13 @@ const studentSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
-    // Classe de l'élève
-    class: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Class',
-    },
+    // Classes de l'élève (Many-to-Many)
+    classes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Class',
+      },
+    ],
     // Parent lié
     parent: {
       type: mongoose.Schema.Types.ObjectId,

@@ -10,7 +10,7 @@ const StudentForm = () => {
     firstName: '',
     lastName: '',
     dateOfBirth: '',
-    class: '',
+    classes: [],
   });
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -39,7 +39,7 @@ const StudentForm = () => {
             firstName: student.firstName || '',
             lastName: student.lastName || '',
             dateOfBirth: student.dateOfBirth ? new Date(student.dateOfBirth).toISOString().split('T')[0] : '',
-            class: student.class?._id || '',
+            classes: student.classes?.map(c => c._id || c) || (student.class ? [student.class._id || student.class] : []),
           });
         }
       } catch (err) {
@@ -53,6 +53,20 @@ const StudentForm = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleClassToggle = (classId) => {
+    setFormData(prev => {
+      const currentClasses = prev.classes || [];
+      const strId = String(classId);
+      const exists = currentClasses.some(id => String(id) === strId);
+      
+      if (exists) {
+        return { ...prev, classes: currentClasses.filter(id => String(id) !== strId) };
+      } else {
+        return { ...prev, classes: [...currentClasses, strId] };
+      }
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -63,14 +77,14 @@ const StudentForm = () => {
           firstName: formData.firstName,
           lastName: formData.lastName,
           dateOfBirth: formData.dateOfBirth || undefined,
-          classId: formData.class || undefined,
+          classes: formData.classes,
         });
       } else {
         await api.post('/admin/create-student', {
           firstName: formData.firstName,
           lastName: formData.lastName,
           dateOfBirth: formData.dateOfBirth || undefined,
-          classId: formData.class || null,
+          classes: formData.classes,
         });
       }
 
@@ -244,24 +258,37 @@ const StudentForm = () => {
           </div>
           <div style={styles.formGroup}>
             <label style={styles.label}>
-              Classe {id ? '(modifier l\'assignation)' : '(assignation après création)'}
+              Classes assignées
             </label>
-            <select
-              name="class"
-              value={formData.class}
-              onChange={handleChange}
-              disabled={loading}
-              style={styles.select}
-              onFocus={(e) => e.target.style.borderColor = '#4299e1'}
-              onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
-            >
-              <option value="">
-                {id ? 'Retirer de la classe' : 'Ne pas assigner maintenant'}
-              </option>
-              {classes.map(cls => (
-                <option key={cls._id} value={cls._id}>{cls.name}</option>
-              ))}
-            </select>
+            <div style={{ 
+              border: '1px solid #e2e8f0', 
+              borderRadius: '8px', 
+              padding: '12px',
+              maxHeight: '200px',
+              overflowY: 'auto'
+            }}>
+              {classes.length === 0 ? (
+                 <p style={{ color: '#718096', fontSize: '14px' }}>Aucune classe disponible</p>
+              ) : (
+                classes.map(cls => (
+                  <label key={cls._id} style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    marginBottom: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px'
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.classes && formData.classes.some(id => String(id) === String(cls._id))}
+                      onChange={() => handleClassToggle(cls._id)}
+                      style={{ marginRight: '10px' }}
+                    />
+                    {cls.name} <span style={{ color: '#718096', marginLeft: '5px', fontSize: '12px' }}>({cls.level})</span>
+                  </label>
+                ))
+              )}
+            </div>
           </div>
           <div style={styles.formActions}>
             <button

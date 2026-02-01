@@ -102,11 +102,11 @@ export default function ParentHomeScreen() {
                             <Text style={[styles.childName, { color: colors.text.primary }]}>
                                 {child.firstName} {child.lastName}
                             </Text>
-                            {child.class && (
+                            {(child.classes?.length > 0 || child.class) && (
                                 <View style={styles.classInfo}>
                                     <Ionicons name="school" size={14} color={colors.primary} />
                                     <Text style={[styles.classText, { color: colors.text.secondary }]}>
-                                        {child.class.name} • {child.class.level}
+                                        {child.classes?.map((c:any) => c.name).join(', ') || child.class?.name} • {child.classes?.[0]?.level || child.class?.level}
                                     </Text>
                                 </View>
                             )}

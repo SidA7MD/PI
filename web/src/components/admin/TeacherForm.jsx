@@ -10,7 +10,7 @@ const TeacherForm = () => {
     username: '',
     phone: '',
     password: '',
-    class: '',
+    classes: [],
   });
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -39,7 +39,7 @@ const TeacherForm = () => {
             username: teacher.username || '',
             phone: teacher.phone || '',
             password: '',
-            class: teacher.classes?.[0]?._id || '',
+            classes: teacher.classes?.map(c => c._id || c) || [],
           });
         }
       } catch (err) {
@@ -54,6 +54,20 @@ const TeacherForm = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleClassToggle = (classId) => {
+    setFormData(prev => {
+      const currentClasses = prev.classes || [];
+      const strId = String(classId);
+      const exists = currentClasses.some(id => String(id) === strId);
+      
+      if (exists) {
+        return { ...prev, classes: currentClasses.filter(id => String(id) !== strId) };
+      } else {
+        return { ...prev, classes: [...currentClasses, strId] };
+      }
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -63,6 +77,7 @@ const TeacherForm = () => {
         const updateData = {
           username: formData.username,
           phone: formData.phone,
+          classes: formData.classes, // Send directly to update endpoint
         };
 
         if (formData.password) {
@@ -70,13 +85,6 @@ const TeacherForm = () => {
         }
 
         await api.put(`/admin/teachers/${id}`, updateData);
-
-        if (formData.class) {
-          await api.post('/admin/assign-teacher-to-class', {
-            teacherId: id,
-            classId: formData.class,
-          });
-        }
       } else {
         if (!formData.password) {
           setError('Le mot de passe est requis pour créer un professeur');
@@ -84,19 +92,12 @@ const TeacherForm = () => {
           return;
         }
 
-        const res = await api.post('/admin/create-teacher', {
+        await api.post('/admin/create-teacher', {
           username: formData.username,
           phone: formData.phone,
           password: formData.password,
+          classes: formData.classes, // Send directly to create endpoint
         });
-        const teacherId = res.data.teacher?.id || res.data.teacher?._id;
-
-        if (formData.class && teacherId) {
-          await api.post('/admin/assign-teacher-to-class', {
-            teacherId,
-            classId: formData.class,
-          });
-        }
       }
 
       navigate('/admin/teachers');
@@ -271,21 +272,36 @@ const TeacherForm = () => {
             />
           </div>
           <div style={styles.formGroup}>
-            <label style={styles.label}>Classe à assigner (optionnel)</label>
-            <select
-              name="class"
-              value={formData.class}
-              onChange={handleChange}
-              disabled={loading}
-              style={styles.select}
-              onFocus={(e) => e.target.style.borderColor = '#4299e1'}
-              onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
-            >
-              <option value="">Ne pas assigner maintenant</option>
-              {classes.map(cls => (
-                <option key={cls._id} value={cls._id}>{cls.name}</option>
-              ))}
-            </select>
+            <label style={styles.label}>Classes à assigner</label>
+            <div style={{ 
+              border: '1px solid #e2e8f0', 
+              borderRadius: '8px', 
+              padding: '12px',
+              maxHeight: '200px',
+              overflowY: 'auto'
+            }}>
+              {classes.length === 0 ? (
+                 <p style={{ color: '#718096', fontSize: '14px' }}>Aucune classe disponible</p>
+              ) : (
+                classes.map(cls => (
+                  <label key={cls._id} style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    marginBottom: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px'
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.classes && formData.classes.some(id => String(id) === String(cls._id))}
+                      onChange={() => handleClassToggle(cls._id)}
+                      style={{ marginRight: '10px' }}
+                    />
+                    {cls.name} <span style={{ color: '#718096', marginLeft: '5px', fontSize: '12px' }}>({cls.level})</span>
+                  </label>
+                ))
+              )}
+            </div>
           </div>
           <div style={styles.formActions}>
             <button
