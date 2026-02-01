@@ -115,6 +115,7 @@ export const updateProfile = async (data: {
     email?: string;
     currentPassword?: string;
     newPassword?: string;
+    pushToken?: string;
 }): Promise<User> => {
     try {
         const response = await api.put<{ user: User }>('/auth/me', data);

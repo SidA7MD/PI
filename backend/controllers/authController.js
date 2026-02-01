@@ -312,12 +312,18 @@ exports.getMe = async (req, res) => {
 // @access  Private
 exports.updateMe = async (req, res) => {
   try {
-    const { username, phone, email, currentPassword, newPassword } = req.body;
+    // Allow updating pushToken separately or with other fields
+    const { username, phone, email, currentPassword, newPassword, pushToken } = req.body;
 
     const user = await User.findById(req.user._id).select('+password');
 
     if (!user) {
       return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    }
+
+    // Update push token if provided
+    if (pushToken !== undefined) {
+         user.pushToken = pushToken;
     }
 
     // If updating password, verify current password

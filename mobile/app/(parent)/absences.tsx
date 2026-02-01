@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../src/context/ThemeContext';
+import { useNotifications } from '../../src/context/NotificationContext';
 import { Card } from '../../src/components/ui/Card';
 import { Avatar } from '../../src/components/ui/Avatar';
 import { spacing, shadows } from '../../src/theme';
@@ -13,7 +15,9 @@ import { useLanguage } from '../../src/context/LanguageContext';
 const AbsencesScreen = () => {
     const { colors } = useTheme();
     const { t } = useLanguage();
+    const { socket } = useNotifications(); // Get socket from context
     const insets = useSafeAreaInsets();
+    const router = useRouter(); // Ensure router is available if needed
 
     const [absences, setAbsences] = useState<any[]>([]);
     const [children, setChildren] = useState<any[]>([]);
@@ -22,8 +26,9 @@ const AbsencesScreen = () => {
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState('');
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async (isRefreshing = false) => {
         try {
+            if (!isRefreshing && loading) setLoading(true); // Don't show full loader on refresh
             setError('');
             const [absencesData, childrenData] = await Promise.all([
                 parentService.getAbsences(),
@@ -37,11 +42,30 @@ const AbsencesScreen = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [t]);
 
+    // Auto-refresh when screen comes into focus
+    useFocusEffect(
+        useCallback(() => {
+            fetchData();
+        }, [fetchData])
+    );
+
+    // Listen for real-time updates
     useEffect(() => {
-        fetchData();
-    }, []);
+        if (!socket) return;
+        
+        const handleNewAbsence = () => {
+             console.log('🔄 Real-time absence update received, refreshing data...');
+             fetchData();
+        };
+
+        socket.on('notification:absence', handleNewAbsence);
+        
+        return () => {
+            socket.off('notification:absence', handleNewAbsence);
+        };
+    }, [socket, fetchData]);
 
     const onRefresh = useCallback(async () => {
         setRefreshing(true);
@@ -150,6 +174,16 @@ const AbsencesScreen = () => {
                         <Ionicons name="school-outline" size={16} color={colors.text.tertiary} />
                         <Text style={[styles.infoText, { color: colors.text.secondary }]}>
                             {absence.class.name}
+                            {absence.subject ? ` • ${absence.subject}` : ''}
+                        </Text>
+                    </View>
+                )}
+
+                {absence.startTime && (
+                    <View style={styles.absenceInfo}>
+                        <Ionicons name="time-outline" size={16} color={colors.text.tertiary} />
+                        <Text style={[styles.infoText, { color: colors.text.secondary }]}>
+                            {absence.startTime}
                         </Text>
                     </View>
                 )}

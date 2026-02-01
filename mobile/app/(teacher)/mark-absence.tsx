@@ -29,8 +29,14 @@ export default function MarkAbsenceScreen() {
     const [classes, setClasses] = useState<ClassWithStats[]>([]);
     const [selectedClass, setSelectedClass] = useState<ClassWithStats | null>(null);
     const [students, setStudents] = useState<StudentWithStatus[]>([]);
+    const [subjects, setSubjects] = useState<string[]>([]);
+    const [selectedSubject, setSelectedSubject] = useState<string>('');
+    const [startTime, setStartTime] = useState<string>('08:00');
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+
+    const START_TIMES = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
+
 
     useEffect(() => {
         loadClasses();
@@ -49,6 +55,10 @@ export default function MarkAbsenceScreen() {
         try {
             const stats = await teacherService.getTeacherStats();
             setClasses(stats.classes);
+            if (stats.subjects && stats.subjects.length > 0) {
+                setSubjects(stats.subjects);
+                setSelectedSubject(stats.subjects[0]);
+            }
         } catch (error) {
             console.error('Error loading classes:', error);
             Alert.alert(t('error'), t('errorOccurred'));
@@ -90,10 +100,27 @@ export default function MarkAbsenceScreen() {
     };
 
     const handleSubmit = async () => {
-        if (!selectedClass) return;
+        if (!selectedClass || !selectedClass._id) {
+             Alert.alert(t('error'), 'Veuillez sélectionner une classe');
+             return;
+        }
 
         const absencesToMark = students.filter(s => s.status !== 'présent');
         const counts = getStatusCounts();
+
+        if (students.length === 0) {
+            Alert.alert(t('error'), 'Aucun élève dans cette classe');
+            return;
+        }
+        
+        // Log for debugging
+        console.log('Preparation submission:', {
+            classId: selectedClass._id,
+            studentsCount: students.length,
+            absencesToMark: absencesToMark.length,
+            subject: selectedSubject,
+            startTime
+        });
 
         if (absencesToMark.length === 0) {
            Alert.alert(
@@ -121,16 +148,21 @@ export default function MarkAbsenceScreen() {
     };
 
     const submitData = async () => {
-        if (!selectedClass) return;
+        if (!selectedClass || !selectedClass._id) return;
         setSubmitting(true);
         try {
-            await teacherService.markBulkAbsence({
+            const payload = {
                 classId: selectedClass._id,
                 students: students.map(s => ({
                     studentId: s._id,
                     status: s.status,
                 })),
-            });
+                subject: selectedSubject,
+                startTime: startTime
+            };
+            console.log('Sending payload:', JSON.stringify(payload));
+
+            await teacherService.markBulkAbsence(payload);
             
              const counts = getStatusCounts();
              Alert.alert(
@@ -259,7 +291,68 @@ export default function MarkAbsenceScreen() {
                          <Text style={[styles.statusLabel, { color: colors.warning }]}>{t('late')}</Text>
                     </View>
                 </View>
-            </View>
+                </View>
+
+                {/* Subject and Time Selection */}
+                <View style={[styles.selectionContainer, { backgroundColor: colors.background.secondary }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>{t('subject')}</Text>
+                    <FlatList
+                        horizontal
+                        data={subjects}
+                        showsHorizontalScrollIndicator={false}
+                        keyExtractor={(item) => item}
+                        style={styles.horizontalList}
+                        contentContainerStyle={styles.horizontalListContent}
+                        renderItem={({ item }) => (
+                            <TouchableOpacity
+                                style={[
+                                    styles.selectionChip,
+                                    selectedSubject === item 
+                                        ? { backgroundColor: colors.primary, borderColor: colors.primary }
+                                        : { backgroundColor: colors.background.card, borderColor: colors.border.light },
+                                    { borderWidth: 1 }
+                                ]}
+                                onPress={() => setSelectedSubject(item)}
+                            >
+                                <Text style={[
+                                    styles.chipText,
+                                    selectedSubject === item ? { color: '#FFF' } : { color: colors.text.primary }
+                                ]}>
+                                    {item}
+                                </Text>
+                            </TouchableOpacity>
+                        )}
+                    />
+
+                    <Text style={[styles.sectionTitle, { color: colors.text.primary, marginTop: spacing.sm }]}>{t('time')}</Text>
+                    <FlatList
+                        horizontal
+                        data={START_TIMES}
+                        showsHorizontalScrollIndicator={false}
+                        keyExtractor={(item) => item}
+                        style={styles.horizontalList}
+                        contentContainerStyle={styles.horizontalListContent}
+                        renderItem={({ item }) => (
+                            <TouchableOpacity
+                                style={[
+                                    styles.selectionChip,
+                                    startTime === item 
+                                        ? { backgroundColor: colors.primary, borderColor: colors.primary }
+                                        : { backgroundColor: colors.background.card, borderColor: colors.border.light },
+                                    { borderWidth: 1 }
+                                ]}
+                                onPress={() => setStartTime(item)}
+                            >
+                                <Text style={[
+                                    styles.chipText,
+                                    startTime === item ? { color: '#FFF' } : { color: colors.text.primary }
+                                ]}>
+                                    {item}
+                                </Text>
+                            </TouchableOpacity>
+                        )}
+                    />
+                </View>
 
             {loading ? (
                 <LoadingSpinner />
@@ -544,5 +637,31 @@ const styles = StyleSheet.create({
         bottom: 0,
         left: 0,
         right: 0,
+    },
+    selectionContainer: {
+        paddingVertical: spacing.sm,
+    },
+    sectionTitle: {
+        fontSize: 14,
+        fontWeight: '600',
+        marginLeft: spacing.lg,
+        marginBottom: spacing.xs,
+    },
+    horizontalList: {
+        flexGrow: 0,
+    },
+    horizontalListContent: {
+        paddingHorizontal: spacing.lg,
+        gap: spacing.sm,
+        paddingBottom: spacing.sm,
+    },
+    selectionChip: {
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
+    },
+    chipText: {
+        fontSize: 14,
+        fontWeight: '500',
     },
 });

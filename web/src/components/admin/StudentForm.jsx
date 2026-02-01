@@ -18,6 +18,7 @@ const StudentForm = () => {
     firstName: '',
     lastName: '',
     dateOfBirth: '',
+    uniqueCode: '',
     classes: [],
   });
   const [classes, setClasses] = useState([]);
@@ -38,6 +39,7 @@ const StudentForm = () => {
             firstName: student.firstName || '',
             lastName: student.lastName || '',
             dateOfBirth: student.dateOfBirth ? new Date(student.dateOfBirth).toISOString().split('T')[0] : '',
+            uniqueCode: student.uniqueCode || '',
             classes: student.classes?.map(c => String(c._id || c)) || [],
           });
         }
@@ -115,6 +117,25 @@ const StudentForm = () => {
             <div className="form-section">
               <h3 className="section-title"><FiUser /> Informations Personnelles</h3>
               
+              {id && formData.uniqueCode && (
+                <div style={{ 
+                  background: 'var(--primary-50)', 
+                  border: '2px solid var(--primary-200)', 
+                  borderRadius: 'var(--radius-md)', 
+                  padding: '16px', 
+                  marginBottom: '24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px'
+                }}>
+                  <span style={{ fontSize: '24px' }}>🔗</span>
+                  <div>
+                    <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--primary-700)', marginBottom: '4px' }}>CODE DE LIAISON</div>
+                    <div style={{ fontSize: '20px', fontWeight: '800', color: 'var(--primary-900)', letterSpacing: '2px' }}>{formData.uniqueCode}</div>
+                  </div>
+                </div>
+              )}
+
               <div className="form-row">
                 <div className="form-group">
                   <label className="form-label">Prénom *</label>

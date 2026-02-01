@@ -16,6 +16,7 @@ export interface TeacherStats {
         attendanceRate: number;
     };
     classes: ClassWithStats[];
+    subjects: string[];
 }
 
 export interface ClassWithStats extends Class {
@@ -35,6 +36,8 @@ export interface BulkAbsenceRequest {
     classId: string;
     date?: Date;
     students: BulkAbsenceStudent[];
+    subject?: string;
+    startTime?: string;
 }
 
 export const getTeacherStats = async (): Promise<TeacherStats> => {

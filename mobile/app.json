@@ -7,11 +7,6 @@
     "scheme": "kbarwilly",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "extra": {
-      "eas": {
-        "projectId": "f59eb7a9-5844-4f92-8bf2-36c2031fdfdc"
-      }
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.kbarwilly.app"
@@ -52,7 +47,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/notification-icon.png",
+          "icon": "./assets/images/android-icon-monochrome.png",
           "color": "#3B82F6",
           "sounds": []
         }
@@ -61,6 +56,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "b9a8f056-ffb7-424f-b290-eb053608fc5d"
+      }
     }
   }
 }

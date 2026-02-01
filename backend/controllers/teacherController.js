@@ -2,10 +2,78 @@ const User = require('../models/User');
 const Class = require('../models/Class');
 const Student = require('../models/Student');
 const Absence = require('../models/Absence');
+const School = require('../models/School');
 
-// Fonction mock pour envoyer une notification
-function sendNotification(parentId, message) {
-  console.log('📱 Notification envoyée →', parentId, message);
+const Notification = require('../models/Notification');
+const socketHandler = require('../utils/socketHandler');
+const pushHandler = require('../utils/pushNotificationHandler');
+
+// Helper pour envoyer une notification (Socket.io + DB + Push)
+async function sendAbsenceNotification(parentId, student, status, date, subject, startTime) {
+  try {
+    const formattedDate = new Date(date).toLocaleDateString('fr-FR');
+    let title = '';
+    let message = '';
+    let type = '';
+
+    if (status === 'absent') {
+      title = 'Nouvelle absence';
+      message = `Votre enfant ${student.firstName} ${student.lastName} a été marqué absent`;
+      type = 'absence';
+    } else if (status === 'retard') {
+      title = 'Nouveau retard';
+      message = `Votre enfant ${student.firstName} ${student.lastName} a été marqué en retard`;
+      type = 'late';
+    }
+
+    if (subject) message += ` en ${subject}`;
+    if (startTime) message += ` à ${startTime}`;
+    message += ` le ${formattedDate}.`;
+
+    // 1. Créer la notification en base
+    const notification = await Notification.create({
+      recipient: parentId,
+      type,
+      title,
+      message,
+      data: {
+        studentId: student._id,
+        date,
+        subject,
+        startTime
+      }
+    });
+
+    console.log(`🔔 Created notification ${notification._id} for parent ${parentId}`);
+
+    // 2. Envoyer en temps réel via Socket.io
+    socketHandler.emitAbsenceNotification(parentId, notification);
+
+    // 3. Envoyer une notification Push (Expo)
+    // Fetch parent to get pushToken (student.parent might not have it populated if not requested)
+    // We already have parentId. Let's assume we need to fetch user if token not available?
+    // Actually, in markBulkAbsence we populated parent. Check if parent object has pushToken.
+    // Ideally we should pass the FULL parent object or fetch it.
+    // Refactoring helper to fetch parent if needed or assume passed object has token.
+    
+    // For now, let's just fetch the parent to be safe and ensure we have the token
+    const parentUser = await User.findById(parentId);
+    if (parentUser && parentUser.pushToken) {
+        console.log(`📱 Sending Push Notification to ${parentUser.username}`);
+        await pushHandler.sendPushToUser(parentUser, title, message, {
+            notificationId: notification._id,
+            studentId: student._id, 
+            type 
+        });
+    } else {
+        console.log(`ℹ️ No push token for parent ${parentId}`);
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Erreur envoi notification:', error);
+    return false;
+  }
 }
 
 // @desc    Obtenir toutes les classes du professeur
@@ -49,6 +117,9 @@ exports.getClassStudents = async (req, res) => {
       return res.status(404).json({ message: 'Classe non trouvée' });
     }
 
+    const school = await School.findOne({ teachers: req.user._id });
+    const subjects = school ? school.subjects : [];
+
     res.status(200).json({
       class: {
         id: classObj._id,
@@ -57,6 +128,7 @@ exports.getClassStudents = async (req, res) => {
       },
       count: classObj.students.length,
       students: classObj.students,
+      subjects,
     });
   } catch (error) {
     res.status(500).json({ message: 'Erreur serveur', error: error.message });
@@ -97,7 +169,8 @@ exports.markAbsence = async (req, res) => {
       student: studentId,
       class: classId,
       teacher: req.user._id,
-      status,
+      absenceType: status,
+      status: 'unjustified',
       reason,
       notes,
       date: new Date(),
@@ -231,9 +304,9 @@ exports.getTeacherStats = async (req, res) => {
     });
     
     const todayStats = {
-      absences: todayAbsences.filter(a => a.status === 'absent').length,
-      lates: todayAbsences.filter(a => a.status === 'retard').length,
-      presents: totalStudents - todayAbsences.filter(a => a.status !== 'présent').length,
+      absences: todayAbsences.filter(a => a.absenceType === 'absent').length,
+      lates: todayAbsences.filter(a => a.absenceType === 'retard').length,
+      presents: totalStudents - todayAbsences.length, // Assuming only non-presents are stored
     };
     
     // Weekly stats
@@ -245,8 +318,8 @@ exports.getTeacherStats = async (req, res) => {
       date: { $gte: weekAgo, $lt: tomorrow },
     });
     
-    const weeklyAbsenceCount = weeklyAbsences.filter(a => a.status === 'absent').length;
-    const weeklyLateCount = weeklyAbsences.filter(a => a.status === 'retard').length;
+    const weeklyAbsenceCount = weeklyAbsences.filter(a => a.absenceType === 'absent').length;
+    const weeklyLateCount = weeklyAbsences.filter(a => a.absenceType === 'retard').length;
     const totalPossibleAttendances = totalStudents * 7;
     const attendanceRate = totalPossibleAttendances > 0 
       ? Math.round(((totalPossibleAttendances - weeklyAbsenceCount) / totalPossibleAttendances) * 100) 
@@ -262,11 +335,16 @@ exports.getTeacherStats = async (req, res) => {
           name: cls.name,
           level: cls.level,
           studentCount,
-          todayAbsences: todayClassAbsences.filter(a => a.status === 'absent').length,
-          todayLates: todayClassAbsences.filter(a => a.status === 'retard').length,
+          todayAbsences: todayClassAbsences.filter(a => a.absenceType === 'absent').length,
+          todayLates: todayClassAbsences.filter(a => a.absenceType === 'retard').length,
         };
       })
     );
+
+    console.log('🔎 Finding school for teacher:', req.user._id);
+    const school = await School.findOne({ teachers: req.user._id });
+    console.log('🏫 School found:', school ? school.name : 'None');
+    const subjects = school ? school.subjects : [];
 
     res.status(200).json({
       totalClasses: teacher.classes.length,
@@ -278,6 +356,7 @@ exports.getTeacherStats = async (req, res) => {
         attendanceRate,
       },
       classes: classesWithCounts,
+      subjects,
     });
   } catch (error) {
     res.status(500).json({ message: 'Erreur serveur', error: error.message });
@@ -289,7 +368,7 @@ exports.getTeacherStats = async (req, res) => {
 // @access  Private/Teacher
 exports.markBulkAbsence = async (req, res) => {
   try {
-    const { classId, date, students } = req.body;
+    const { classId, date, students, subject, startTime } = req.body;
     // students: [{ studentId, status, reason?, notes? }, ...]
     
     if (!classId || !students || !Array.isArray(students)) {
@@ -297,9 +376,12 @@ exports.markBulkAbsence = async (req, res) => {
     }
 
     const teacher = await User.findById(req.user._id);
-    
+
+    console.log('📝 markBulkAbsence Payload:', JSON.stringify(req.body, null, 2));
+
     // Verify teacher teaches this class
     if (!teacher.classes.includes(classId)) {
+      console.log('⛔ Teacher does not teach this class:', classId);
       return res.status(403).json({ message: "Vous n'enseignez pas dans cette classe" });
     }
 
@@ -321,51 +403,97 @@ exports.markBulkAbsence = async (req, res) => {
           continue;
         }
 
-        // Check if absence already exists for this student on this date
+        // Check if absence already exists
         const startOfDay = new Date(absenceDate);
         startOfDay.setHours(0, 0, 0, 0);
         const endOfDay = new Date(absenceDate);
         endOfDay.setHours(23, 59, 59, 999);
 
-        const existingAbsence = await Absence.findOne({
+        let absence = await Absence.findOne({
           student: studentId,
           class: classId,
           date: { $gte: startOfDay, $lte: endOfDay },
         });
 
-        if (existingAbsence) {
-          // Update existing
-          existingAbsence.status = status;
-          if (reason) existingAbsence.reason = reason;
-          if (notes) existingAbsence.notes = notes;
-          await existingAbsence.save();
-          results.created++;
-          continue;
-        }
-
-        // Create new absence
+        // Need student info for notification (populate parent)
         const student = await Student.findById(studentId).populate('parent');
-        
-        const absence = await Absence.create({
-          student: studentId,
-          class: classId,
-          teacher: req.user._id,
-          status,
-          reason,
-          notes,
-          date: absenceDate,
-        });
-
-        // Send notification
-        if (student?.parent) {
-          const message = `Votre enfant ${student.firstName} ${student.lastName} a été marqué comme ${status} le ${absenceDate.toLocaleDateString('fr-FR')}`;
-          sendNotification(student.parent._id, message);
-          absence.notificationSent = true;
-          await absence.save();
+         
+        if (!student) {
+             console.log(`❌ Student not found: ${studentId}`);
+             results.errors.push({ studentId, error: 'Student not found' });
+             continue;
         }
 
-        results.created++;
+        if (absence) {
+          // Update existing
+          console.log(`🔄 Updating existing absence for student ${student.firstName} ${student.lastName}`);
+          absence.absenceType = status; // Map status to absenceType
+          if (reason) absence.reason = reason;
+          if (notes) absence.notes = notes;
+          if (subject) absence.subject = subject;
+          if (startTime) absence.startTime = startTime;
+          await absence.save();
+          results.created++; // Treating update as "recording" an absence
+        } else {
+          // Create new absence
+          console.log(`✨ Creating new absence for student ${student.firstName} ${student.lastName}`);
+          absence = await Absence.create({
+            student: studentId,
+            class: classId,
+            teacher: req.user._id,
+            absenceType: status, // Map status to absenceType
+            status: 'unjustified', // Default to unjustified
+            reason,
+            notes,
+            subject,
+            startTime,
+            date: absenceDate,
+          });
+          results.created++;
+        }
+
+        // Send notification logic (Shared for both create and update)
+        // Check if we should send a notification:
+        // 1. Student has a parent
+        // 2. Status is 'absent' or 'retard'
+        // 3. Notification hasn't been sent yet OR we want to resend on update? 
+        //    Let's trigger it if status is compatible. Ideally we might want to check if status CHANGED, 
+        //    but for now, ensuring parents get the alert is safer.
+        
+        // Note: For now, we set notificationSent to true after sending. 
+        // If updating, we might want to resend? Let's assume we resend for now to be safe, 
+        // or check if notificationSent is false. 
+        // The user issue is NO notification received, so let's force send if conditions met.
+
+        if (student.parent && (status === 'absent' || status === 'retard')) {
+           console.log(`🚀 Attempting to send notification to parent ${student.parent._id}`);
+           const sent = await sendAbsenceNotification(
+             student.parent._id, 
+             student, 
+             status, 
+             absenceDate,
+             subject,
+             startTime
+           );
+           
+           if (sent) {
+             console.log('✅ Notification marked as sent in DB');
+             absence.notificationSent = true;
+             await absence.save();
+           } else {
+             console.log('⚠️ sendAbsenceNotification returned false');
+           }
+        } else {
+            console.log('ℹ️ Skipping notification: Parent missing or status not absent/retard');
+            console.log('Debug:', { 
+                hasParent: !!student.parent, 
+                status, 
+                parentId: student.parent?._id 
+            });
+        }
+
       } catch (err) {
+        console.error(`❌ Error processing student ${studentData.studentId}:`, err);
         results.errors.push({ studentId: studentData.studentId, error: err.message });
       }
     }

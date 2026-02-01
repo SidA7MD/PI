@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useTheme } from '../../src/context/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,7 +10,7 @@ import { EmptyState } from '../../src/components/ui/EmptyState';
 import * as teacherService from '../../src/services/teacherService';
 import { ClassWithStats } from '../../src/services/teacherService';
 import { Absence } from '../../src/types';
-import { spacing, borderRadius, shadows } from '../../src/theme';
+import { spacing, shadows } from '../../src/theme';
 
 import { useLanguage } from '../../src/context/LanguageContext';
 
@@ -38,17 +39,7 @@ export default function HistoryScreen() {
         }
     }, [selectedClass]);
 
-    useEffect(() => {
-        loadData();
-    }, []);
-
-    useEffect(() => {
-        if (selectedClass) {
-            loadAbsences();
-        }
-    }, [selectedClass]);
-
-    const loadAbsences = async () => {
+    const loadAbsences = useCallback(async () => {
         if (!selectedClass) return;
         setLoading(true);
         try {
@@ -60,7 +51,27 @@ export default function HistoryScreen() {
             setLoading(false);
             setRefreshing(false);
         }
-    };
+    }, [selectedClass]);
+
+    useFocusEffect(
+        useCallback(() => {
+            if (selectedClass) {
+                loadAbsences();
+            } else {
+                loadData();
+            }
+        }, [selectedClass, loadAbsences, loadData])
+    );
+
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    useEffect(() => {
+        if (selectedClass) {
+            loadAbsences();
+        }
+    }, [selectedClass]);
 
     const handleRefresh = () => {
         setRefreshing(true);
@@ -117,7 +128,6 @@ export default function HistoryScreen() {
     return (
         <View style={[styles.container, { backgroundColor: colors.background.secondary }]}>
             {/* Header matching Pointer Style */}
-            {/* Header matching Pointer Style but with Primary Color */}
             <LinearGradient
                 colors={[colors.primary, colors.primaryDark]}
                 style={[styles.header, { paddingTop: insets.top + spacing.lg, paddingBottom: spacing['2xl'] }]}

@@ -7,6 +7,21 @@ const schoolSchema = new mongoose.Schema(
       required: [true, "Le nom de l'école est requis"],
       trim: true,
     },
+    // Liste des matières enseignées
+    subjects: {
+      type: [String],
+      default: [
+        'Mathématiques',
+        'Français',
+        'Arabe',
+        'Anglais',
+        'Education Islamique',
+        'Histoire-Géo',
+        'Sciences Naturelles',
+        'Physique-Chimie',
+        'Education Physique'
+      ],
+    },
     // Administrateurs de l'école
     admins: [
       {

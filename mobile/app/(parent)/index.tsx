@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../src/context/AuthContext';
+import { useNotifications } from '../../src/context/NotificationContext';
 import { useTheme } from '../../src/context/ThemeContext';
 import { useLanguage } from '../../src/context/LanguageContext';
 import { Card } from '../../src/components/ui/Card';
@@ -17,6 +18,7 @@ export default function ParentHomeScreen() {
     const { user } = useAuth();
     const { colors } = useTheme();
     const { t } = useLanguage();
+    const { socket } = useNotifications();
     const router = useRouter();
     const insets = useSafeAreaInsets();
 
@@ -25,7 +27,7 @@ export default function ParentHomeScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState('');
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             setError('');
             const data = await parentService.getParentStats();
@@ -36,11 +38,30 @@ export default function ParentHomeScreen() {
         } finally {
             setLoading(false);
         }
-    };
-
-    useEffect(() => {
-        fetchData();
     }, []);
+
+    // Auto-refresh when screen comes into focus
+    useFocusEffect(
+        useCallback(() => {
+            fetchData();
+        }, [fetchData])
+    );
+
+    // Listen for real-time updates
+    useEffect(() => {
+        if (!socket) return;
+        
+        const handleNewAbsence = () => {
+             console.log('🔄 Real-time stats update received, refreshing data...');
+             fetchData();
+        };
+
+        socket.on('notification:absence', handleNewAbsence);
+        
+        return () => {
+            socket.off('notification:absence', handleNewAbsence);
+        };
+    }, [socket, fetchData]);
 
     const onRefresh = useCallback(async () => {
         setRefreshing(true);

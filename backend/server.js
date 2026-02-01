@@ -17,7 +17,14 @@ const absenceRoutes = require('./routes/absenceRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const otpRoutes = require('./routes/otp');
 
+const http = require('http');
+const socketHandler = require('./utils/socketHandler');
+
 const app = express();
+const server = http.createServer(app);
+
+// Initialiser Socket.io
+socketHandler.init(server);
 
 connectDB();
 
@@ -74,6 +81,6 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 Serveur démarré sur le port ${PORT}`);
 });

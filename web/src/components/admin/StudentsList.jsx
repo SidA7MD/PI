@@ -104,6 +104,11 @@ const StudentsList = () => {
               </div>
 
               <div className="chips-container">
+                {student.uniqueCode && (
+                  <div className="chip" style={{ background: 'var(--primary-50)', color: 'var(--primary-700)', fontWeight: '600' }}>
+                    🔗 Code: {student.uniqueCode}
+                  </div>
+                )}
                 <div className="chip">
                   <FiCalendar size={12} /> 
                   {student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString() : 'N/A'}

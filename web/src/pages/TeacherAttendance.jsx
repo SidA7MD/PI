@@ -10,6 +10,9 @@ import '../styles/Components.css';
 const TeacherAttendance = () => {
   const { classId } = useParams();
   const navigate = useNavigate();
+  const [subjects, setSubjects] = useState([]);
+  const [selectedSubject, setSelectedSubject] = useState('');
+  const [startTime, setStartTime] = useState('08:00');
   const [students, setStudents] = useState([]);
   const [attendance, setAttendance] = useState({});
   const [loading, setLoading] = useState(true);
@@ -22,6 +25,10 @@ const TeacherAttendance = () => {
         const res = await api.get(`/teacher/class/${classId}/students`);
         setStudents(res.data.students);
         setClassName(res.data.class.name);
+        if (res.data.subjects && res.data.subjects.length > 0) {
+          setSubjects(res.data.subjects);
+          setSelectedSubject(res.data.subjects[0]);
+        }
         
         // Initialize attendance state (default present)
         const initialAttendance = {};
@@ -77,22 +84,36 @@ const TeacherAttendance = () => {
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
-      const absences = Object.entries(attendance)
+      const studentStatuses = Object.entries(attendance)
         .filter(([_, status]) => status !== 'present')
         .map(([studentId, status]) => ({
           studentId,
           status: status === 'late' ? 'retard' : 'absent',
-          date: new Date().toISOString(),
         }));
+
+      // Even if empty, we might want to send it? The backend requires students array.
+      // If no absences, we can send empty list?
+      // Backend: "ClassId et liste d'élèves requis".
+      // Let's send all non-present students.
+
+      if (studentStatuses.length === 0) {
+          if (!window.confirm("Tout le monde est présent ?")) {
+              setSubmitting(false);
+              return;
+          }
+      }
 
       await api.post('/teacher/mark-bulk-absence', {
         classId,
-        absences
+        students: studentStatuses, // Changed from absences to students
+        subject: selectedSubject,
+        startTime
       });
       alert('Appel enregistré avec succès !');
       navigate('/teacher/dashboard');
     } catch (err) {
-      alert('Erreur lors de l\'enregistrement');
+      console.error(err);
+      alert('Erreur lors de l\'enregistrement: ' + (err.response?.data?.message || err.message));
     } finally {
       setSubmitting(false);
     }
@@ -111,10 +132,67 @@ const TeacherAttendance = () => {
           <p className="page-subtitle">Touchez les élèves pour changer leur statut</p>
         </div>
         
-        <button onClick={handleSubmit} className="btn-add" disabled={submitting}>
-          <FiSave size={20} />
-          <span>{submitting ? 'Enregistrement...' : 'Valider l\'appel'}</span>
-        </button>
+      </div>
+
+      <div className="selection-section" style={{ padding: '0 24px 24px 24px' }}>
+        <div style={{ marginBottom: '16px' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '8px' }}>Matière</h3>
+          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' }}>
+            {subjects.map(sub => (
+              <button
+                key={sub}
+                onClick={() => setSelectedSubject(sub)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '20px',
+                  border: `1px solid ${selectedSubject === sub ? 'var(--primary-600)' : 'var(--gray-300)'}`,
+                  background: selectedSubject === sub ? 'var(--primary-600)' : 'white',
+                  color: selectedSubject === sub ? 'white' : 'var(--gray-900)',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                {sub}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ marginBottom: '24px' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '8px' }}>Heure de début</h3>
+          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' }}>
+            {['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'].map(t => (
+              <button
+                key={t}
+                onClick={() => setStartTime(t)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '20px',
+                  border: `1px solid ${startTime === t ? 'var(--primary-600)' : 'var(--gray-300)'}`,
+                  background: startTime === t ? 'var(--primary-600)' : 'white',
+                  color: startTime === t ? 'white' : 'var(--gray-900)',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <button onClick={handleSubmit} className="btn-add" disabled={submitting} style={{ padding: '10px 24px', borderRadius: '12px' }}>
+            <FiSave size={20} />
+            <span>{submitting ? 'Enregistrement...' : 'Valider l\'appel'}</span>
+          </button>
+        </div>
       </div>
 
       <div className="cards-grid">

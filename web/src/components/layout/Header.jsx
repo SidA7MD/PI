@@ -51,7 +51,19 @@ const Header = () => {
             <div className="logo-icon">
               <LuGraduationCap />
             </div>
-            <span className="logo-text">SchoolTrack</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <span className="logo-text">Khbarwilly</span>
+              {user?.role === 'school' && user?.name && (
+                <span style={{ 
+                  fontSize: '11px', 
+                  fontWeight: '600', 
+                  color: 'var(--gray-500)',
+                  letterSpacing: '0.3px'
+                }}>
+                  {user.name}
+                </span>
+              )}
+            </div>
           </Link>
 
           {/* Desktop Navigation */}

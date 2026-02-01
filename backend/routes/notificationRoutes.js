@@ -1,8 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
+const { protect } = require('../middleware/authMiddleware');
+const notificationController = require('../controllers/notificationController');
 
-// Route pour enregistrer le push token (SANS authentification pour le moment)
+// Routes protégées par authentification
+router.get('/', protect, notificationController.getNotifications);
+router.get('/unread-count', protect, notificationController.getUnreadCount);
+router.post('/:id/read', protect, notificationController.markAsRead);
+router.post('/read-all', protect, notificationController.markAllAsRead);
+
+// Route pour enregistrer le push token (SANS authentification pour le moment - Legacy or specific use case?)
+// Note: Il vaut mieux protéger cette route aussi si possible, mais on garde la logique existante si nécessaire.
+// On va laisser l'ancienne route telle quelle pour la compatibilité, mais on pourrait la migrer vers le contrôleur.
 router.post('/register', async (req, res) => {
     try {
         const { pushToken, userId } = req.body;

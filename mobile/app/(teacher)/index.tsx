@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '../../src/context/AuthContext';
 import { useTheme } from '../../src/context/ThemeContext';
 import { useLanguage } from '../../src/context/LanguageContext';
@@ -103,11 +103,6 @@ export default function TeacherHomeScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load stats on mount
-  useEffect(() => {
-    loadStats();
-  }, []);
-
   // Memoized load stats function
   const loadStats = useCallback(async () => {
     try {
@@ -128,6 +123,13 @@ export default function TeacherHomeScreen() {
       setLoading(false);
     }
   }, [t]);
+
+  // Load stats on mount and focus
+  useFocusEffect(
+    useCallback(() => {
+        loadStats();
+    }, [loadStats])
+  );
 
   // Pull to refresh handler
   const onRefresh = useCallback(async () => {

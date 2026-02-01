@@ -49,6 +49,17 @@ const absenceSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    // Matière
+    subject: {
+      type: String,
+      trim: true,
+      required: false, // Optionnel pour la compatibilité existante, mais recommandé
+    },
+    // Heure de début du cours (format HH:MM)
+    startTime: {
+      type: String,
+      trim: true,
+    },
     // Notification envoyée au parent
     notificationSent: {
       type: Boolean,

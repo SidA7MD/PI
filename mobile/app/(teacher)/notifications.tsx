@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useNotifications } from '../../src/context/NotificationContext';
 import { useTheme } from '../../src/context/ThemeContext';
 import { spacing, shadows } from '../../src/theme';
@@ -14,8 +14,14 @@ export default function NotificationsScreen() {
     const { colors } = useTheme();
     const router = useRouter();
     const insets = useSafeAreaInsets();
-    const { notifications, markAsRead, markAllAsRead } = useNotifications();
+    const { notifications, markAsRead, markAllAsRead, refreshNotifications } = useNotifications();
     const { t } = useLanguage();
+
+    useFocusEffect(
+        React.useCallback(() => {
+            refreshNotifications();
+        }, [refreshNotifications])
+    );
 
     const handleNotificationPress = (id: string, read: boolean) => {
         if (!read) {

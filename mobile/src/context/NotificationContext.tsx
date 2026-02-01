@@ -1,129 +1,246 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
+import io, { Socket } from 'socket.io-client';
+import { useAuth } from './AuthContext';
+import Constants from 'expo-constants';
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
+import { Platform } from 'react-native';
 import * as notificationService from '../services/notificationService';
-import { Notification } from '../types/index';
+import { Notification } from '../services/notificationService';
+import * as authService from '../services/authService';
 
-interface NotificationContextType {
+// Replicate API_URL logic from api.ts
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 
+                Constants.expoConfig?.extra?.apiUrl || 
+                'http://10.17.12.218:5001/api';
+
+const SOCKET_URL = API_URL.replace('/api', '');
+
+// Configure notification handler
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true, // Required on iOS
+    shouldShowList: true, // Required on iOS
+  }),
+});
+
+interface NotificationContextData {
+    socket: Socket | null;
+    isConnected: boolean;
     notifications: Notification[];
     unreadCount: number;
-    registerForNotifications: () => Promise<void>;
-    markAsRead: (notificationId: string) => void;
-    markAllAsRead: () => void;
-    deleteNotification: (notificationId: string) => void;
-    isNotificationSupported: boolean;
+    markAsRead: (id: string) => Promise<void>;
+    markAllAsRead: () => Promise<void>;
+    refreshNotifications: () => Promise<void>;
+    expoPushToken: string | undefined;
 }
 
-const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
+const NotificationContext = createContext<NotificationContextData>({} as NotificationContextData);
+
+export const useNotifications = () => useContext(NotificationContext);
 
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
+    const { user, isAuthenticated } = useAuth();
+    const [socket, setSocket] = useState<Socket | null>(null);
+    const [isConnected, setIsConnected] = useState(false);
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
-    const [isNotificationSupported, setIsNotificationSupported] = useState(false);
+    const [expoPushToken, setExpoPushToken] = useState<string | undefined>('');
+    const notificationListener = useRef<Notifications.EventSubscription | undefined>(undefined);
+    const responseListener = useRef<Notifications.EventSubscription | undefined>(undefined);
 
+    // Register for push notifications
     useEffect(() => {
-        // Check if notifications are available
-        const notificationsAvailable = notificationService.areNotificationsAvailable();
-        setIsNotificationSupported(notificationsAvailable);
+        if (isAuthenticated && user) {
+            registerForPushNotificationsAsync().then(token => {
+                setExpoPushToken(token);
+                if (token) {
+                    console.log('📬 Expo Push Token:', token);
+                    // Update user profile with push token
+                    authService.updateProfile({ pushToken: token })
+                        .then(() => console.log('✅ Push Token synced with backend'))
+                        .catch(err => console.error('❌ Failed to sync push token:', err));
+                }
+            });
 
-        if (!notificationsAvailable) {
-            console.log('⚠️ Running in Expo Go - notifications disabled');
+            // Listeners
+            notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+                console.log('🔔 Push Notification Received:', notification);
+                // Can manually refresh notifications list here
+                loadNotifications();
+            });
+
+            responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+                console.log('👆 Notification Tapped:', response);
+                // Handle navigation here if needed
+            });
+
+            return () => {
+                if (notificationListener.current) notificationListener.current.remove();
+                if (responseListener.current) responseListener.current.remove();
+            };
+        }
+    }, [isAuthenticated, user]);
+
+    // Initialiser le socket quand l'utilisateur est connecté
+    useEffect(() => {
+        if (!isAuthenticated || !user) {
+            if (socket) {
+                socket.disconnect();
+                setSocket(null);
+                setIsConnected(false);
+            }
             return;
         }
 
-        // Register for push notifications
-        registerForNotifications();
+        console.log('🔌 Connecting to Socket.io at:', SOCKET_URL);
+        
+        const newSocket = io(SOCKET_URL, {
+            transports: ['websocket'],
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000,
+        });
 
-        // Listen for incoming notifications
-        const receivedSubscription = notificationService.addNotificationReceivedListener(
-            (notification) => {
-                console.log('Notification received:', notification);
-                // Add to notifications list
-                const newNotification: Notification = {
-                    _id: Date.now().toString(),
-                    user: '',
-                    title: notification.request.content.title || '',
-                    message: notification.request.content.body || '',
-                    type: 'absence',
-                    read: false,
-                    data: notification.request.content.data,
-                    createdAt: new Date(),
-                };
-                setNotifications((prev) => [newNotification, ...prev]);
-                setUnreadCount((prev) => prev + 1);
-            }
-        );
+        newSocket.on('connect', () => {
+            console.log('✅ Socket connected:', newSocket.id);
+            setIsConnected(true);
+            
+            // Explicitly join the user room
+            console.log('🔗 Joining room for user:', user._id);
+            newSocket.emit('join', user._id);
+        });
 
-        const responseSubscription = notificationService.addNotificationResponseReceivedListener(
-            (response) => {
-                console.log('Notification response:', response);
-                // Handle notification tap
-            }
-        );
+        newSocket.on('disconnect', () => {
+            console.log('❌ Socket disconnected');
+            setIsConnected(false);
+        });
+
+        newSocket.on('connect_error', (err) => {
+            console.log('⚠️ Socket connection error:', err.message);
+        });
+
+        // Écouter les notifications d'absence (Socket)
+        newSocket.on('notification:absence', (notification: Notification) => {
+            console.log('🔔 New socket notification received:', notification);
+            setNotifications(prev => [notification, ...prev]);
+            setUnreadCount(prev => prev + 1);
+        });
+
+        setSocket(newSocket);
+
+        // Charger les notifications initiales
+        loadNotifications();
 
         return () => {
-            if (receivedSubscription?.remove) {
-                receivedSubscription.remove();
-            }
-            if (responseSubscription?.remove) {
-                responseSubscription.remove();
-            }
+            newSocket.disconnect();
         };
-    }, []);
+    }, [isAuthenticated, user]);
 
-    const registerForNotifications = async () => {
+    const loadNotifications = async () => {
         try {
-            await notificationService.registerForPushNotifications();
+            const data = await notificationService.getNotifications();
+            if (data.success) {
+                setNotifications(data.notifications);
+                setUnreadCount(data.unreadCount);
+            }
         } catch (error) {
-            console.error('Failed to register for notifications:', error);
+            console.error('Error loading notifications:', error);
         }
     };
 
-    const markAsRead = (notificationId: string) => {
-        setNotifications((prev) =>
-            prev.map((notif) =>
-                notif._id === notificationId ? { ...notif, read: true } : notif
-            )
-        );
-        setUnreadCount((prev) => Math.max(0, prev - 1));
+    const markAsRead = async (id: string) => {
+        // Optimistic update
+        setNotifications(prev => prev.map(n => n._id === id ? { ...n, read: true } : n));
+        setUnreadCount(prev => Math.max(0, prev - 1));
+        
+        try {
+            await notificationService.markAsRead(id);
+        } catch (error) {
+            console.error('Error marking as read:', error);
+            // Revert if error? For now, we keep optimistic
+        }
     };
 
-    const markAllAsRead = () => {
-        setNotifications((prev) =>
-            prev.map((notif) => ({ ...notif, read: true }))
-        );
+    const markAllAsRead = async () => {
+        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
         setUnreadCount(0);
+        
+        try {
+            await notificationService.markAllAsRead();
+        } catch (error) {
+            console.error('Error marking all as read:', error);
+        }
     };
 
-    const deleteNotification = (notificationId: string) => {
-        setNotifications((prev) => {
-            const notif = prev.find((n) => n._id === notificationId);
-            if (notif && !notif.read) {
-                setUnreadCount((count) => Math.max(0, count - 1));
-            }
-            return prev.filter((n) => n._id !== notificationId);
-        });
+    const refreshNotifications = async () => {
+        await loadNotifications();
     };
 
     return (
-        <NotificationContext.Provider
-            value={{
-                notifications,
-                unreadCount,
-                registerForNotifications,
-                markAsRead,
-                markAllAsRead,
-                deleteNotification,
-                isNotificationSupported,
-            }}
-        >
+        <NotificationContext.Provider value={{
+            socket,
+            isConnected,
+            notifications,
+            unreadCount,
+            markAsRead,
+            markAllAsRead,
+            refreshNotifications,
+            expoPushToken
+        }}>
             {children}
         </NotificationContext.Provider>
     );
 };
 
-export const useNotifications = () => {
-    const context = useContext(NotificationContext);
-    if (!context) {
-        throw new Error('useNotifications must be used within NotificationProvider');
+async function registerForPushNotificationsAsync() {
+  let token;
+
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('default', {
+      name: 'default',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#FF231F7C',
+    });
+  }
+
+  if (Device.isDevice) {
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
     }
-    return context;
-};
+    if (finalStatus !== 'granted') {
+      console.log('Failed to get push token for push notification!');
+      return;
+    }
+    
+    // Check if running in Expo Go
+    if (Constants.executionEnvironment === 'storeClient') {
+      console.log('🚫 Skipping push registration in Expo Go (Not supported in SDK 53+)');
+      return;
+    }
+
+    try {
+        const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.expoConfig?.extra?.eas?.projectId;
+        if (!projectId) {
+            console.log('⚠️ Project ID not found in app.json or app.config.js');
+        }
+        token = (await Notifications.getExpoPushTokenAsync({
+            projectId, 
+        })).data;
+    } catch (e) {
+        console.error('Error fetching push token:', e);
+    }
+  } else {
+    // alert('Must use physical device for Push Notifications');
+    console.log('Must use physical device for Push Notifications');
+  }
+
+  return token;
+}
