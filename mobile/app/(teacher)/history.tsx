@@ -195,7 +195,7 @@ export default function HistoryScreen() {
                                 </Text>
                             </View>
                             {group.absences.map((absence) => {
-                                const statusConfig = getStatusConfig(absence.status);
+                                const statusConfig = getStatusConfig(absence.absenceType);
                                 const student = typeof absence.student === 'object' ? absence.student : null;
                                 return (
                                     <View

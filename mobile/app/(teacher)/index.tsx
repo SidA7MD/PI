@@ -105,12 +105,15 @@ export default function TeacherHomeScreen() {
 
   // Memoized load stats function
   const loadStats = useCallback(async () => {
+    console.log('🏠 [TeacherHome] loadStats called');
     try {
       setError(null);
+      console.log('🏠 [TeacherHome] About to call teacherService.getTeacherStats()');
       const data = await teacherService.getTeacherStats();
+      console.log('🏠 [TeacherHome] Stats received:', data);
       setStats(data);
     } catch (err) {
-      console.error('Error loading stats:', err);
+      console.error('🏠 [TeacherHome] Error loading stats:', err);
       setError(t('errorLoadingStats') || 'Failed to load statistics');
       
       // Show alert for critical errors
@@ -315,7 +318,7 @@ export default function TeacherHomeScreen() {
                 <View style={styles.summaryRow}>
                   <View style={styles.summaryItem}>
                     <Text style={[styles.summaryValue, { color: colors.success }]}>
-                      {stats?.todayStats?.presents || 0}
+                      {Math.max(0, stats?.todayStats?.presents ?? 0)}
                     </Text>
                     <Text style={[styles.summaryLabel, { color: colors.text.secondary }]}>
                       {t('present') || 'Present'}

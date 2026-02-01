@@ -5,9 +5,12 @@ import { useTheme } from '../../src/context/ThemeContext';
 import { useNotifications } from '../../src/context/NotificationContext';
 import { shadows } from '../../src/theme';
 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 export default function TeacherLayout() {
     const { colors } = useTheme();
     const { unreadCount } = useNotifications();
+    const insets = useSafeAreaInsets();
 
     return (
         <Tabs
@@ -17,8 +20,8 @@ export default function TeacherLayout() {
                 tabBarStyle: {
                     backgroundColor: colors.background.card,
                     borderTopWidth: 0,
-                    height: 60,
-                    paddingBottom: 8,
+                    height: 60 + insets.bottom,
+                    paddingBottom: 8 + insets.bottom,
                     ...shadows.lg, // Use theme shadow
                 },
                 tabBarLabelStyle: {

@@ -41,8 +41,15 @@ export interface BulkAbsenceRequest {
 }
 
 export const getTeacherStats = async (): Promise<TeacherStats> => {
-    const { data } = await api.get('/teacher/stats');
-    return data;
+    console.log('📊 [Mobile] Calling getTeacherStats...');
+    try {
+        const { data } = await api.get('/teacher/stats');
+        console.log('✅ [Mobile] getTeacherStats response:', data);
+        return data;
+    } catch (error) {
+        console.error('❌ [Mobile] getTeacherStats error:', error);
+        throw error;
+    }
 };
 
 export const getMyClasses = async (): Promise<Class[]> => {

@@ -8,6 +8,8 @@ const Notification = require('../models/Notification');
 const socketHandler = require('../utils/socketHandler');
 const pushHandler = require('../utils/pushNotificationHandler');
 
+console.log('🔄 teacherController.js loaded - VERSION 2.0 WITH UNIQUE STUDENT FIX');
+
 // Helper pour envoyer une notification (Socket.io + DB + Push)
 async function sendAbsenceNotification(parentId, student, status, date, subject, startTime) {
   try {
@@ -91,6 +93,137 @@ exports.getMyClasses = async (req, res) => {
       classes: teacher.classes,
     });
   } catch (error) {
+    res.status(500).json({ message: 'Erreur serveur', error: error.message });
+  }
+};
+
+// @desc    Get teacher dashboard statistics
+// @route   GET /api/teacher/stats
+// @access  Private/Teacher
+exports.getTeacherStats = async (req, res) => {
+  console.log('📊 getTeacherStats called for teacher:', req.user._id);
+  try {
+    const teacher = await User.findById(req.user._id).populate({
+      path: 'classes',
+      populate: { path: 'students' }
+    });
+    
+    console.log('👨‍🏫 Teacher found:', teacher.username);
+    console.log('📚 Number of classes:', teacher.classes?.length || 0);
+
+    if (!teacher.classes || teacher.classes.length === 0) {
+      return res.status(200).json({
+        totalClasses: 0,
+        totalStudents: 0,
+        todayStats: { absences: 0, lates: 0, presents: 0 },
+        weeklyStats: { absences: 0, lates: 0, attendanceRate: 100 },
+        classes: [],
+        subjects: []
+      });
+    }
+
+    const classIds = teacher.classes.map(c => c._id);
+    
+    // Count UNIQUE students across all classes (a student can be in multiple classes)
+    const uniqueStudentIds = new Set();
+    teacher.classes.forEach(classObj => {
+      if (classObj.students) {
+        classObj.students.forEach(student => {
+          uniqueStudentIds.add(student._id.toString());
+        });
+      }
+    });
+    const totalStudents = uniqueStudentIds.size;
+
+    // Get date ranges
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const weekAgo = new Date(today);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+
+    // Get today's absences
+    const todayAbsences = await Absence.find({
+      class: { $in: classIds },
+      date: { $gte: today, $lt: tomorrow }
+    });
+
+    // Get weekly absences
+    const weeklyAbsences = await Absence.find({
+      class: { $in: classIds },
+      date: { $gte: weekAgo, $lt: tomorrow }
+    });
+
+    // Calculate today stats - count unique students
+    const todayAbsentStudents = new Set(
+      todayAbsences.filter(a => a.absenceType === 'absent').map(a => a.student.toString())
+    );
+    const todayLateStudents = new Set(
+      todayAbsences.filter(a => a.absenceType === 'retard').map(a => a.student.toString())
+    );
+    
+    // Combine absent and late (a student can't be both on same day, but just in case)
+    const todayAbsentOrLate = new Set([...todayAbsentStudents, ...todayLateStudents]);
+    
+    // DEBUG LOGGING
+    console.log('=== TEACHER STATS DEBUG ===');
+    console.log('Total Students:', totalStudents);
+    console.log('Today Absences Count:', todayAbsences.length);
+    console.log('Unique Absent Students:', todayAbsentStudents.size);
+    console.log('Unique Late Students:', todayLateStudents.size);
+    console.log('Total Absent or Late:', todayAbsentOrLate.size);
+    console.log('Calculated Presents:', totalStudents - todayAbsentOrLate.size);
+    
+    const todayStats = {
+      absences: todayAbsentStudents.size,
+      lates: todayLateStudents.size,
+      presents: Math.max(0, totalStudents - todayAbsentOrLate.size)
+    };
+    
+    console.log('Final todayStats:', todayStats);
+    console.log('========================');
+
+    // Calculate weekly stats
+    const weeklyAbsencesCount = weeklyAbsences.filter(a => a.absenceType === 'absent').length;
+    const weeklyLatesCount = weeklyAbsences.filter(a => a.absenceType === 'retard').length;
+    const weeklyTotalPossible = totalStudents * 7; // 7 days
+    const attendanceRate = weeklyTotalPossible > 0 
+      ? ((weeklyTotalPossible - weeklyAbsencesCount) / weeklyTotalPossible * 100).toFixed(1)
+      : 100;
+
+   // Get school for subjects
+    const school = await School.findOne({ teachers: req.user._id });
+    const subjects = school ? school.subjects : [];
+
+    // Build class stats (today only to match interface)
+   const classesWithStats = teacher.classes.map(classObj => ({
+      ...classObj.toObject(),
+      studentCount: classObj.students?.length || 0,
+      todayAbsences: todayAbsences.filter(a => 
+        a.class.toString() === classObj._id.toString() && a.absenceType === 'absent'
+      ).length,
+      todayLates: todayAbsences.filter(a => 
+        a.class.toString() === classObj._id.toString() && a.absenceType === 'retard'
+      ).length
+    }));
+
+    res.status(200).json({
+      totalClasses: teacher.classes.length,
+      totalStudents,
+      todayStats,
+      weeklyStats: {
+        absences: weeklyAbsencesCount,
+        lates: weeklyLatesCount,
+        attendanceRate: parseFloat(attendanceRate)
+      },
+      classes: classesWithStats,
+      subjects
+    });
+
+  } catch (error) {
+    console.error('Error in getTeacherStats:', error);
     res.status(500).json({ message: 'Erreur serveur', error: error.message });
   }
 };
