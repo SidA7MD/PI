@@ -1,7 +1,15 @@
 // src/components/admin/StudentForm.jsx
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+// Header and Sidebar imports removed
 import api from '../../services/api';
+import { 
+  FiUser, FiCalendar, FiBook, FiSave, FiArrowLeft, FiAlertCircle, 
+  FiSearch, FiX 
+} from 'react-icons/fi';
+import { LuGraduationCap } from 'react-icons/lu';
+import '../../styles/Forms.css';
+import '../../styles/Auth.css';
 
 const StudentForm = () => {
   const { id } = useParams();
@@ -13,18 +21,9 @@ const StudentForm = () => {
     classes: [],
   });
   const [classes, setClasses] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   useEffect(() => {
     const loadData = async () => {
@@ -39,11 +38,12 @@ const StudentForm = () => {
             firstName: student.firstName || '',
             lastName: student.lastName || '',
             dateOfBirth: student.dateOfBirth ? new Date(student.dateOfBirth).toISOString().split('T')[0] : '',
-            classes: student.classes?.map(c => c._id || c) || (student.class ? [student.class._id || student.class] : []),
+            classes: student.classes?.map(c => String(c._id || c)) || [],
           });
         }
       } catch (err) {
         console.error('Erreur chargement données', err);
+        setError('Erreur lors du chargement des données');
       }
     };
     loadData();
@@ -53,18 +53,17 @@ const StudentForm = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleClassToggle = (classId) => {
+  const toggleClass = (classId) => {
     setFormData(prev => {
-      const currentClasses = prev.classes || [];
+      const current = prev.classes || [];
       const strId = String(classId);
-      const exists = currentClasses.some(id => String(id) === strId);
-      
-      if (exists) {
-        return { ...prev, classes: currentClasses.filter(id => String(id) !== strId) };
+      if (current.includes(strId)) {
+        return { ...prev, classes: current.filter(id => id !== strId) };
       } else {
-        return { ...prev, classes: [...currentClasses, strId] };
+        return { ...prev, classes: [...current, strId] };
       }
     });
+    setSearchTerm('');
   };
 
   const handleSubmit = async (e) => {
@@ -73,21 +72,10 @@ const StudentForm = () => {
     setError('');
     try {
       if (id) {
-        await api.put(`/student/${id}`, {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          dateOfBirth: formData.dateOfBirth || undefined,
-          classes: formData.classes,
-        });
+        await api.put(`/student/${id}`, formData);
       } else {
-        await api.post('/admin/create-student', {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          dateOfBirth: formData.dateOfBirth || undefined,
-          classes: formData.classes,
-        });
+        await api.post('/admin/create-student', formData);
       }
-
       navigate('/admin/students');
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Erreur lors de l\'opération');
@@ -96,224 +84,155 @@ const StudentForm = () => {
     }
   };
 
-  const styles = {
-    container: {
-      padding: isMobile ? '20px' : '32px',
-      maxWidth: '700px',
-      margin: '0 auto',
-      minHeight: 'calc(100vh - 70px)',
-    },
-    card: {
-      background: '#ffffff',
-      borderRadius: isMobile ? '16px' : '12px',
-      padding: isMobile ? '24px' : '32px',
-      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
-      border: '1px solid #e2e8f0',
-    },
-    header: {
-      marginBottom: isMobile ? '24px' : '32px',
-    },
-    title: {
-      fontSize: isMobile ? '20px' : '24px',
-      color: '#2d3748',
-      fontWeight: '600',
-      margin: 0,
-      letterSpacing: '-0.3px',
-    },
-    errorMessage: {
-      background: '#fed7d7',
-      color: '#742a2a',
-      padding: isMobile ? '10px 14px' : '12px 16px',
-      borderRadius: '8px',
-      marginBottom: isMobile ? '20px' : '24px',
-      fontSize: isMobile ? '13px' : '14px',
-      border: '1px solid #fc8181',
-      lineHeight: '1.5',
-    },
-    formGroup: {
-      marginBottom: isMobile ? '20px' : '24px',
-    },
-    label: {
-      display: 'block',
-      fontSize: isMobile ? '13px' : '14px',
-      fontWeight: '600',
-      color: '#2d3748',
-      marginBottom: '8px',
-      lineHeight: '1.4',
-    },
-    input: {
-      width: '100%',
-      padding: isMobile ? '14px 16px' : '12px 16px',
-      fontSize: isMobile ? '16px' : '14px', // 16px prevents zoom on iOS
-      border: '1px solid #e2e8f0',
-      borderRadius: '8px',
-      outline: 'none',
-      transition: 'all 0.2s ease',
-      boxSizing: 'border-box',
-      WebkitAppearance: 'none', // Better iOS styling
-      MozAppearance: 'none',
-    },
-    select: {
-      width: '100%',
-      padding: isMobile ? '14px 16px' : '12px 16px',
-      fontSize: isMobile ? '16px' : '14px',
-      border: '1px solid #e2e8f0',
-      borderRadius: '8px',
-      outline: 'none',
-      transition: 'all 0.2s ease',
-      boxSizing: 'border-box',
-      background: '#ffffff',
-      WebkitAppearance: 'none',
-      MozAppearance: 'none',
-      backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%232d3748\' d=\'M6 9L1 4h10z\'/%3E%3C/svg%3E")',
-      backgroundRepeat: 'no-repeat',
-      backgroundPosition: `right ${isMobile ? '16px' : '12px'} center`,
-      paddingRight: isMobile ? '40px' : '36px',
-    },
-    formActions: {
-      display: 'flex',
-      flexDirection: isMobile ? 'column' : 'row',
-      gap: isMobile ? '12px' : '12px',
-      marginTop: isMobile ? '28px' : '32px',
-    },
-    btnPrimary: {
-      padding: isMobile ? '14px 24px' : '12px 24px',
-      background: '#4299e1',
-      color: 'white',
-      border: 'none',
-      borderRadius: '8px',
-      fontSize: isMobile ? '15px' : '14px',
-      fontWeight: '600',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-      boxShadow: '0 2px 8px rgba(66, 153, 225, 0.3)',
-      width: isMobile ? '100%' : 'auto',
-      order: isMobile ? 1 : 1,
-    },
-    btnSecondary: {
-      padding: isMobile ? '14px 24px' : '12px 24px',
-      background: '#ffffff',
-      color: '#2d3748',
-      border: '1px solid #e2e8f0',
-      borderRadius: '8px',
-      fontSize: isMobile ? '15px' : '14px',
-      fontWeight: '600',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-      width: isMobile ? '100%' : 'auto',
-      order: isMobile ? 2 : 2,
-    },
-  };
+  const selectedClasses = classes.filter(c => formData.classes.includes(String(c._id)));
+  const availableClasses = classes.filter(c => 
+    !formData.classes.includes(String(c._id)) &&
+    c.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <div style={styles.header}>
-          <h2 style={styles.title}>{id ? 'Modifier' : 'Ajouter'} un élève</h2>
-        </div>
-        {error && <div style={styles.errorMessage}>{error}</div>}
-        <form onSubmit={handleSubmit}>
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Prénom</label>
-            <input
-              type="text"
-              name="firstName"
-              value={formData.firstName}
-              onChange={handleChange}
-              required
-              disabled={loading}
-              style={styles.input}
-              onFocus={(e) => e.target.style.borderColor = '#4299e1'}
-              onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
-              placeholder="Entrez le prénom"
-            />
-          </div>
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Nom</label>
-            <input
-              type="text"
-              name="lastName"
-              value={formData.lastName}
-              onChange={handleChange}
-              required
-              disabled={loading}
-              style={styles.input}
-              onFocus={(e) => e.target.style.borderColor = '#4299e1'}
-              onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
-              placeholder="Entrez le nom"
-            />
-          </div>
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Date de naissance (optionnel)</label>
-            <input
-              type="date"
-              name="dateOfBirth"
-              value={formData.dateOfBirth}
-              onChange={handleChange}
-              disabled={loading}
-              style={styles.input}
-              onFocus={(e) => e.target.style.borderColor = '#4299e1'}
-              onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
-            />
-          </div>
-          <div style={styles.formGroup}>
-            <label style={styles.label}>
-              Classes assignées
-            </label>
-            <div style={{ 
-              border: '1px solid #e2e8f0', 
-              borderRadius: '8px', 
-              padding: '12px',
-              maxHeight: '200px',
-              overflowY: 'auto'
-            }}>
-              {classes.length === 0 ? (
-                 <p style={{ color: '#718096', fontSize: '14px' }}>Aucune classe disponible</p>
-              ) : (
-                classes.map(cls => (
-                  <label key={cls._id} style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    marginBottom: '8px',
-                    cursor: 'pointer',
-                    fontSize: '14px'
-                  }}>
-                    <input
-                      type="checkbox"
-                      checked={formData.classes && formData.classes.some(id => String(id) === String(cls._id))}
-                      onChange={() => handleClassToggle(cls._id)}
-                      style={{ marginRight: '10px' }}
-                    />
-                    {cls.name} <span style={{ color: '#718096', marginLeft: '5px', fontSize: '12px' }}>({cls.level})</span>
-                  </label>
-                ))
-              )}
+    <>
+      <div className="form-container">
+        <div className="form-card">
+          <div className="form-header">
+            <div className="form-icon">
+              <LuGraduationCap />
             </div>
+            <h2 className="form-title">{id ? 'Modifier Élève' : 'Inscrire Élève'}</h2>
+            <p className="form-subtitle">
+              {id ? 'Mettre à jour le dossier' : 'Créer un nouveau profil élève'}
+            </p>
           </div>
-          <div style={styles.formActions}>
-            <button
-              type="submit"
-              style={styles.btnPrimary}
-              disabled={loading}
-              onMouseEnter={(e) => !isMobile && (e.target.style.background = '#3182ce')}
-              onMouseLeave={(e) => !isMobile && (e.target.style.background = '#4299e1')}
-            >
-              {loading ? 'En cours...' : id ? 'Mettre à jour' : 'Créer'}
-            </button>
-            <button
-              type="button"
-              style={styles.btnSecondary}
-              onClick={() => navigate('/admin/students')}
-              disabled={loading}
-              onMouseEnter={(e) => !isMobile && (e.target.style.background = '#f7fafc')}
-              onMouseLeave={(e) => !isMobile && (e.target.style.background = '#ffffff')}
-            >
-              Annuler
-            </button>
-          </div>
-        </form>
+
+          {error && (
+            <div className="error-alert">
+              <FiAlertCircle size={18} />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            <div className="form-section">
+              <h3 className="section-title"><FiUser /> Informations Personnelles</h3>
+              
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label">Prénom *</label>
+                  <div className="form-input-wrapper">
+                    <FiUser className="form-input-icon" />
+                    <input
+                      type="text"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleChange}
+                      className="form-input"
+                      placeholder="Ex: Amadou"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Nom *</label>
+                  <div className="form-input-wrapper">
+                    <FiUser className="form-input-icon" />
+                    <input
+                      type="text"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleChange}
+                      className="form-input"
+                      placeholder="Ex: Ba"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Date de naissance</label>
+                <div className="form-input-wrapper">
+                  <FiCalendar className="form-input-icon" />
+                  <input
+                    type="date"
+                    name="dateOfBirth"
+                    value={formData.dateOfBirth}
+                    onChange={handleChange}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="form-section">
+              <h3 className="section-title"><FiBook /> Classes</h3>
+              <div className="chips-input-container">
+                {selectedClasses.length > 0 && (
+                  <div className="selected-chips">
+                    {selectedClasses.map(c => (
+                      <div 
+                        key={c._id} 
+                        className="active-chip"
+                        onClick={() => toggleClass(c._id)}
+                      >
+                        <span>{c.name}</span>
+                        <FiX size={14} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                <div className="search-input-wrapper" style={{ border: 'none', padding: 0 }}>
+                  <FiSearch className="search-icon" style={{ left: 0 }} />
+                  <input
+                    type="text"
+                    placeholder="Rechercher une classe..."
+                    className="search-input"
+                    style={{ paddingLeft: '28px', border: 'none', background: 'transparent' }}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+
+                {searchTerm && (
+                  <div className="search-dropdown">
+                    {availableClasses.length === 0 ? (
+                      <div className="dropdown-item" style={{ color: '#999', cursor: 'default' }}>
+                        Aucun résultat
+                      </div>
+                    ) : (
+                      availableClasses.map(c => (
+                        <div 
+                          key={c._id} 
+                          className="dropdown-item"
+                          onClick={() => toggleClass(c._id)}
+                        >
+                          {c.name}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="form-actions">
+              <button type="submit" className="btn-primary" disabled={loading} style={{ flex: 2 }}>
+                {loading ? 'Enregistrement...' : <><FiSave /> {id ? 'Mettre à jour' : 'Enregistrer'}</>}
+              </button>
+              <button 
+                type="button" 
+                className="btn-secondary" 
+                onClick={() => navigate('/admin/students')}
+                style={{ flex: 1 }}
+              >
+                <FiArrowLeft /> Annuler
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

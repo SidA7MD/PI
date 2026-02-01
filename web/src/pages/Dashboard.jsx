@@ -33,8 +33,6 @@ const Dashboard = () => {
     return <Navigate to="/admin/dashboard" replace />;
   } else if (user.role === 'teacher') {
     return <Navigate to="/teacher/dashboard" replace />;
-  } else if (user.role === 'parent') {
-    return <Navigate to="/parent/dashboard" replace />;
   }
 
   return <Navigate to="/login" replace />;

@@ -150,10 +150,10 @@ exports.getTeacherById = async (req, res) => {
 // @access  Private/School
 exports.createTeacher = async (req, res) => {
   try {
-    const { username, phone, password, classId } = req.body;
+    const { username, phone, email, password, classId } = req.body;
 
-    if (!username || !phone || !password) {
-      return res.status(400).json({ message: 'Tous les champs sont requis' });
+    if (!username || !password) {
+      return res.status(400).json({ message: 'Nom d\'utilisateur et mot de passe sont requis' });
     }
 
     // Vérifier que l'école existe
@@ -168,16 +168,27 @@ exports.createTeacher = async (req, res) => {
       return res.status(400).json({ message: 'Ce nom d\'utilisateur est déjà utilisé' });
     }
 
-    // Vérifier si le téléphone existe déjà
-    const phoneExists = await User.findOne({ phone });
-    if (phoneExists) {
-      return res.status(400).json({ message: 'Ce numéro de téléphone est déjà utilisé' });
+    // Vérifier si le téléphone existe déjà (si fourni)
+    if (phone) {
+      const phoneExists = await User.findOne({ phone });
+      if (phoneExists) {
+        return res.status(400).json({ message: 'Ce numéro de téléphone est déjà utilisé' });
+      }
+    }
+
+    // Vérifier si l'email existe déjà (si fourni)
+    if (email) {
+      const emailExists = await User.findOne({ email });
+      if (emailExists) {
+        return res.status(400).json({ message: 'Cet email est déjà utilisé' });
+      }
     }
 
     // Créer le professeur
     const teacher = await User.create({
       username,
-      phone,
+      phone: phone || undefined,
+      email: email || undefined,
       password,
       role: 'teacher',
       school: schoolUser.school,

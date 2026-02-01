@@ -1,0 +1,317 @@
+/* src/styles/Components.css */
+/* Filter Bar */
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.search-input-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 280px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--gray-400);
+  font-size: 18px;
+}
+
+
+.search-input-wrapper .search-input {
+  width: 100%;
+  padding: 12px 16px 12px 42px;
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease-in-out;
+  background: white;
+  color: var(--gray-900);
+}
+
+.search-input-wrapper .search-input:hover {
+  border-color: var(--gray-300);
+}
+
+.search-input-wrapper .search-input:focus {
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 4px var(--primary-50);
+}
+
+.btn-add {
+  background: var(--primary-600);
+  color: white;
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2);
+}
+
+.btn-add:hover {
+  background: var(--primary-700);
+  transform: translateY(-1px);
+}
+
+/* Item Card (for Lists) */
+.item-card {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  border: 1px solid var(--gray-200);
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.item-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+  border-color: var(--primary-200);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.item-badge {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-200) 100%);
+  color: var(--gray-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.item-badge.primary {
+  background: linear-gradient(135deg, var(--primary-100) 0%, var(--primary-200) 100%);
+  color: var(--primary-700);
+}
+
+.item-badge.success {
+  background: linear-gradient(135deg, var(--success-bg) 0%, #A7F3D0 100%);
+  color: var(--success);
+}
+
+.item-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-400);
+  transition: all 0.2s;
+}
+
+.btn-icon:hover {
+  background: var(--gray-100);
+  color: var(--gray-800);
+}
+
+.btn-icon.delete:hover {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.item-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 4px;
+}
+
+.item-subtitle {
+  font-size: 14px;
+  color: var(--gray-500);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Chips Container */
+.chips-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.chip {
+  padding: 4px 10px;
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gray-600);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chip-icon {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.chip.more {
+  background: var(--gray-100);
+  color: var(--gray-500);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: var(--radius-xl);
+  border: 2px dashed var(--gray-200);
+  grid-column: 1 / -1;
+}
+
+.empty-icon {
+  font-size: 48px;
+  color: var(--gray-300);
+  margin-bottom: 16px;
+}
+
+.empty-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: 8px;
+}
+
+.empty-subtext {
+  color: var(--gray-500);
+  font-size: 14px;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-input-wrapper {
+    min-width: 100%;
+  }
+
+  .btn-add {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .item-card {
+    padding: 16px;
+  }
+
+  .item-badge {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
+
+  .item-title {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .search-input-wrapper .search-input {
+    padding: 10px 14px 10px 38px;
+    font-size: 14px;
+  }
+
+  .search-icon {
+    left: 12px;
+    font-size: 16px;
+  }
+
+  .btn-add {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+
+  .item-card {
+    padding: 14px;
+  }
+
+  .item-badge {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+
+  .item-title {
+    font-size: 15px;
+  }
+
+  .item-subtitle {
+    font-size: 13px;
+  }
+
+  .chip {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+
+  .empty-state {
+    padding: 40px 16px;
+  }
+
+  .empty-icon {
+    font-size: 36px;
+  }
+
+  .empty-text {
+    font-size: 16px;
+  }
+
+  .empty-subtext {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-bar {
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .card-header {
+    flex-wrap: wrap;
+  }
+
+  .item-actions {
+    width: 100%;
+    justify-content: flex-end;
+    margin-top: 8px;
+  }
+}

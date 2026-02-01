@@ -1,139 +1,115 @@
 // src/pages/TeacherHistory.jsx
 import React, { useState, useEffect } from 'react';
+// Header and Sidebar imports removed
 import api from '../services/api';
-import { FaHistory, FaFilter, FaSearch, FaUser } from 'react-icons/fa';
-import '../styles/TeacherHistory.css';
+import { FiCalendar, FiUser, FiClock, FiAlertCircle, FiFilter } from 'react-icons/fi';
+import '../styles/Dashboard.css';
+import '../styles/Components.css';
 
 const TeacherHistory = () => {
   const [absences, setAbsences] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [classes, setClasses] = useState([]);
-  const [selectedClass, setSelectedClass] = useState('all');
+  const [filter, setFilter] = useState('all');
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchHistory = async () => {
       try {
-        const [statsRes, absencesRes] = await Promise.all([
-          api.get('/teacher/stats'),
-          // Fetching absences for the first class by default if no class selected
-          api.get('/teacher/classes')
-        ]);
-        
-        setClasses(statsRes.data.classes);
-        
-        // Fetch all absences for all teacher's classes
-        // Note: The backend getClassAbsences needs a classId, 
-        // but we want a general history. For now we'll fetch per class or create a combined view.
-        // Let's fetch for each class and combine for the "all" view.
-        const allAbsences = await Promise.all(
-          statsRes.data.classes.map(c => api.get(`/teacher/class/${c._id}/absences`))
-        );
-        
-        const combined = allAbsences.flatMap(res => res.data.absences);
-        setAbsences(combined.sort((a, b) => new Date(b.date) - new Date(a.date)));
+        const res = await api.get('/teacher/absences');
+        setAbsences(res.data.absences || []);
       } catch (err) {
-        console.error('Error fetching history:', err);
+        console.error('Error', err);
       } finally {
         setLoading(false);
       }
     };
-
-    fetchData();
+    fetchHistory();
   }, []);
 
-  const handleClassChange = async (e) => {
-    const classId = e.target.value;
-    setSelectedClass(classId);
-    setLoading(true);
-    try {
-      if (classId === 'all') {
-        const allAbsences = await Promise.all(
-          classes.map(c => api.get(`/teacher/class/${c._id}/absences`))
-        );
-        const combined = allAbsences.flatMap(res => res.data.absences);
-        setAbsences(combined.sort((a, b) => new Date(b.date) - new Date(a.date)));
-      } else {
-        const res = await api.get(`/teacher/class/${classId}/absences`);
-        setAbsences(res.data.absences);
-      }
-    } catch (err) {
-      console.error('Error filtering history:', err);
-    } finally {
-      setLoading(false);
+  const filteredAbsences = absences.filter(a => {
+    if (filter === 'all') return true;
+    if (filter === 'today') {
+      return new Date(a.date).toDateString() === new Date().toDateString();
     }
-  };
-
-  const getStatusBadge = (status) => {
-    const config = {
-      absent: { class: 'status-absent', label: 'Absent' },
-      retard: { class: 'status-late', label: 'Retard' },
-      présent: { class: 'status-present', label: 'Présent' }
-    };
-    const s = config[status] || config['présent'];
-    return <span className={`badge ${s.class}`}>{s.label}</span>;
-  };
-
-  if (loading && absences.length === 0) return <div className="loading">Chargement de l'historique...</div>;
+    if (filter === 'week') {
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      return new Date(a.date) >= weekAgo;
+    }
+    return true;
+  });
 
   return (
-    <div className="teacher-history">
-      <header className="history-header">
-        <div className="title-area">
-          <h1><FaHistory /> Historique des absences</h1>
-          <p>Consultez et gérez les pointages passés.</p>
+    <>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">
+            <FiClock className="text-primary-600" />
+            Historique des Absences
+          </h1>
+          <p className="page-subtitle">Consultez les absences signalées</p>
         </div>
-        
-        <div className="filters">
-          <div className="filter-group">
-            <FaFilter className="filter-icon" />
-            <select value={selectedClass} onChange={handleClassChange}>
-              <option value="all">Toutes les classes</option>
-              {classes.map(c => (
-                <option key={c._id} value={c._id}>{c.name}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </header>
-
-      <div className="history-table-container">
-        <table className="history-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Élève</th>
-              <th>Classe</th>
-              <th>Statut</th>
-              <th>Notes</th>
-            </tr>
-          </thead>
-          <tbody>
-            {absences.map((abs) => (
-              <tr key={abs._id}>
-                <td className="date-cell">
-                  <strong>{new Date(abs.date).toLocaleDateString('fr-FR')}</strong>
-                  <span>{new Date(abs.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
-                </td>
-                <td>
-                  <div className="student-info">
-                    <FaUser className="user-icon" />
-                    {abs.student?.firstName} {abs.student?.lastName}
-                  </div>
-                </td>
-                <td>{abs.class?.name || 'Inconnu'}</td>
-                <td>{getStatusBadge(abs.status)}</td>
-                <td className="notes-cell">{abs.notes || '-'}</td>
-              </tr>
-            ))}
-            {absences.length === 0 && (
-              <tr>
-                <td colSpan="5" className="empty-row">Aucun enregistrement trouvé.</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
       </div>
-    </div>
+
+      <div className="filter-bar">
+        {[
+          { id: 'all', label: 'Tout', icon: <FiFilter /> },
+          { id: 'today', label: 'Aujourd\'hui', icon: <FiCalendar /> },
+          { id: 'week', label: 'Cette semaine', icon: <FiClock /> }
+        ].map(f => (
+          <button
+            key={f.id}
+            className={`chip ${filter === f.id ? 'active-chip' : ''}`}
+            style={{ 
+              background: filter === f.id ? 'var(--primary-600)' : 'white',
+              color: filter === f.id ? 'white' : 'var(--gray-600)',
+              border: `1px solid ${filter === f.id ? 'var(--primary-600)' : 'var(--gray-300)'}`,
+              fontSize: '14px',
+              padding: '8px 16px',
+              cursor: 'pointer'
+            }}
+            onClick={() => setFilter(f.id)}
+          >
+            {f.icon} {f.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="cards-grid">
+        {filteredAbsences.length === 0 ? (
+          <div className="empty-state">
+            <FiAlertCircle className="empty-icon" style={{ color: 'var(--success)' }} />
+            <div className="empty-text">Aucune absence</div>
+            <div className="empty-subtext">Aucune absence trouvée pour cette période</div>
+          </div>
+        ) : (
+          filteredAbsences.map(absence => (
+            <div key={absence._id} className="item-card">
+              <div className="card-header">
+                <div className="item-badge" style={{ background: 'var(--gray-100)' }}>
+                  {absence.student?.firstName?.charAt(0)}
+                </div>
+                <div className="chip" style={{ 
+                  background: absence.status === 'retard' ? 'var(--warning-bg)' : 'var(--danger-bg)',
+                  color: absence.status === 'retard' ? 'var(--warning)' : 'var(--danger)'
+                }}>
+                  {absence.status === 'retard' ? 'Retard' : 'Absent'}
+                </div>
+              </div>
+
+              <div className="item-title">{absence.student?.firstName} {absence.student?.lastName}</div>
+              <div className="item-subtitle">
+                <span style={{ fontWeight: '600', color: 'var(--primary-600)' }}>{absence.class?.name}</span>
+              </div>
+
+              <div style={{ marginTop: 'auto', fontSize: '13px', color: 'var(--gray-500)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <FiCalendar size={12} />
+                {new Date(absence.date).toLocaleDateString()}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </>
   );
 };
 

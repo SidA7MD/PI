@@ -1,159 +1,108 @@
 // src/pages/Login.jsx
-import { useContext, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useContext } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import '../styles/Login.css';
+import { FiMail, FiLock, FiLogIn, FiAlertCircle } from 'react-icons/fi';
+import { LuGraduationCap } from 'react-icons/lu';
+import '../styles/Auth.css';
 
 const Login = () => {
-  const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
-  const [loginType, setLoginType] = useState('school'); // 'school', 'teacher', or 'superadmin'
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
   const { login } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
+    setError('');
     try {
-      await login(identifier, password, loginType);
-
-      // Redirect based on role will be handled by App.jsx
+      await login(formData.email, formData.password);
       navigate('/dashboard');
     } catch (err) {
-      setError(typeof err === 'string' ? err : err.message || 'Erreur de connexion');
-    } finally {
+      setError(err.response?.data?.message || 'Identifiants invalides');
       setLoading(false);
     }
   };
 
-  const getPlaceholder = () => {
-    switch (loginType) {
-      case 'school':
-        return 'email@ecole.fr';
-      case 'teacher':
-        return 'Téléphone ou nom d\'utilisateur';
-      case 'superadmin':
-        return 'Nom d\'utilisateur';
-      default:
-        return 'Identifiant';
-    }
-  };
-
-  const getLabel = () => {
-    switch (loginType) {
-      case 'school':
-        return 'Email de l\'école';
-      case 'teacher':
-        return 'Téléphone ou nom d\'utilisateur';
-      case 'superadmin':
-        return 'Nom d\'utilisateur';
-      default:
-        return 'Identifiant';
-    }
-  };
-
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <div className="login-header">
-          <h1>Gestion des Absences</h1>
-          <p>Connectez-vous à votre compte</p>
-        </div>
-        {error && <div className="error-message">{error}</div>}
-
-        <div style={{ marginBottom: '20px', display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            onClick={() => setLoginType('school')}
-            style={{
-              padding: '8px 16px',
-              border: 'none',
-              borderRadius: '6px',
-              background: loginType === 'school' ? '#667eea' : '#e0e0e0',
-              color: loginType === 'school' ? 'white' : '#333',
-              cursor: 'pointer',
-              fontWeight: loginType === 'school' ? '600' : '400',
-            }}
-          >
-            École
-          </button>
-          <button
-            type="button"
-            onClick={() => setLoginType('teacher')}
-            style={{
-              padding: '8px 16px',
-              border: 'none',
-              borderRadius: '6px',
-              background: loginType === 'teacher' ? '#667eea' : '#e0e0e0',
-              color: loginType === 'teacher' ? 'white' : '#333',
-              cursor: 'pointer',
-              fontWeight: loginType === 'teacher' ? '600' : '400',
-            }}
-          >
-            Professeur
-          </button>
-          <button
-            type="button"
-            onClick={() => setLoginType('superadmin')}
-            style={{
-              padding: '8px 16px',
-              border: 'none',
-              borderRadius: '6px',
-              background: loginType === 'superadmin' ? '#667eea' : '#e0e0e0',
-              color: loginType === 'superadmin' ? 'white' : '#333',
-              cursor: 'pointer',
-              fontWeight: loginType === 'superadmin' ? '600' : '400',
-            }}
-          >
-            Super Admin
-          </button>
+    <div className="auth-container">
+      <div className="auth-card">
+        <div className="auth-header">
+          <div className="auth-icon-wrapper">
+            <LuGraduationCap />
+          </div>
+          <h1 className="auth-title">Bon retour !</h1>
+          <p className="auth-subtitle">Connectez-vous pour gérer votre établissement</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="login-form">
-          <div className="form-group">
-            <label htmlFor="identifier">{getLabel()}</label>
-            <input
-              id="identifier"
-              type={loginType === 'school' ? 'email' : 'text'}
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              placeholder={getPlaceholder()}
-              required
-              disabled={loading}
-            />
+        {error && (
+          <div className="error-alert">
+            <FiAlertCircle size={18} />
+            <span>{error}</span>
           </div>
-          <div className="form-group">
-            <label htmlFor="password">Mot de passe</label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Entrez votre mot de passe"
-              required
-              disabled={loading}
-            />
-          </div>
-          <button type="submit" className="login-button" disabled={loading}>
-            {loading ? 'Connexion...' : 'Se connecter'}
-          </button>
+        )}
 
-          <div style={{ textAlign: 'center', marginTop: '20px' }}>
-            <p style={{ color: '#666', fontSize: '14px' }}>
-              Vous êtes une école ?{' '}
-              <Link to="/register" style={{ color: '#667eea', textDecoration: 'none', fontWeight: '500' }}>
-                Créer un compte
-              </Link>
-            </p>
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="form-group">
+            <label className="form-label">Email ou nom d'utilisateur</label>
+            <div className="form-input-wrapper">
+              <FiMail className="form-input-icon" />
+              <input
+                type="text"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                className="form-input"
+                placeholder="Entrez votre email"
+                required
+              />
+            </div>
           </div>
+
+          <div className="form-group">
+            <label className="form-label">Mot de passe</label>
+            <div className="form-input-wrapper">
+              <FiLock className="form-input-icon" />
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className="form-input"
+                placeholder="Votre mot de passe"
+                required
+              />
+            </div>
+          </div>
+
+          <button type="submit" className="btn-primary" disabled={loading}>
+            {loading ? 'Connexion...' : (
+              <>
+                <span>Se connecter</span>
+                <FiLogIn size={18} />
+              </>
+            )}
+          </button>
         </form>
+
+        <div className="auth-footer">
+          <p>
+            Vous n'avez pas de compte ? 
+            <Link to="/register" className="auth-link">Créer une école</Link>
+          </p>
+        </div>
       </div>
     </div>
   );
 };
 
 export default Login;
-

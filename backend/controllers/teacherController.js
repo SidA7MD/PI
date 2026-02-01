@@ -378,3 +378,34 @@ exports.markBulkAbsence = async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur', error: error.message });
   }
 };
+
+// @desc    Obtenir toutes les absences du professeur
+// @route   GET /api/teacher/absences
+// @access  Private/Teacher
+exports.getMyAbsences = async (req, res) => {
+  try {
+    const teacher = await User.findById(req.user._id).populate('classes');
+    
+    if (!teacher.classes || teacher.classes.length === 0) {
+      return res.status(200).json({
+        count: 0,
+        absences: [],
+      });
+    }
+
+    const classIds = teacher.classes.map(c => c._id);
+    
+    const absences = await Absence.find({ class: { $in: classIds } })
+      .populate('student', 'firstName lastName uniqueCode')
+      .populate('class', 'name level')
+      .populate('teacher', 'username')
+      .sort({ date: -1 });
+
+    res.status(200).json({
+      count: absences.length,
+      absences,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur serveur', error: error.message });
+  }
+};

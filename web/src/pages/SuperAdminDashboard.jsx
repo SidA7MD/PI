@@ -1,12 +1,15 @@
 // src/pages/SuperAdminDashboard.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import Header from '../components/layout/Header';
-import SuperAdminSidebar from '../components/layout/SuperAdminSidebar';
+// Header and SuperAdminSidebar imports removed
 import api from '../services/api';
 import { FaPlus } from 'react-icons/fa';
+import { FiTrendingUp, FiMail, FiLock, FiAlertCircle, FiCalendar, FiMinus } from 'react-icons/fi';
+import { LuSchool } from 'react-icons/lu';
 import '../styles/Dashboard.css';
-import '../styles/AdminPages.css';
+import '../styles/Components.css';
+import '../styles/Forms.css';
+import '../styles/Auth.css';
 
 const SuperAdminDashboard = () => {
   const { user } = useContext(AuthContext);
@@ -81,136 +84,184 @@ const SuperAdminDashboard = () => {
 
   if (loading) {
     return (
-      <div className="admin-layout">
-        <Header />
-        <div className="admin-content">
-          <SuperAdminSidebar />
-          <main className="dashboard-main">
-            <div className="loading">Chargement...</div>
-          </main>
-        </div>
+      <div className="loading-container">
+        <div className="loading">Chargement...</div>
       </div>
     );
   }
 
   return (
-    <div className="admin-layout">
-      <Header />
-      <div className="admin-content">
-        <SuperAdminSidebar />
-        <main className="dashboard-main">
-          <div className="dashboard-header">
-            <h1>Super Administrateur</h1>
-            <p className="dashboard-subtitle">Gestion des écoles</p>
-          </div>
-
-          <div style={{ marginBottom: '30px' }}>
-            <button
-              onClick={() => setShowForm(!showForm)}
-              className="add-button"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
-            >
-              <FaPlus />
-              {showForm ? 'Annuler' : 'Créer une nouvelle école'}
-            </button>
-          </div>
-
-          {showForm && (
-            <div className="content-card" style={{ marginBottom: '30px' }}>
-              <h2 style={{ marginBottom: '20px' }}>Créer une nouvelle école</h2>
-              {error && <div className="error-message">{error}</div>}
-              <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                  <label>Nom de l'école *</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    placeholder="Ex: École Primaire Centrale"
-                    required
-                    disabled={submitting}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Email de l'école *</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="email@ecole.fr"
-                    required
-                    disabled={submitting}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Mot de passe *</label>
-                  <input
-                    type="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    placeholder="Minimum 6 caractères"
-                    required
-                    minLength="6"
-                    disabled={submitting}
-                  />
-                  <small style={{ color: '#666', fontSize: '12px', marginTop: '5px', display: 'block' }}>
-                    Ce mot de passe sera utilisé par l'école pour se connecter
-                  </small>
-                </div>
-                <div className="form-actions">
-                  <button type="submit" className="btn btn-primary" disabled={submitting}>
-                    {submitting ? 'Création...' : 'Créer l\'école'}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => {
-                      setShowForm(false);
-                      setFormData({ name: '', email: '', password: '' });
-                      setError('');
-                    }}
-                    disabled={submitting}
-                  >
-                    Annuler
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
-          <div className="content-card">
-            <h2 style={{ marginBottom: '20px' }}>Écoles enregistrées ({schools.length})</h2>
-            {schools.length === 0 ? (
-              <div className="empty-state">
-                <p>Aucune école enregistrée</p>
-              </div>
-            ) : (
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Nom</th>
-                    <th>Email</th>
-                    <th>Date de création</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {schools.map((school) => (
-                    <tr key={school._id}>
-                      <td>{school.name}</td>
-                      <td>{school.email}</td>
-                      <td>{new Date(school.createdAt).toLocaleDateString('fr-FR')}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </main>
+    <>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">
+            <LuSchool className="text-primary-600" />
+            Super Administrateur
+          </h1>
+          <p className="page-subtitle">Gestion globale des établissements scolaires</p>
+        </div>
       </div>
-    </div>
+
+      <div className="stats-grid">
+        <div className="stat-card">
+          <div className="stat-header">
+            <div className="stat-value">{schools.length}</div>
+            <div className="stat-icon info">
+              <LuSchool />
+            </div>
+          </div>
+          <div className="stat-label">Écoles Inscrites</div>
+        </div>
+      </div>
+
+      <div className="filter-bar" style={{ justifyContent: 'space-between' }}>
+        <h2 className="page-title" style={{ fontSize: '20px', margin: 0 }}>
+          <FiTrendingUp /> Écoles ({schools.length})
+        </h2>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="btn-add"
+        >
+          {showForm ? <FiMinus /> : <FaPlus />}
+          <span>{showForm ? 'Fermer le formulaire' : 'Nouvelle école'}</span>
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="form-container" style={{ margin: '0 0 32px 0', maxWidth: '100%' }}>
+          <div className="form-card">
+            <div className="form-header">
+              <div className="form-icon">
+                <LuSchool />
+              </div>
+              <h2 className="form-title">Créer une nouvelle école</h2>
+              <p className="form-subtitle">Ajouter un établissement à la plateforme</p>
+            </div>
+            
+            {error && (
+              <div className="error-alert">
+                <FiAlertCircle size={18} />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit}>
+              <div className="form-section">
+                <h3 className="section-title"><LuSchool /> Informations de l'établissement</h3>
+                
+                <div className="form-group">
+                  <label className="form-label">Nom de l'école *</label>
+                  <div className="form-input-wrapper">
+                    <LuSchool className="form-input-icon" />
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      className="form-input"
+                      placeholder="Ex: École Primaire Centrale"
+                      required
+                      disabled={submitting}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">Email administrateur *</label>
+                    <div className="form-input-wrapper">
+                      <FiMail className="form-input-icon" />
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        className="form-input"
+                        placeholder="admin@ecole.fr"
+                        required
+                        disabled={submitting}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Mot de passe *</label>
+                    <div className="form-input-wrapper">
+                      <FiLock className="form-input-icon" />
+                      <input
+                        type="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        className="form-input"
+                        placeholder="Minimum 6 caractères"
+                        required
+                        minLength="6"
+                        disabled={submitting}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="form-actions">
+                <button type="submit" className="btn-submit" disabled={submitting}>
+                  {submitting ? 'Création en cours...' : 'Créer l\'école'}
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => {
+                    setShowForm(false);
+                    setFormData({ name: '', email: '', password: '' });
+                    setError('');
+                  }}
+                  disabled={submitting}
+                >
+                  Annuler
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <div className="cards-grid">
+        {schools.length === 0 ? (
+          <div className="empty-state">
+            <LuSchool className="empty-icon" />
+            <div className="empty-text">Aucune école enregistrée</div>
+            <div className="empty-subtext">Utilisez le bouton "Nouvelle école" pour commencer</div>
+          </div>
+        ) : (
+          schools.map((school) => (
+            <div key={school._id} className="item-card">
+              <div className="card-header">
+                <div className="item-badge primary">
+                  {school.name.charAt(0)}
+                </div>
+                <div className="item-actions">
+                  {/* Future actions like delete or edit can go here */}
+                </div>
+              </div>
+
+              <div className="item-title">{school.name}</div>
+              
+              <div className="item-subtitle">
+                <FiMail size={14} /> {school.email}
+              </div>
+
+              <div className="chips-container">
+                <div className="chip">
+                  <FiCalendar size={12} />
+                  Inscrit le {new Date(school.createdAt).toLocaleDateString('fr-FR')}
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </>
   );
 };
 

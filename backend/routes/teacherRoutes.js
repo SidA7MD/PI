@@ -8,6 +8,7 @@ const {
   updateAbsence,
   getTeacherStats,
   markBulkAbsence,
+  getMyAbsences,
 } = require('../controllers/teacherController');
 const { protect, teacherOnly } = require('../middleware/authMiddleware');
 
@@ -23,6 +24,9 @@ router.get('/class/:classId/students', getClassStudents);
 
 // Marquer une absence
 router.post('/mark-absence', markAbsence);
+
+// Obtenir toutes les absences du professeur
+router.get('/absences', getMyAbsences);
 
 // Obtenir les absences d'une classe
 router.get('/class/:classId/absences', getClassAbsences);

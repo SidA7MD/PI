@@ -3,7 +3,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import Layout from './components/Layout';
+
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
@@ -18,9 +18,7 @@ import AbsencesDashboard from './components/admin/AbsencesDashboard';
 import TeacherDashboard from './pages/TeacherDashboard';
 import TeacherAttendance from './pages/TeacherAttendance';
 import TeacherHistory from './pages/TeacherHistory';
-import ParentDashboard from './pages/ParentDashboard';
 
-import ParentAbsences from './pages/ParentAbsences';
 import Profile from './pages/Profile';
 
 function App() {
@@ -38,9 +36,7 @@ function App() {
             path="/profile"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <Profile />
-                </Layout>
+                <Profile />
               </ProtectedRoute>
             }
           />
@@ -64,9 +60,7 @@ function App() {
             path="/teacher/dashboard"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <TeacherDashboard />
-                </Layout>
+                <TeacherDashboard />
               </ProtectedRoute>
             }
           />
@@ -74,9 +68,7 @@ function App() {
             path="/teacher/attendance/:classId"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <TeacherAttendance />
-                </Layout>
+                <TeacherAttendance />
               </ProtectedRoute>
             }
           />
@@ -84,9 +76,7 @@ function App() {
             path="/teacher/history"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <TeacherHistory />
-                </Layout>
+                <TeacherHistory />
               </ProtectedRoute>
             }
           />
@@ -94,39 +84,16 @@ function App() {
             path="/teacher/classes"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <TeacherDashboard />
-                </Layout>
+                <TeacherDashboard />
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/parent/dashboard"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <ParentDashboard />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/parent/absences"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <ParentAbsences />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
+
           <Route
             path="/admin/teachers"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <TeachersList />
-                </Layout>
+                <TeachersList />
               </ProtectedRoute>
             }
           />
@@ -134,9 +101,7 @@ function App() {
             path="/admin/teachers/create"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <TeacherForm />
-                </Layout>
+                <TeacherForm />
               </ProtectedRoute>
             }
           />
@@ -144,9 +109,7 @@ function App() {
             path="/admin/teachers/edit/:id"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <TeacherForm />
-                </Layout>
+                <TeacherForm />
               </ProtectedRoute>
             }
           />
@@ -154,9 +117,7 @@ function App() {
             path="/admin/classes"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <ClassesList />
-                </Layout>
+                <ClassesList />
               </ProtectedRoute>
             }
           />
@@ -164,9 +125,7 @@ function App() {
             path="/admin/classes/create"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <ClassForm />
-                </Layout>
+                <ClassForm />
               </ProtectedRoute>
             }
           />
@@ -174,9 +133,7 @@ function App() {
             path="/admin/classes/edit/:id"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <ClassForm />
-                </Layout>
+                <ClassForm />
               </ProtectedRoute>
             }
           />
@@ -184,9 +141,7 @@ function App() {
             path="/admin/students"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <StudentsList />
-                </Layout>
+                <StudentsList />
               </ProtectedRoute>
             }
           />
@@ -194,9 +149,7 @@ function App() {
             path="/admin/students/create"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <StudentForm />
-                </Layout>
+                <StudentForm />
               </ProtectedRoute>
             }
           />
@@ -204,9 +157,7 @@ function App() {
             path="/admin/students/edit/:id"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <StudentForm />
-                </Layout>
+                <StudentForm />
               </ProtectedRoute>
             }
           />
@@ -214,9 +165,7 @@ function App() {
             path="/admin/absences"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <AbsencesDashboard />
-                </Layout>
+                <AbsencesDashboard />
               </ProtectedRoute>
             }
           />
