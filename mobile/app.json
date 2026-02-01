@@ -47,7 +47,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/android-icon-monochrome.png",
+          "icon": "./assets/images/notification-icon.png",
           "color": "#3B82F6",
           "sounds": []
         }
@@ -58,9 +58,8 @@
       "typedRoutes": true
     },
     "extra": {
-      "router": {},
       "eas": {
-        "projectId": "b9a8f056-ffb7-424f-b290-eb053608fc5d"
+        "projectId": "f59eb7a9-5844-4f92-8bf2-36c2031fdfdc"
       }
     }
   }

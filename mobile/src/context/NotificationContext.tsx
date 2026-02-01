@@ -49,8 +49,8 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [expoPushToken, setExpoPushToken] = useState<string | undefined>('');
-    const notificationListener = useRef<Notifications.EventSubscription | undefined>(undefined);
-    const responseListener = useRef<Notifications.EventSubscription | undefined>(undefined);
+    const notificationListener = useRef<Notifications.EventSubscription>(undefined);
+    const responseListener = useRef<Notifications.EventSubscription>(undefined);
 
     // Register for push notifications
     useEffect(() => {
@@ -220,19 +220,12 @@ async function registerForPushNotificationsAsync() {
       return;
     }
     
-    // Check if running in Expo Go
-    if (Constants.executionEnvironment === 'storeClient') {
-      console.log('🚫 Skipping push registration in Expo Go (Not supported in SDK 53+)');
-      return;
-    }
-
+    // Learn more about projectId:
+    // https://docs.expo.dev/push-notifications/push-notifications-setup/#configure-projectid
+    // If you use bare workflow, you need to provide projectId manually if missing from app.json
     try {
-        const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.expoConfig?.extra?.eas?.projectId;
-        if (!projectId) {
-            console.log('⚠️ Project ID not found in app.json or app.config.js');
-        }
         token = (await Notifications.getExpoPushTokenAsync({
-            projectId, 
+            // projectId: Constants.expoConfig?.extra?.eas?.projectId, // Not always needed if using Expo Go
         })).data;
     } catch (e) {
         console.error('Error fetching push token:', e);
