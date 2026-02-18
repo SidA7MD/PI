@@ -89,19 +89,19 @@ exports.updateClass = async (req, res) => {
 
         // 1. Retirer ce cours des professeurs qui ne sont PLUS dans la liste
         const pullRes = await User.updateMany(
-          { 
-            classes: classId, 
+          {
+            classes: classId,
             _id: { $nin: newTeacherIds }
-          }, 
+          },
           { $pull: { classes: classId } }
         );
         console.log('Pull result (teachers):', pullRes.modifiedCount);
 
         // 2. Ajouter ce cours aux nouveaux professeurs
         const pushRes = await User.updateMany(
-          { 
+          {
             _id: { $in: newTeacherIds }
-          }, 
+          },
           { $addToSet: { classes: classId } }
         );
         console.log('Push result (teachers):', pushRes.modifiedCount);
@@ -161,6 +161,10 @@ exports.deleteClass = async (req, res) => {
       { classes: classObj._id },
       { $pull: { classes: classObj._id } }
     );
+
+    // Supprimer toutes les absences associées à cette classe
+    const Absence = require('../models/Absence');
+    await Absence.deleteMany({ class: classObj._id });
 
     await classObj.deleteOne();
 

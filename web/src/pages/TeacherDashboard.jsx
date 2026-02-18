@@ -4,8 +4,8 @@ import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 // Header and Sidebar imports removed
 import api from '../services/api';
-import { 
-  FiUsers, FiClock, FiCalendar, FiCheckCircle, FiAlertTriangle 
+import {
+  FiUsers, FiClock, FiCalendar, FiCheckCircle, FiAlertTriangle
 } from 'react-icons/fi';
 import { LuSchool, LuGraduationCap } from 'react-icons/lu';
 import '../styles/Dashboard.css';
@@ -112,20 +112,20 @@ const TeacherDashboard = () => {
           classes.map((cls) => (
             <Link key={cls._id} to={`/teacher/attendance/${cls._id}`} className="item-card action-card">
               <div className="card-header">
-                 <div className="item-badge primary">
-                    {cls.name.charAt(0)}
-                 </div>
-                 <div className="chip">
-                   {cls.studentCount} élèves
-                 </div>
+                <div className="item-badge primary">
+                  {cls.name.charAt(0)}
+                </div>
+                <div className="chip">
+                  {cls.studentCount} élèves
+                </div>
               </div>
 
               <div className="item-title">{cls.name}</div>
-              
+
               <div className="item-subtitle" style={{ marginBottom: '12px' }}>
-                 <span style={{ color: 'var(--danger)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                   <FiAlertTriangle size={14} /> {cls.todayAbsences} absents auj.
-                 </span>
+                <span style={{ color: 'var(--danger)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <FiAlertTriangle size={14} /> {cls.todayAbsences} absents auj.
+                </span>
               </div>
 
               <div style={{ marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid var(--gray-100)', color: 'var(--primary-600)', fontWeight: '600', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>

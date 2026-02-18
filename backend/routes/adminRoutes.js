@@ -10,12 +10,16 @@ const {
   createStudent,
   assignStudentToClass,
   assignTeacherToClass,
+  getAdminStats,
 } = require('../controllers/adminController');
 const { protect, schoolOnly } = require('../middleware/authMiddleware');
 
 // Toutes les routes nécessitent une authentification et le rôle school
 router.use(protect);
 router.use(schoolOnly);
+
+// Statistiques
+router.get('/stats', getAdminStats);
 
 // Gestion des professeurs
 router.post('/create-teacher', createTeacher);

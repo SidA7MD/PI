@@ -47,7 +47,7 @@ export default function RegisterScreen() {
             newErrors.phone = t('invalidPhone');
         }
 
-        if (formData.email && !validateEmail(formData.email)) {
+        if (!formData.email.trim() || !validateEmail(formData.email)) {
             newErrors.email = t('invalidEmail');
         }
 
@@ -70,14 +70,14 @@ export default function RegisterScreen() {
 
         try {
             // Auto-prepend +222 to phone number
-            const phoneWithPrefix = formData.phone.startsWith('+222') 
-                ? formData.phone 
+            const phoneWithPrefix = formData.phone.startsWith('+222')
+                ? formData.phone
                 : `+222${formData.phone}`;
-            
+
             await register({
                 username: formData.username.trim(),
                 phone: phoneWithPrefix,
-                email: formData.email.trim() || undefined,
+                email: formData.email.trim(),
                 password: formData.password,
                 role: 'parent',
             });
@@ -97,7 +97,7 @@ export default function RegisterScreen() {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={[styles.container, { backgroundColor: colors.background.secondary }]}
             >
-                <ScrollView 
+                <ScrollView
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"

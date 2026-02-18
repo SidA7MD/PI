@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 // Header and Sidebar imports removed
 import api from '../services/api';
 import { FiCalendar, FiUser, FiClock, FiAlertCircle, FiFilter } from 'react-icons/fi';
+import { useSocket } from '../context/SocketContext';
 import '../styles/Dashboard.css';
 import '../styles/Components.css';
 
@@ -11,19 +12,32 @@ const TeacherHistory = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
 
+  const socket = useSocket();
+
+  const fetchHistory = async () => {
+    try {
+      const res = await api.get('/teacher/absences');
+      setAbsences(res.data.absences || []);
+    } catch (err) {
+      console.error('Error', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        const res = await api.get('/teacher/absences');
-        setAbsences(res.data.absences || []);
-      } catch (err) {
-        console.error('Error', err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchHistory();
   }, []);
+
+  useEffect(() => {
+    if (socket) {
+      socket.on('absence:deleted', () => {
+        console.log('🗑️ Absence deleted, refreshing teacher history...');
+        fetchHistory();
+      });
+      return () => socket.off('absence:deleted');
+    }
+  }, [socket]);
 
   const filteredAbsences = absences.filter(a => {
     if (filter === 'all') return true;
@@ -59,7 +73,7 @@ const TeacherHistory = () => {
           <button
             key={f.id}
             className={`chip ${filter === f.id ? 'active-chip' : ''}`}
-            style={{ 
+            style={{
               background: filter === f.id ? 'var(--primary-600)' : 'white',
               color: filter === f.id ? 'white' : 'var(--gray-600)',
               border: `1px solid ${filter === f.id ? 'var(--primary-600)' : 'var(--gray-300)'}`,
@@ -88,7 +102,7 @@ const TeacherHistory = () => {
                 <div className="item-badge" style={{ background: 'var(--gray-100)' }}>
                   {absence.student?.firstName?.charAt(0)}
                 </div>
-                <div className="chip" style={{ 
+                <div className="chip" style={{
                   background: absence.status === 'retard' ? 'var(--warning-bg)' : 'var(--danger-bg)',
                   color: absence.status === 'retard' ? 'var(--warning)' : 'var(--danger)'
                 }}>

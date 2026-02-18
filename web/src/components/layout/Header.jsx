@@ -2,8 +2,8 @@
 import React, { useContext, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
-import { 
-  FiLogOut, FiUsers, FiBook, FiCalendar, FiHome, FiMenu, FiX, FiUser 
+import {
+  FiLogOut, FiUsers, FiBook, FiCalendar, FiHome, FiMenu, FiX, FiUser, FiFileText
 } from 'react-icons/fi';
 import { LuGraduationCap, LuSchool } from 'react-icons/lu';
 import '../../styles/Layout.css';
@@ -23,6 +23,7 @@ const Header = () => {
           { icon: <FiBook />, label: 'Classes', path: '/admin/classes' },
           { icon: <FiUsers />, label: 'Élèves', path: '/admin/students' },
           { icon: <FiCalendar />, label: 'Absences', path: '/admin/absences' },
+          // Bulletins removed
         ];
       case 'teacher':
         return [
@@ -53,14 +54,14 @@ const Header = () => {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
               <span className="logo-text">Khbarwilly</span>
-              {user?.role === 'school' && user?.name && (
-                <span style={{ 
-                  fontSize: '11px', 
-                  fontWeight: '600', 
+              {user?.role === 'school' && user?.school?.name && (
+                <span style={{
+                  fontSize: '11px',
+                  fontWeight: '600',
                   color: 'var(--gray-500)',
                   letterSpacing: '0.3px'
                 }}>
-                  {user.name}
+                  {user.school.name}
                 </span>
               )}
             </div>
@@ -69,9 +70,9 @@ const Header = () => {
           {/* Desktop Navigation */}
           <nav className="desktop-nav">
             {menuItems.map((item) => {
-              const isActive = location.pathname === item.path || 
+              const isActive = location.pathname === item.path ||
                 (item.path !== '/admin/dashboard' && item.path !== '/teacher/dashboard' && item.path !== '/parent/dashboard' && location.pathname.startsWith(item.path));
-              
+
               return (
                 <Link
                   key={item.path}
@@ -88,18 +89,20 @@ const Header = () => {
 
         <div className="header-right">
           <Link to="/profile" className="user-profile-link">
-             <div className="user-avatar">
+            <div className="user-avatar">
               {user?.username?.charAt(0).toUpperCase()}
             </div>
-            <span className="user-name">{user?.username}</span>
+            <span className="user-name">
+              {user?.role === 'school' && user?.school?.name ? `École ${user.school.name}` : user?.username}
+            </span>
           </Link>
-          
+
           <button onClick={logout} className="logout-btn" title="Déconnexion">
             <FiLogOut />
           </button>
 
           {/* Mobile Menu Toggle */}
-          <button 
+          <button
             className="mobile-menu-toggle"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >

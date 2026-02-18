@@ -34,8 +34,8 @@ const userSchema = new mongoose.Schema(
     },
     email: {
       type: String,
+      required: [true, 'L\'email est requis'],
       unique: true,
-      sparse: true,
       trim: true,
       lowercase: true,
     },
@@ -66,6 +66,10 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.pre('save', async function (next) {
+  // Convert null to undefined for unique sparse fields to avoid index conflicts
+  if (this.phone === null) this.phone = undefined;
+  if (this.username === null) this.username = undefined;
+
   if (!this.isModified('password')) {
     return next();
   }

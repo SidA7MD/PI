@@ -9,10 +9,10 @@ const ProtectedRoute = ({ children }) => {
 
   if (loading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
         height: '100vh',
         fontSize: '18px',
         color: '#666'
@@ -23,6 +23,10 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (user.role === 'parent') {
     return <Navigate to="/login" replace />;
   }
 

@@ -53,7 +53,7 @@ const Login = () => {
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
-            <label className="form-label">Email ou nom d'utilisateur</label>
+            <label className="form-label">Email</label>
             <div className="form-input-wrapper">
               <FiMail className="form-input-icon" />
               <input
@@ -62,7 +62,7 @@ const Login = () => {
                 value={formData.email}
                 onChange={handleChange}
                 className="form-input"
-                placeholder="Entrez votre email"
+                placeholder="votre@email.com"
                 required
               />
             </div>
@@ -95,10 +95,8 @@ const Login = () => {
         </form>
 
         <div className="auth-footer">
-          <p>
-            Vous n'avez pas de compte ? 
-            <Link to="/register" className="auth-link">Créer une école</Link>
-          </p>
+          
+          
         </div>
       </div>
     </div>

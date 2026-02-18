@@ -16,7 +16,7 @@ exports.getAllStudents = async (req, res) => {
 
     const students = await Student.find({ school: schoolUser.school })
       .populate('classes', 'name level')
-      .populate('parent', 'username phone')
+      .populate('parents', 'username phone')
       .sort({ lastName: 1 });
 
     res.status(200).json({
@@ -35,7 +35,7 @@ exports.getStudentById = async (req, res) => {
   try {
     const student = await Student.findById(req.params.id)
       .populate('classes', 'name level')
-      .populate('parent', 'username phone')
+      .populate('parents', 'username phone')
       .populate('school', 'name');
 
     if (!student) {
@@ -78,7 +78,7 @@ exports.updateStudent = async (req, res) => {
     if (lastName) student.lastName = lastName;
     if (dateOfBirth) student.dateOfBirth = dateOfBirth;
     if (active !== undefined) student.active = active;
-    
+
     // Gérer le changement de classe
     // Gérer le changement de classes (tableau d'IDs)
     console.log('Classes from request:', req.body.classes);
@@ -93,19 +93,19 @@ exports.updateStudent = async (req, res) => {
 
         // 1. Retirer l'élève des classes qui ne sont PLUS dans la liste
         const pullRes = await Class.updateMany(
-          { 
-            students: studentId, 
+          {
+            students: studentId,
             _id: { $nin: newClassIds }
-          }, 
+          },
           { $pull: { students: studentId } }
         );
         console.log(`Removed student ${studentId} from ${pullRes.modifiedCount} classes`);
 
         // 2. Ajouter l'élève aux nouvelles classes
         const pushRes = await Class.updateMany(
-          { 
+          {
             _id: { $in: newClassIds }
-          }, 
+          },
           { $addToSet: { students: studentId } }
         );
         console.log(`Added student ${studentId} to ${pushRes.modifiedCount} classes`);
@@ -123,14 +123,15 @@ exports.updateStudent = async (req, res) => {
           student.classes.push(cId);
           await Class.findByIdAndUpdate(cId, { $addToSet: { students: student._id } });
         }
-      } catch (err) {}
+      } catch (err) { }
     }
 
     await student.save();
 
     const updatedStudent = await Student.findById(student._id)
       .populate('classes', 'name level')
-      .populate('parent', 'username phone');
+      .populate('classes', 'name level')
+      .populate('parents', 'username phone');
 
     res.status(200).json({
       message: 'Élève mis à jour avec succès',
@@ -161,7 +162,29 @@ exports.deleteStudent = async (req, res) => {
     // Retirer l'élève de toutes les classes
     await Class.updateMany({ students: student._id }, { $pull: { students: student._id } });
 
+    // Supprimer toutes les absences associées à cet élève
+    const Absence = require('../models/Absence');
+    await Absence.deleteMany({ student: student._id });
+
+    // Retirer l'élève de la liste des enfants de ses parents
+    if (student.parents && student.parents.length > 0) {
+      await User.updateMany(
+        { _id: { $in: student.parents } },
+        { $pull: { students: student._id } }
+      );
+    }
+
+    // Par précaution, retirer de TOUS les utilisateurs ayant cet élève (cas de ghosting)
+    await User.updateMany(
+      { role: 'parent', students: student._id },
+      { $pull: { students: student._id } }
+    );
+
     await student.deleteOne();
+
+    // Notifier l'interface école pour mettre à jour l'historique
+    const socketHandler = require('../utils/socketHandler');
+    socketHandler.emitToSchool(schoolUser.school, 'absence:deleted', { studentId: student._id });
 
     res.status(200).json({
       message: 'Élève supprimé avec succès',

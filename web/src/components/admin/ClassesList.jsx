@@ -31,7 +31,7 @@ const ClassesList = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Voulez-vous vraiment supprimer cette classe ?')) {
       try {
-        await api.delete(`/admin/classes/${id}`);
+        await api.delete(`/class/${id}`);
         setClasses(classes.filter((c) => c._id !== id));
       } catch (err) {
         console.error('Error deleting class', err);
@@ -39,7 +39,7 @@ const ClassesList = () => {
     }
   };
 
-  const filteredClasses = classes.filter(cls => 
+  const filteredClasses = classes.filter(cls =>
     cls.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     cls.level.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -59,9 +59,9 @@ const ClassesList = () => {
       <div className="filter-bar">
         <div className="search-input-wrapper">
           <FiSearch className="search-icon" />
-          <input 
-            type="text" 
-            placeholder="Rechercher une classe..." 
+          <input
+            type="text"
+            placeholder="Rechercher une classe..."
             className="search-input"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

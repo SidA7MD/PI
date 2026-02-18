@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 // Header and Sidebar imports removed
 import api from '../../services/api';
-import { FiUser, FiMail, FiPhone, FiLock, FiSave, FiArrowLeft, FiAlertCircle } from 'react-icons/fi';
+import { FiUser, FiMail, FiPhone, FiLock, FiSave, FiArrowLeft, FiAlertCircle, FiTrash2 } from 'react-icons/fi';
 import '../../styles/Forms.css';
 import '../../styles/Auth.css'; // For basic form inputs
 
@@ -50,10 +50,10 @@ const TeacherForm = () => {
     setError('');
     try {
       if (id) {
-        const updateData = { 
-          username: formData.username, 
+        const updateData = {
+          username: formData.username,
           email: formData.email,
-          phone: formData.phone 
+          phone: formData.phone
         };
         if (formData.password) updateData.password = formData.password;
         await api.put(`/admin/teachers/${id}`, updateData);
@@ -65,6 +65,19 @@ const TeacherForm = () => {
       setError(err.response?.data?.message || err.message || 'Erreur');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (window.confirm('Voulez-vous vraiment supprimer ce professeur ?')) {
+      setLoading(true);
+      try {
+        await api.delete(`/admin/teachers/${id}`);
+        navigate('/admin/teachers');
+      } catch (err) {
+        setError(err.response?.data?.message || err.message || 'Erreur lors de la suppression');
+        setLoading(false);
+      }
     }
   };
 
@@ -92,7 +105,7 @@ const TeacherForm = () => {
           <form onSubmit={handleSubmit}>
             <div className="form-section">
               <h3 className="section-title"><FiUser /> Informations Personnelles</h3>
-              
+
               <div className="form-group">
                 <label className="form-label">Nom d'utilisateur *</label>
                 <div className="form-input-wrapper">
@@ -168,9 +181,20 @@ const TeacherForm = () => {
               <button type="submit" className="btn-primary" disabled={loading} style={{ flex: 2 }}>
                 {loading ? 'Enregistrement...' : <><FiSave /> {id ? 'Mettre à jour' : 'Enregistrer'}</>}
               </button>
-              <button 
-                type="button" 
-                className="btn-secondary" 
+              {id && (
+                <button
+                  type="button"
+                  className="btn-danger"
+                  onClick={handleDelete}
+                  disabled={loading}
+                  style={{ flex: 1 }}
+                >
+                  <FiTrash2 /> Supprimer
+                </button>
+              )}
+              <button
+                type="button"
+                className="btn-secondary"
                 onClick={() => navigate('/admin/teachers')}
                 style={{ flex: 1 }}
               >

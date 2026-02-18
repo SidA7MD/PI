@@ -20,26 +20,26 @@ const isValidEmail = (email) => {
 // @access  Public
 exports.registerSchool = async (req, res) => {
   try {
-    const { 
-      schoolName, 
-      schoolAddress, 
-      schoolPhone, 
+    const {
+      schoolName,
+      schoolAddress,
+      schoolPhone,
       schoolEmail,
       adminUsername,
       adminPhone,
-      adminPassword 
+      adminPassword
     } = req.body;
 
     // Validation
     if (!schoolName || !adminUsername || !adminPhone || !adminPassword) {
-      return res.status(400).json({ 
-        message: 'Nom de l\'école, nom d\'utilisateur, téléphone et mot de passe sont requis' 
+      return res.status(400).json({
+        message: 'Nom de l\'école, nom d\'utilisateur, téléphone et mot de passe sont requis'
       });
     }
 
     if (adminPassword.length < 6) {
-      return res.status(400).json({ 
-        message: 'Le mot de passe doit contenir au moins 6 caractères' 
+      return res.status(400).json({
+        message: 'Le mot de passe doit contenir au moins 6 caractères'
       });
     }
 
@@ -134,13 +134,9 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'Username, password et role sont requis' });
     }
 
-    // Parents must provide phone, teachers must provide email
-    if (role === 'parent' && !phone) {
-      return res.status(400).json({ message: 'Le téléphone est requis pour les parents' });
-    }
-
-    if (role === 'teacher' && !email) {
-      return res.status(400).json({ message: 'L\'email est requis pour les professeurs' });
+    // Parents and teachers must provide email
+    if ((role === 'parent' || role === 'teacher') && !email) {
+      return res.status(400).json({ message: 'L\'email est requis' });
     }
 
     // Only allow parent and teacher roles
@@ -214,20 +210,14 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: 'Le mot de passe est requis' });
     }
 
-    if (!email && !username && !phone) {
-      return res.status(400).json({ 
-        message: 'Email, téléphone ou nom d\'utilisateur requis' 
+    if (!email) {
+      return res.status(400).json({
+        message: 'L\'email est requis'
       });
     }
 
-    // Build query to find user by email, phone, or username
-    const query = {
-      $or: [
-        username ? { username } : null,
-        phone ? { phone } : null,
-        email ? { email: email.toLowerCase() } : null,
-      ].filter(Boolean),
-    };
+    // Build query to find user by email
+    const query = { email: email.toLowerCase() };
 
     // Find user and include password field
     const user = await User.findOne(query)
@@ -323,21 +313,21 @@ exports.updateMe = async (req, res) => {
 
     // Update push token if provided
     if (pushToken !== undefined) {
-         user.pushToken = pushToken;
+      user.pushToken = pushToken;
     }
 
     // If updating password, verify current password
     if (newPassword) {
       if (!currentPassword) {
-        return res.status(400).json({ 
-          message: 'Le mot de passe actuel est requis' 
+        return res.status(400).json({
+          message: 'Le mot de passe actuel est requis'
         });
       }
 
       const isPasswordMatch = await user.comparePassword(currentPassword);
       if (!isPasswordMatch) {
-        return res.status(401).json({ 
-          message: 'Mot de passe actuel incorrect' 
+        return res.status(401).json({
+          message: 'Mot de passe actuel incorrect'
         });
       }
 
@@ -400,7 +390,7 @@ exports.uploadAvatar = async (req, res) => {
 
     const user = await User.findById(req.user._id);
     if (!user) {
-        return res.status(404).json({ message: 'Utilisateur non trouvé' });
+      return res.status(404).json({ message: 'Utilisateur non trouvé' });
     }
 
     user.avatarUrl = avatarUrl; // Assuming User model has avatarUrl field, if not it will be ignored until added
@@ -420,31 +410,31 @@ exports.uploadAvatar = async (req, res) => {
 // @route   POST /api/auth/change-password
 // @access  Private
 exports.changePassword = async (req, res) => {
-    try {
-        const { currentPassword, newPassword } = req.body;
+  try {
+    const { currentPassword, newPassword } = req.body;
 
-        if (!currentPassword || !newPassword) {
-            return res.status(400).json({ message: 'Tous les champs sont requis' });
-        }
-
-        const user = await User.findById(req.user._id).select('+password');
-        if (!user) {
-            return res.status(404).json({ message: 'Utilisateur non trouvé' });
-        }
-
-        // Verify current password
-        const isMatch = await user.comparePassword(currentPassword);
-        if (!isMatch) {
-            return res.status(401).json({ message: 'Mot de passe actuel incorrect' });
-        }
-
-        // Update password
-        user.password = newPassword;
-        await user.save();
-
-        res.status(200).json({ message: 'Mot de passe modifié avec succès' });
-    } catch (error) {
-        console.error('Change Password error:', error);
-        res.status(500).json({ message: 'Erreur serveur', error: error.message });
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Tous les champs sont requis' });
     }
+
+    const user = await User.findById(req.user._id).select('+password');
+    if (!user) {
+      return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    }
+
+    // Verify current password
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Mot de passe actuel incorrect' });
+    }
+
+    // Update password
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({ message: 'Mot de passe modifié avec succès' });
+  } catch (error) {
+    console.error('Change Password error:', error);
+    res.status(500).json({ message: 'Erreur serveur', error: error.message });
+  }
 };

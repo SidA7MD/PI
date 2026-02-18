@@ -17,7 +17,7 @@ export default function LoginScreen() {
     const { colors } = useTheme();
     const { t } = useLanguage();
 
-    const [identifier, setIdentifier] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -26,20 +26,14 @@ export default function LoginScreen() {
     const handleLogin = async () => {
         setError('');
 
-        if (!identifier || !password) {
+        if (!email || !password) {
             setError(t('fillAllFields'));
             return;
         }
 
         setLoading(true);
         try {
-            const credentials = identifier.includes('@')
-                ? { email: identifier, password }
-                : identifier.match(/^[0-9]+$/)
-                    ? { phone: identifier, password }
-                    : { username: identifier, password };
-
-            await login(credentials);
+            await login({ email, password });
         } catch (err: any) {
             setError(err.response?.data?.message || t('loginError'));
         } finally {
@@ -55,7 +49,7 @@ export default function LoginScreen() {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={[styles.container, { backgroundColor: colors.background.secondary }]}
             >
-                <ScrollView 
+                <ScrollView
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
@@ -87,11 +81,12 @@ export default function LoginScreen() {
 
                             <View style={styles.form}>
                                 <Input
-                                    label={t('identifierLabel')}
-                                    value={identifier}
-                                    onChange={setIdentifier}
-                                    placeholder={t('identifierPlaceholder')}
+                                    label={t('emailLabel')}
+                                    value={email}
+                                    onChange={setEmail}
+                                    placeholder={t('emailPlaceholder')}
                                     autoCapitalize="none"
+                                    keyboardType="email-address"
                                     error={error}
                                 />
 

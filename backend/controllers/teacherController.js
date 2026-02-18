@@ -55,20 +55,20 @@ async function sendAbsenceNotification(parentId, student, status, date, subject,
     // Actually, in markBulkAbsence we populated parent. Check if parent object has pushToken.
     // Ideally we should pass the FULL parent object or fetch it.
     // Refactoring helper to fetch parent if needed or assume passed object has token.
-    
+
     // For now, let's just fetch the parent to be safe and ensure we have the token
     const parentUser = await User.findById(parentId);
     if (parentUser && parentUser.pushToken) {
-        console.log(`📱 Sending Push Notification to ${parentUser.username}`);
-        await pushHandler.sendPushToUser(parentUser, title, message, {
-            notificationId: notification._id,
-            studentId: student._id, 
-            type 
-        });
+      console.log(`📱 Sending Push Notification to ${parentUser.username}`);
+      await pushHandler.sendPushToUser(parentUser, title, message, {
+        notificationId: notification._id,
+        studentId: student._id,
+        type
+      });
     } else {
-        console.log(`ℹ️ No push token for parent ${parentId}`);
+      console.log(`ℹ️ No push token for parent ${parentId}`);
     }
-    
+
     return true;
   } catch (error) {
     console.error('Erreur envoi notification:', error);
@@ -110,14 +110,14 @@ exports.getClassStudents = async (req, res) => {
 
     const classObj = await Class.findById(classId).populate({
       path: 'students',
-      populate: { path: 'parent', select: 'username phone' },
+      populate: { path: 'parents', select: 'username phone' },
     });
 
     if (!classObj) {
       return res.status(404).json({ message: 'Classe non trouvée' });
     }
 
-    const school = await School.findOne({ teachers: req.user._id });
+    const school = await School.findById(teacher.school);
     const subjects = school ? school.subjects : [];
 
     res.status(200).json({
@@ -159,7 +159,7 @@ exports.markAbsence = async (req, res) => {
     }
 
     // Vérifier que l'élève appartient à cette classe
-    const student = await Student.findById(studentId).populate('parent');
+    const student = await Student.findById(studentId).populate('parents');
     if (!student || !student.classes.some(c => c.toString() === classId.toString())) {
       return res.status(404).json({ message: 'Élève non trouvé dans cette classe' });
     }
@@ -176,12 +176,15 @@ exports.markAbsence = async (req, res) => {
       date: new Date(),
     });
 
-    // Envoyer une notification au parent si l'élève est absent ou en retard
-    if ((status === 'absent' || status === 'retard') && student.parent) {
-      const message = `Votre enfant ${student.firstName} ${
-        student.lastName
-      } a été marqué comme ${status} le ${new Date().toLocaleDateString('fr-FR')}`;
-      sendNotification(student.parent._id, message);
+    // Envoyer une notification aux parents si l'élève est absent ou en retard
+    if ((status === 'absent' || status === 'retard') && student.parents && student.parents.length > 0) {
+      const message = `Votre enfant ${student.firstName} ${student.lastName
+        } a été marqué comme ${status} le ${new Date().toLocaleDateString('fr-FR')}`;
+
+      // Notifier chaque parent
+      for (const parent of student.parents) {
+        sendNotification(parent._id, message);
+      }
 
       // Marquer la notification comme envoyée
       absence.notificationSent = true;
@@ -276,7 +279,7 @@ exports.updateAbsence = async (req, res) => {
 exports.getTeacherStats = async (req, res) => {
   try {
     const teacher = await User.findById(req.user._id).populate('classes');
-    
+
     if (!teacher.classes || teacher.classes.length === 0) {
       return res.status(200).json({
         totalClasses: 0,
@@ -288,43 +291,43 @@ exports.getTeacherStats = async (req, res) => {
     }
 
     const classIds = teacher.classes.map(c => c._id);
-    
+
     // Count total students
     const totalStudents = await Student.countDocuments({ classes: { $in: classIds } });
-    
+
     // Today's stats
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    
+
     const todayAbsences = await Absence.find({
       class: { $in: classIds },
       date: { $gte: today, $lt: tomorrow },
     });
-    
+
     const todayStats = {
       absences: todayAbsences.filter(a => a.absenceType === 'absent').length,
       lates: todayAbsences.filter(a => a.absenceType === 'retard').length,
       presents: totalStudents - todayAbsences.length, // Assuming only non-presents are stored
     };
-    
+
     // Weekly stats
     const weekAgo = new Date(today);
     weekAgo.setDate(weekAgo.getDate() - 7);
-    
+
     const weeklyAbsences = await Absence.find({
       class: { $in: classIds },
       date: { $gte: weekAgo, $lt: tomorrow },
     });
-    
+
     const weeklyAbsenceCount = weeklyAbsences.filter(a => a.absenceType === 'absent').length;
     const weeklyLateCount = weeklyAbsences.filter(a => a.absenceType === 'retard').length;
     const totalPossibleAttendances = totalStudents * 7;
-    const attendanceRate = totalPossibleAttendances > 0 
-      ? Math.round(((totalPossibleAttendances - weeklyAbsenceCount) / totalPossibleAttendances) * 100) 
+    const attendanceRate = totalPossibleAttendances > 0
+      ? Math.round(((totalPossibleAttendances - weeklyAbsenceCount) / totalPossibleAttendances) * 100)
       : 100;
-    
+
     // Classes with student counts
     const classesWithCounts = await Promise.all(
       teacher.classes.map(async (cls) => {
@@ -342,7 +345,7 @@ exports.getTeacherStats = async (req, res) => {
     );
 
     console.log('🔎 Finding school for teacher:', req.user._id);
-    const school = await School.findOne({ teachers: req.user._id });
+    const school = await School.findById(teacher.school);
     console.log('🏫 School found:', school ? school.name : 'None');
     const subjects = school ? school.subjects : [];
 
@@ -370,7 +373,7 @@ exports.markBulkAbsence = async (req, res) => {
   try {
     const { classId, date, students, subject, startTime } = req.body;
     // students: [{ studentId, status, reason?, notes? }, ...]
-    
+
     if (!classId || !students || !Array.isArray(students)) {
       return res.status(400).json({ message: 'ClassId et liste d\'élèves requis' });
     }
@@ -391,12 +394,12 @@ exports.markBulkAbsence = async (req, res) => {
     for (const studentData of students) {
       try {
         const { studentId, status, reason, notes } = studentData;
-        
+
         if (!['absent', 'présent', 'retard'].includes(status)) {
           results.errors.push({ studentId, error: 'Statut invalide' });
           continue;
         }
-        
+
         // Skip if present (no need to record)
         if (status === 'présent') {
           results.skipped++;
@@ -413,15 +416,17 @@ exports.markBulkAbsence = async (req, res) => {
           student: studentId,
           class: classId,
           date: { $gte: startOfDay, $lte: endOfDay },
+          subject,
+          startTime
         });
 
-        // Need student info for notification (populate parent)
-        const student = await Student.findById(studentId).populate('parent');
-         
+        // Need student info for notification (populate parents)
+        const student = await Student.findById(studentId).populate('parents');
+
         if (!student) {
-             console.log(`❌ Student not found: ${studentId}`);
-             results.errors.push({ studentId, error: 'Student not found' });
-             continue;
+          console.log(`❌ Student not found: ${studentId}`);
+          results.errors.push({ studentId, error: 'Student not found' });
+          continue;
         }
 
         if (absence) {
@@ -459,37 +464,35 @@ exports.markBulkAbsence = async (req, res) => {
         // 3. Notification hasn't been sent yet OR we want to resend on update? 
         //    Let's trigger it if status is compatible. Ideally we might want to check if status CHANGED, 
         //    but for now, ensuring parents get the alert is safer.
-        
+
         // Note: For now, we set notificationSent to true after sending. 
         // If updating, we might want to resend? Let's assume we resend for now to be safe, 
         // or check if notificationSent is false. 
         // The user issue is NO notification received, so let's force send if conditions met.
 
-        if (student.parent && (status === 'absent' || status === 'retard')) {
-           console.log(`🚀 Attempting to send notification to parent ${student.parent._id}`);
-           const sent = await sendAbsenceNotification(
-             student.parent._id, 
-             student, 
-             status, 
-             absenceDate,
-             subject,
-             startTime
-           );
-           
-           if (sent) {
-             console.log('✅ Notification marked as sent in DB');
-             absence.notificationSent = true;
-             await absence.save();
-           } else {
-             console.log('⚠️ sendAbsenceNotification returned false');
-           }
+        if (student.parents && student.parents.length > 0 && (status === 'absent' || status === 'retard')) {
+          console.log(`🚀 Attempting to send notification to ${student.parents.length} parents`);
+
+          let anySent = false;
+          for (const parent of student.parents) {
+            const sent = await sendAbsenceNotification(
+              parent._id,
+              student,
+              status,
+              absenceDate,
+              subject,
+              startTime
+            );
+            if (sent) anySent = true;
+          }
+
+          if (anySent) {
+            console.log('✅ Notification marked as sent in DB');
+            absence.notificationSent = true;
+            await absence.save();
+          }
         } else {
-            console.log('ℹ️ Skipping notification: Parent missing or status not absent/retard');
-            console.log('Debug:', { 
-                hasParent: !!student.parent, 
-                status, 
-                parentId: student.parent?._id 
-            });
+          console.log('ℹ️ Skipping notification: Parents missing or status not absent/retard');
         }
 
       } catch (err) {
@@ -513,7 +516,7 @@ exports.markBulkAbsence = async (req, res) => {
 exports.getMyAbsences = async (req, res) => {
   try {
     const teacher = await User.findById(req.user._id).populate('classes');
-    
+
     if (!teacher.classes || teacher.classes.length === 0) {
       return res.status(200).json({
         count: 0,
@@ -522,7 +525,7 @@ exports.getMyAbsences = async (req, res) => {
     }
 
     const classIds = teacher.classes.map(c => c._id);
-    
+
     const absences = await Absence.find({ class: { $in: classIds } })
       .populate('student', 'firstName lastName uniqueCode')
       .populate('class', 'name level')

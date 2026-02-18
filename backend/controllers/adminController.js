@@ -1,7 +1,9 @@
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const School = require('../models/School');
 const Class = require('../models/Class');
 const Student = require('../models/Student');
+const Absence = require('../models/Absence');
 const generateStudentCode = require('../utils/generateStudentCode');
 
 // ============================================
@@ -21,9 +23,12 @@ exports.createSchool = async (req, res) => {
       });
     }
 
-    // Vérifier si l'email existe déjà
-    const emailExists = await User.findOne({ email: email.toLowerCase() });
-    if (emailExists) {
+    // Vérifier si l'email existe déjà dans User ou School
+    const emailLower = email.toLowerCase();
+    const userEmailExists = await User.findOne({ email: emailLower });
+    const schoolEmailExists = await School.findOne({ email: emailLower });
+
+    if (userEmailExists || schoolEmailExists) {
       return res.status(400).json({ message: 'Cet email est déjà utilisé' });
     }
 
@@ -36,29 +41,42 @@ exports.createSchool = async (req, res) => {
     // Créer l'école dans la base de données
     const school = await School.create({
       name,
-      email: email.toLowerCase(),
+      email: emailLower,
     });
 
-    // Créer le compte User pour l'école (role: 'school')
-    const schoolUser = await User.create({
-      email: email.toLowerCase(),
-      password,
-      role: 'school',
-      school: school._id,
-    });
+    try {
+      // Nettoyer les anciens conflits "phone: null" s'ils existent dans la base
+      await User.updateMany({ phone: null }, { $unset: { phone: "" } });
+      await User.updateMany({ username: null }, { $unset: { username: "" } });
 
-    // Ajouter l'utilisateur école aux admins de l'école
-    school.admins.push(schoolUser._id);
-    await school.save();
+      // Créer le compte User pour l'école (role: 'school')
+      const schoolUser = await User.create({
+        username: `school_${school._id}_${Date.now()}`, // Username unique garanti
+        email: emailLower,
+        password,
+        role: 'school',
+        school: school._id,
+        phone: undefined,
+      });
 
-    res.status(201).json({
-      message: 'École créée avec succès',
-      school: {
-        id: school._id,
-        name: school.name,
-        email: school.email,
-      },
-    });
+      // Ajouter l'utilisateur école aux admins de l'école
+      school.admins.push(schoolUser._id);
+      await school.save();
+
+      res.status(201).json({
+        message: 'École créée avec succès',
+        school: {
+          id: school._id,
+          name: school.name,
+          email: school.email,
+        },
+      });
+    } catch (userErr) {
+      // Si la création du compte user échoue, supprimer l'école créée
+      console.error('Error creating school user - rolling back school creation:', userErr);
+      await School.findByIdAndDelete(school._id);
+      throw userErr; // Sera rattrapé par le catch global
+    }
   } catch (error) {
     console.error('Error in createSchool:', error);
     res.status(500).json({ message: 'Erreur serveur', error: error.message });
@@ -204,7 +222,7 @@ exports.createTeacher = async (req, res) => {
       try {
         const classIds = req.body.classes.map(id => new mongoose.Types.ObjectId(id));
         const teacherId = teacher._id;
-        
+
         console.log(`Syncing classes for NEW teacher ${teacher.username}. Classes:`, classIds);
 
         // Mettre à jour le professeur
@@ -303,19 +321,19 @@ exports.updateTeacher = async (req, res) => {
 
         // 1. Retirer le professeur des classes qui ne sont PLUS dans la liste
         const pullRes = await Class.updateMany(
-          { 
-            teachers: teacherId, 
+          {
+            teachers: teacherId,
             _id: { $nin: newClassIds }
-          }, 
+          },
           { $pull: { teachers: teacherId } }
         );
         console.log('Pull result (classes):', pullRes.modifiedCount);
 
         // 2. Ajouter le professeur aux nouvelles classes
         const pushRes = await Class.updateMany(
-          { 
+          {
             _id: { $in: newClassIds }
-          }, 
+          },
           { $addToSet: { teachers: teacherId } }
         );
         console.log('Push result (classes):', pushRes.modifiedCount);
@@ -327,9 +345,9 @@ exports.updateTeacher = async (req, res) => {
         console.error('Error casting class IDs in updateTeacher:', castErr);
       }
     } else if (classId) {
-       // Backward compatibility for single classId
-       // Logic removed to encourage array usage, or keep if needed:
-       // For now, assume frontend updates to send classes array
+      // Backward compatibility for single classId
+      // Logic removed to encourage array usage, or keep if needed:
+      // For now, assume frontend updates to send classes array
     }
 
     const updatedTeacher = await User.findById(teacher._id)
@@ -427,7 +445,7 @@ exports.createClass = async (req, res) => {
       try {
         const teacherIds = req.body.teachers.map(id => new mongoose.Types.ObjectId(id));
         const classId = classObj._id;
-        
+
         console.log(`Syncing teachers for NEW class ${classObj.name}. Teachers:`, teacherIds);
 
         // Mettre à jour la classe avec les professeurs
@@ -436,7 +454,7 @@ exports.createClass = async (req, res) => {
 
         // Mettre à jour les professeurs pour ajouter cette classe
         const syncRes = await User.updateMany(
-          { 
+          {
             _id: { $in: teacherIds }
           },
           { $addToSet: { classes: classId } }
@@ -561,7 +579,7 @@ exports.assignStudentToClass = async (req, res) => {
 
     // Vérifier si l'élève est déjà dans la classe
     if (student.classes && student.classes.includes(classId)) {
-       return res.status(400).json({ message: "L'élève est déjà dans cette classe" });
+      return res.status(400).json({ message: "L'élève est déjà dans cette classe" });
     }
 
     // Assigner l'élève à la classe (ajouter à la liste)
@@ -642,5 +660,108 @@ exports.assignTeacherToClass = async (req, res) => {
   } catch (error) {
     console.error('Error in assignTeacherToClass:', error);
     res.status(500).json({ message: 'Erreur serveur', error: error.message });
+  }
+};
+// @desc    Obtenir les statistiques globales pour le dashboard admin
+// @route   GET /api/admin/stats
+// @access  Private/School
+exports.getAdminStats = async (req, res) => {
+  try {
+    const schoolId = req.user.school;
+
+    if (!schoolId) {
+      return res.status(400).json({ message: 'Aucune école associée à cet utilisateur' });
+    }
+
+    // Dates pour aujourd'hui
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const Absence = require('../models/Absence');
+
+    // Récupérer les classes de l'école
+    const targetClasses = await Class.find({ school: schoolId }).distinct('_id');
+
+    // Exécuter les comptages de base
+    const [teacherCount, studentCount, classCount] = await Promise.all([
+      User.countDocuments({ role: 'teacher', school: schoolId }),
+      Student.countDocuments({ school: schoolId }),
+      Class.countDocuments({ school: schoolId }),
+    ]);
+
+    // Pour les absences, on récupère les IDs d'élèves uniques marqués absents aujourd'hui
+    const studentIdsMarkedAbsent = await Absence.find({
+      date: { $gte: startOfDay, $lte: endOfDay },
+      class: { $in: targetClasses },
+      absenceType: 'absent'
+    }).distinct('student');
+
+    // On compte combien de ces élèves existent toujours dans cette école
+    const absenceCount = await Student.countDocuments({
+      _id: { $in: studentIdsMarkedAbsent },
+      school: schoolId
+    });
+
+    res.status(200).json({
+      teachers: teacherCount,
+      students: studentCount,
+      classes: classCount,
+      todayAbsences: absenceCount,
+    });
+  } catch (error) {
+    console.error('Error in getAdminStats:', error);
+    res.status(500).json({ message: 'Erreur serveur', error: error.message });
+  }
+};
+
+// @desc    Supprimer une école et toutes ses données (Super Admin seulement)
+// @route   DELETE /api/superadmin/schools/:id
+// @access  Private/SuperAdmin
+exports.deleteSchool = async (req, res) => {
+  try {
+    const schoolId = req.params.id;
+    const school = await School.findById(schoolId);
+
+    if (!school) {
+      return res.status(404).json({ message: 'École non trouvée' });
+    }
+
+    console.log(`\n--- STARTING DELETION FOR SCHOOL: ${school.name} (${schoolId}) ---`);
+
+    // 1. Supprimer les report cards
+    const ReportCard = require('../models/ReportCard');
+    const rcRes = await ReportCard.deleteMany({ school: schoolId });
+    console.log(`Deleted ${rcRes.deletedCount} report cards`);
+
+    // 2. Trouver les classes pour supprimer les absences
+    const classIds = await Class.find({ school: schoolId }).distinct('_id');
+    const absRes = await Absence.deleteMany({ class: { $in: classIds } });
+    console.log(`Deleted ${absRes.deletedCount} absences`);
+
+    // 3. Supprimer les élèves
+    const studentRes = await Student.deleteMany({ school: schoolId });
+    console.log(`Deleted ${studentRes.deletedCount} students`);
+
+    // 4. Supprimer les classes
+    const clRes = await Class.deleteMany({ school: schoolId });
+    console.log(`Deleted ${clRes.deletedCount} classes`);
+
+    // 5. Supprimer les utilisateurs liés à cette école (admins et enseignants)
+    // Note: On ne supprime pas les parents car ils peuvent avoir des enfants dans d'autres écoles
+    const userRes = await User.deleteMany({ school: schoolId, role: { $in: ['school', 'teacher'] } });
+    console.log(`Deleted ${userRes.deletedCount} users (school admins & teachers)`);
+
+    // 6. Enfin, supprimer l'école
+    await School.findByIdAndDelete(schoolId);
+    console.log(`School ${school.name} deleted`);
+
+    res.status(200).json({
+      message: 'École et toutes ses données supprimées avec succès',
+    });
+  } catch (error) {
+    console.error('Error in deleteSchool:', error);
+    res.status(500).json({ message: 'Erreur serveur lors de la suppression', error: error.message });
   }
 };

@@ -82,9 +82,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             console.log('🔐 Logging in...');
             const { user, token } = await authService.login(credentials);
             console.log('✅ Login successful:', user.username, 'Role:', user.role);
-            
+
             dispatch({ type: 'SET_USER', payload: { user, token } });
-            
+
             // Navigate based on role
             if (user.role === 'teacher') {
                 console.log('📍 Navigating to teacher home');
@@ -92,6 +92,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             } else if (user.role === 'parent') {
                 console.log('📍 Navigating to parent home');
                 router.replace('/(parent)');
+            } else if (user.role === 'school') {
+                console.log('⚠️ School accounts are web-only');
+                await authService.logout();
+                dispatch({ type: 'LOGOUT' });
+                throw new Error('Les comptes école ne peuvent se connecter que via l\'interface web');
             } else {
                 console.log('⚠️ Unknown role:', user.role);
                 router.replace('/(parent)'); // Default fallback
@@ -109,9 +114,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             console.log('📝 Registering new user...');
             const { user, token } = await authService.register(data);
             console.log('✅ Registration successful:', user.username, 'Role:', user.role);
-            
+
             dispatch({ type: 'SET_USER', payload: { user, token } });
-            
+
             // Navigate based on role
             if (user.role === 'teacher') {
                 console.log('📍 Navigating to teacher home');
@@ -119,6 +124,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             } else if (user.role === 'parent') {
                 console.log('📍 Navigating to parent home');
                 router.replace('/(parent)');
+            } else if (user.role === 'school') {
+                console.log('⚠️ School accounts are web-only');
+                await authService.logout();
+                dispatch({ type: 'LOGOUT' });
+                throw new Error('Les comptes école ne peuvent se connecter que via l\'interface web');
             } else {
                 console.log('⚠️ Unknown role:', user.role);
                 router.replace('/(parent)'); // Default fallback

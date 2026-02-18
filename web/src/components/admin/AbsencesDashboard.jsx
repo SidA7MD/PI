@@ -1,6 +1,7 @@
 // src/components/admin/AbsencesDashboard.jsx
 import { useEffect, useState } from 'react';
 import api from '../../services/api';
+import { useSocket } from '../../context/SocketContext';
 
 const AbsencesDashboard = () => {
   const [absences, setAbsences] = useState([]);
@@ -16,9 +17,24 @@ const AbsencesDashboard = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const socket = useSocket();
+
   useEffect(() => {
     fetchAbsences();
   }, []);
+
+  useEffect(() => {
+    if (socket) {
+      socket.on('absence:deleted', (data) => {
+        console.log('🗑️ Absence or student deleted, refreshing history...', data);
+        fetchAbsences();
+      });
+
+      return () => {
+        socket.off('absence:deleted');
+      };
+    }
+  }, [socket]);
 
   const fetchAbsences = async () => {
     try {
@@ -207,27 +223,6 @@ const AbsencesDashboard = () => {
                     </div>
                   </div>
 
-                  {absence.notes && (
-                    <div>
-                      <div style={{
-                        fontSize: '11px',
-                        fontWeight: '600',
-                        color: '#a0aec0',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                        marginBottom: '4px',
-                      }}>
-                        Notes
-                      </div>
-                      <div style={{
-                        fontSize: '14px',
-                        color: '#2d3748',
-                        lineHeight: '1.5',
-                      }}>
-                        {absence.notes}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             ))
@@ -304,16 +299,6 @@ const AbsencesDashboard = () => {
                     letterSpacing: '0.5px',
                     whiteSpace: 'nowrap',
                   }}>Status</th>
-                  <th style={{
-                    padding: '16px 24px',
-                    textAlign: 'left',
-                    fontSize: '11px',
-                    fontWeight: '600',
-                    color: '#a0aec0',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                    whiteSpace: 'nowrap',
-                  }}>Notes</th>
                 </tr>
               </thead>
               <tbody style={{ background: '#ffffff' }}>
@@ -394,15 +379,6 @@ const AbsencesDashboard = () => {
                         }}>
                           {absence.justified ? 'Justifié' : 'Non justifié'}
                         </span>
-                      </td>
-                      <td style={{
-                        padding: '20px 24px',
-                        borderBottom: '1px solid #f1f5f9',
-                        fontSize: '14px',
-                        color: '#2d3748',
-                        verticalAlign: 'middle',
-                      }}>
-                        {absence.notes || '-'}
                       </td>
                     </tr>
                   ))

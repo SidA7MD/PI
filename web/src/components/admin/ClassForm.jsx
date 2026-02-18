@@ -3,9 +3,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 // Header and Sidebar imports removed
 import api from '../../services/api';
-import { 
-  FiBook, FiSave, FiArrowLeft, FiAlertCircle, 
-  FiUser, FiSearch, FiX 
+import {
+  FiBook, FiSave, FiArrowLeft, FiAlertCircle,
+  FiUser, FiSearch, FiX, FiTrash2
 } from 'react-icons/fi';
 import { LuSchool } from 'react-icons/lu';
 import '../../styles/Forms.css';
@@ -78,8 +78,21 @@ const ClassForm = () => {
     }
   };
 
+  const handleDelete = async () => {
+    if (window.confirm('Voulez-vous vraiment supprimer cette classe ?')) {
+      setLoading(true);
+      try {
+        await api.delete(`/class/${id}`);
+        navigate('/admin/classes');
+      } catch (err) {
+        setError(err.response?.data?.message || err.message || 'Erreur lors de la suppression');
+        setLoading(false);
+      }
+    }
+  };
+
   const selectedTeachers = teachers.filter(t => formData.teachers.includes(String(t._id)));
-  const availableTeachers = teachers.filter(t => 
+  const availableTeachers = teachers.filter(t =>
     !formData.teachers.includes(String(t._id)) &&
     t.username.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -108,7 +121,7 @@ const ClassForm = () => {
           <form onSubmit={handleSubmit}>
             <div className="form-section">
               <h3 className="section-title"><LuSchool /> Informations</h3>
-              
+
               <div className="form-group">
                 <label className="form-label">Nom de la classe *</label>
                 <div className="form-input-wrapper">
@@ -168,8 +181,8 @@ const ClassForm = () => {
                 {selectedTeachers.length > 0 && (
                   <div className="selected-chips">
                     {selectedTeachers.map(t => (
-                      <div 
-                        key={t._id} 
+                      <div
+                        key={t._id}
                         className="active-chip"
                         onClick={() => toggleTeacher(t._id)}
                       >
@@ -179,7 +192,7 @@ const ClassForm = () => {
                     ))}
                   </div>
                 )}
-                
+
                 <div className="search-input-wrapper" style={{ border: 'none', padding: 0 }}>
                   <FiSearch className="search-icon" style={{ left: 0 }} />
                   <input
@@ -200,8 +213,8 @@ const ClassForm = () => {
                       </div>
                     ) : (
                       availableTeachers.map(t => (
-                        <div 
-                          key={t._id} 
+                        <div
+                          key={t._id}
                           className="dropdown-item"
                           onClick={() => toggleTeacher(t._id)}
                         >
@@ -218,9 +231,20 @@ const ClassForm = () => {
               <button type="submit" className="btn-primary" disabled={loading} style={{ flex: 2 }}>
                 {loading ? 'Enregistrement...' : <><FiSave /> {id ? 'Mettre à jour' : 'Enregistrer'}</>}
               </button>
-              <button 
-                type="button" 
-                className="btn-secondary" 
+              {id && (
+                <button
+                  type="button"
+                  className="btn-danger"
+                  onClick={handleDelete}
+                  disabled={loading}
+                  style={{ flex: 1 }}
+                >
+                  <FiTrash2 /> Supprimer
+                </button>
+              )}
+              <button
+                type="button"
+                className="btn-secondary"
                 onClick={() => navigate('/admin/classes')}
                 style={{ flex: 1 }}
               >

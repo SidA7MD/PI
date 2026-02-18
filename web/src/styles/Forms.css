@@ -215,6 +215,28 @@ textarea.form-control {
   color: var(--gray-900);
 }
 
+.btn-danger {
+  background: white;
+  border: 2px solid var(--danger);
+  color: var(--danger);
+  padding: 14px 28px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn-danger:hover {
+  background: var(--danger);
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.2);
+}
+
 /* Chips Input Area */
 .chips-input-container {
   border: 2px solid var(--gray-200);

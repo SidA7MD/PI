@@ -3,9 +3,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 // Header and Sidebar imports removed
 import api from '../../services/api';
-import { 
-  FiUser, FiCalendar, FiBook, FiSave, FiArrowLeft, FiAlertCircle, 
-  FiSearch, FiX 
+import {
+  FiUser, FiCalendar, FiBook, FiSave, FiArrowLeft, FiAlertCircle,
+  FiSearch, FiX, FiTrash2
 } from 'react-icons/fi';
 import { LuGraduationCap } from 'react-icons/lu';
 import '../../styles/Forms.css';
@@ -86,8 +86,21 @@ const StudentForm = () => {
     }
   };
 
+  const handleDelete = async () => {
+    if (window.confirm('Voulez-vous vraiment supprimer cet élève ?')) {
+      setLoading(true);
+      try {
+        await api.delete(`/student/${id}`);
+        navigate('/admin/students');
+      } catch (err) {
+        setError(err.response?.data?.message || err.message || 'Erreur lors de la suppression');
+        setLoading(false);
+      }
+    }
+  };
+
   const selectedClasses = classes.filter(c => formData.classes.includes(String(c._id)));
-  const availableClasses = classes.filter(c => 
+  const availableClasses = classes.filter(c =>
     !formData.classes.includes(String(c._id)) &&
     c.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -116,13 +129,13 @@ const StudentForm = () => {
           <form onSubmit={handleSubmit}>
             <div className="form-section">
               <h3 className="section-title"><FiUser /> Informations Personnelles</h3>
-              
+
               {id && formData.uniqueCode && (
-                <div style={{ 
-                  background: 'var(--primary-50)', 
-                  border: '2px solid var(--primary-200)', 
-                  borderRadius: 'var(--radius-md)', 
-                  padding: '16px', 
+                <div style={{
+                  background: 'var(--primary-50)',
+                  border: '2px solid var(--primary-200)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '16px',
                   marginBottom: '24px',
                   display: 'flex',
                   alignItems: 'center',
@@ -191,8 +204,8 @@ const StudentForm = () => {
                 {selectedClasses.length > 0 && (
                   <div className="selected-chips">
                     {selectedClasses.map(c => (
-                      <div 
-                        key={c._id} 
+                      <div
+                        key={c._id}
                         className="active-chip"
                         onClick={() => toggleClass(c._id)}
                       >
@@ -202,7 +215,7 @@ const StudentForm = () => {
                     ))}
                   </div>
                 )}
-                
+
                 <div className="search-input-wrapper" style={{ border: 'none', padding: 0 }}>
                   <FiSearch className="search-icon" style={{ left: 0 }} />
                   <input
@@ -223,8 +236,8 @@ const StudentForm = () => {
                       </div>
                     ) : (
                       availableClasses.map(c => (
-                        <div 
-                          key={c._id} 
+                        <div
+                          key={c._id}
                           className="dropdown-item"
                           onClick={() => toggleClass(c._id)}
                         >
@@ -241,9 +254,20 @@ const StudentForm = () => {
               <button type="submit" className="btn-primary" disabled={loading} style={{ flex: 2 }}>
                 {loading ? 'Enregistrement...' : <><FiSave /> {id ? 'Mettre à jour' : 'Enregistrer'}</>}
               </button>
-              <button 
-                type="button" 
-                className="btn-secondary" 
+              {id && (
+                <button
+                  type="button"
+                  className="btn-danger"
+                  onClick={handleDelete}
+                  disabled={loading}
+                  style={{ flex: 1 }}
+                >
+                  <FiTrash2 /> Supprimer
+                </button>
+              )}
+              <button
+                type="button"
+                className="btn-secondary"
                 onClick={() => navigate('/admin/students')}
                 style={{ flex: 1 }}
               >

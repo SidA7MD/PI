@@ -31,7 +31,7 @@ const StudentsList = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Voulez-vous vraiment supprimer cet élève ?')) {
       try {
-        await api.delete(`/admin/students/${id}`);
+        await api.delete(`/student/${id}`);
         setStudents(students.filter((s) => s._id !== id));
       } catch (err) {
         console.error('Error deleting student', err);
@@ -39,7 +39,7 @@ const StudentsList = () => {
     }
   };
 
-  const filteredStudents = students.filter(s => 
+  const filteredStudents = students.filter(s =>
     s.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.parent?.username?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -60,9 +60,9 @@ const StudentsList = () => {
       <div className="filter-bar">
         <div className="search-input-wrapper">
           <FiSearch className="search-icon" />
-          <input 
-            type="text" 
-            placeholder="Rechercher un élève..." 
+          <input
+            type="text"
+            placeholder="Rechercher un élève..."
             className="search-input"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -100,7 +100,12 @@ const StudentsList = () => {
 
               <div className="item-title">{student.firstName} {student.lastName}</div>
               <div className="item-subtitle">
-                <FiUser size={14} /> Parent: {student.parent?.username || 'Aucun'}
+                <FiUser size={14} /> Parent(s): {
+                  student.parents && student.parents.length > 0
+                    ? student.parents.map(p => p.username).join(', ')
+                    : (student.parent?.username || 'Aucun')
+                }
+                {(student.parentPhone) && ` - ${student.parentPhone}`}
               </div>
 
               <div className="chips-container">
@@ -110,7 +115,7 @@ const StudentsList = () => {
                   </div>
                 )}
                 <div className="chip">
-                  <FiCalendar size={12} /> 
+                  <FiCalendar size={12} />
                   {student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString() : 'N/A'}
                 </div>
                 {student.classes?.map(cls => (

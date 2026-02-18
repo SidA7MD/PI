@@ -35,16 +35,7 @@ export default function ParentLayout() {
                     ),
                 }}
             />
-            <Tabs.Screen
-                name="absences"
-                options={{
-                    title: t('absences'),
-                    headerShown: false,
-                    tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-                        <Ionicons name="calendar" size={size} color={color} />
-                    ),
-                }}
-            />
+            {/* Bulletins screen removed */}
             <Tabs.Screen
                 name="notifications"
                 options={{

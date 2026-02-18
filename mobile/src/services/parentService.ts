@@ -3,18 +3,18 @@ import { Student, Absence } from '../types';
 import { AbsenceFilters } from '../types/absence.types';
 
 export const getMyChildren = async (): Promise<Student[]> => {
-    const { data } = await api.get('/parent/students');
-    return data.students;
+  const { data } = await api.get('/parent/students');
+  return data.students;
 };
 
 export const getChildAbsences = async (
-    studentId: string,
-    filters?: AbsenceFilters
+  studentId: string,
+  filters?: AbsenceFilters
 ): Promise<Absence[]> => {
-    const { data } = await api.get(`/parent/student/${studentId}/absences`, {
-        params: filters,
-    });
-    return data.absences;
+  const { data } = await api.get(`/parent/student/${studentId}/absences`, {
+    params: filters,
+  });
+  return data.absences;
 };
 
 // Obtenir les statistiques du tableau de bord parent
@@ -58,20 +58,30 @@ export const getSpecificChildAbsences = async (studentId: string) => {
 };
 
 export const validateCode = async (uniqueCode: string): Promise<Student> => {
-    const { data } = await api.post('/parent/validate-code', { uniqueCode });
-    return data.student;
+  const { data } = await api.post('/parent/validate-code', { uniqueCode });
+  return data.student;
 };
 
 export const linkChild = async (uniqueCode: string): Promise<Student> => {
-    const { data } = await api.post('/parent/link-student', { uniqueCode });
-    return data.student;
+  const { data } = await api.post('/parent/link-student', { uniqueCode });
+  return data.student;
 };
 
 export const unlinkChild = async (studentId: string): Promise<void> => {
-    await api.delete(`/parent/student/${studentId}`);
+  await api.delete(`/parent/student/${studentId}`);
 };
 
 export const getChildDetails = async (studentId: string): Promise<Student> => {
-    const { data } = await api.get(`/student/${studentId}`);
-    return data.student;
+  const { data } = await api.get(`/student/${studentId}`);
+  return data.student;
+};
+
+// Obtenir les bulletins (PDF) pour un élève spécifique
+export const getChildReports = async (studentId: string) => {
+  try {
+    const response = await api.get(`/report-cards/student/${studentId}`);
+    return response.data;
+  } catch (error: any) {
+    throw error;
+  }
 };

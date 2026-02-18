@@ -9,10 +9,10 @@ export interface LoginCredentials {
 
 export interface RegisterData {
     username: string;
-    phone?: string;
-    email?: string;
+    email: string; // Required for unified auth
     password: string;
     role: 'teacher' | 'parent';
+    phone?: string;
 }
 
 export interface AuthState {

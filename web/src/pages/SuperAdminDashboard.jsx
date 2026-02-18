@@ -82,6 +82,17 @@ const SuperAdminDashboard = () => {
     }
   };
 
+  const handleDelete = async (schoolId, schoolName) => {
+    if (window.confirm(`Êtes-vous sûr de vouloir supprimer l'école "${schoolName}" ? Cette action supprimera TOUTES les données associées (classes, élèves, professeurs) et est irréversible.`)) {
+      try {
+        await api.delete(`/superadmin/schools/${schoolId}`);
+        fetchSchools();
+      } catch (err) {
+        alert(err.response?.data?.message || 'Erreur lors de la suppression de l\'école');
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="loading-container">
@@ -137,7 +148,7 @@ const SuperAdminDashboard = () => {
               <h2 className="form-title">Créer une nouvelle école</h2>
               <p className="form-subtitle">Ajouter un établissement à la plateforme</p>
             </div>
-            
+
             {error && (
               <div className="error-alert">
                 <FiAlertCircle size={18} />
@@ -148,7 +159,7 @@ const SuperAdminDashboard = () => {
             <form onSubmit={handleSubmit}>
               <div className="form-section">
                 <h3 className="section-title"><LuSchool /> Informations de l'établissement</h3>
-                
+
                 <div className="form-group">
                   <label className="form-label">Nom de l'école *</label>
                   <div className="form-input-wrapper">
@@ -241,12 +252,25 @@ const SuperAdminDashboard = () => {
                   {school.name.charAt(0)}
                 </div>
                 <div className="item-actions">
-                  {/* Future actions like delete or edit can go here */}
+                  <button
+                    onClick={() => handleDelete(school._id, school.name)}
+                    className="action-btn delete"
+                    title="Supprimer l'école"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#e53e3e',
+                      cursor: 'pointer',
+                      padding: '4px'
+                    }}
+                  >
+                    <FiMinus size={18} />
+                  </button>
                 </div>
               </div>
 
               <div className="item-title">{school.name}</div>
-              
+
               <div className="item-subtitle">
                 <FiMail size={14} /> {school.email}
               </div>

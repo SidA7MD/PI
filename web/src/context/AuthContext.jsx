@@ -17,35 +17,17 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const login = async (identifier, password, loginType = 'school') => {
+  const login = async (identifier, password) => {
     try {
-      let body;
-      
-      // Build request body based on login type
-      switch (loginType) {
-        case 'school':
-          // Schools login with email
-          body = { email: identifier, password };
-          break;
-        case 'teacher':
-          // Teachers can login with phone or username
-          if (/^[0-9]+$/.test(identifier)) {
-            body = { phone: identifier, password };
-          } else if (identifier.includes('@')) {
-            body = { email: identifier, password };
-          } else {
-            body = { username: identifier, password };
-          }
-          break;
-        case 'superadmin':
-          // Superadmin logs in with username
-          body = { username: identifier, password };
-          break;
-        default:
-          body = { username: identifier, password };
-      }
-      
+      const body = { email: identifier, password };
+
       const res = await api.post('/auth/login', body);
+
+      // Parents are not allowed on Web
+      if (res.data.user.role === 'parent') {
+        throw new Error('Les parents ne peuvent se connecter que via l\'application mobile');
+      }
+
       localStorage.setItem('token', res.data.token);
       setUser(res.data.user);
       return res.data;

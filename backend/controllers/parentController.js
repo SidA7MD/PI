@@ -20,13 +20,23 @@ exports.linkStudent = async (req, res) => {
       return res.status(404).json({ message: 'Code invalide, élève non trouvé' });
     }
 
-    // Vérifier si l'élève est déjà lié à un parent
-    if (student.parent) {
-      return res.status(400).json({ message: 'Cet élève est déjà lié à un parent' });
+    // Vérifier si l'élève est déjà lié à CE parent
+    if (student.parents.includes(req.user._id)) {
+      return res.status(400).json({ message: 'Vous avez déjà lié cet élève' });
     }
 
     // Lier l'élève au parent
-    student.parent = req.user._id;
+    student.parents.push(req.user._id);
+
+    // Synchroniser le téléphone du parent (ajouter s'il y en a déjà un)
+    if (req.user.phone) {
+      if (student.parentPhone) {
+        student.parentPhone += ` / ${req.user.phone}`;
+      } else {
+        student.parentPhone = req.user.phone;
+      }
+    }
+
     await student.save();
 
     // Ajouter l'élève à la liste des enfants du parent
@@ -60,9 +70,12 @@ exports.getMyStudents = async (req, res) => {
       populate: { path: 'classes', select: 'name level' },
     });
 
+    // Filtrer les élèves qui pourraient avoir été supprimés
+    const activeStudents = parent.students.filter(s => s !== null);
+
     res.status(200).json({
-      count: parent.students.length,
-      students: parent.students,
+      count: activeStudents.length,
+      students: activeStudents,
     });
   } catch (error) {
     res.status(500).json({ message: 'Erreur serveur', error: error.message });
@@ -85,9 +98,12 @@ exports.getAbsences = async (req, res) => {
       .populate('teacher', 'username')
       .sort({ date: -1 });
 
+    // Filtrer les absences d'élèves supprimés (si non nettoyé par cascade)
+    const validAbsences = absences.filter(abs => abs.student !== null);
+
     res.status(200).json({
-      count: absences.length,
-      absences,
+      count: validAbsences.length,
+      absences: validAbsences,
     });
   } catch (error) {
     res.status(500).json({ message: 'Erreur serveur', error: error.message });
@@ -140,17 +156,23 @@ exports.getParentStats = async (req, res) => {
       .populate('class', 'name')
       .sort({ date: -1 });
 
+    // Filtrer les élèves supprimés
+    const validStudents = parent.students.filter(s => s !== null);
+
+    // Filtrer les absences d'élèves supprimés
+    const validAbsencesAll = absences.filter(abs => abs.student !== null);
+
     // Statistiques des 7 derniers jours
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    
-    const recentAbsences = absences.filter(
+
+    const recentAbsences = validAbsencesAll.filter(
       abs => new Date(abs.date) >= sevenDaysAgo
     );
 
     // Statistiques par enfant
-    const childrenStats = parent.students.map(student => {
-      const studentAbsences = absences.filter(
+    const childrenStats = validStudents.map(student => {
+      const studentAbsences = validAbsencesAll.filter(
         abs => abs.student._id.toString() === student._id.toString()
       );
       return {
@@ -167,8 +189,8 @@ exports.getParentStats = async (req, res) => {
     });
 
     res.status(200).json({
-      totalChildren: parent.students.length,
-      totalAbsences: absences.length,
+      totalChildren: validStudents.length,
+      totalAbsences: validAbsencesAll.length,
       recentAbsences: recentAbsences.length,
       children: childrenStats,
     });

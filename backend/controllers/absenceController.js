@@ -66,9 +66,12 @@ exports.getAllAbsences = async (req, res) => {
       .populate('teacher', 'username')
       .sort({ date: -1 });
 
+    // Filtrer les absences orphelines (élève supprimé)
+    const filteredAbsences = absences.filter(abs => abs.student !== null);
+
     res.status(200).json({
-      count: absences.length,
-      absences,
+      count: filteredAbsences.length,
+      absences: filteredAbsences,
     });
   } catch (error) {
     console.error('Error in getAllAbsences:', error);
@@ -124,7 +127,12 @@ exports.deleteAbsence = async (req, res) => {
       }
     }
 
+    const schoolId = absence.class ? absence.class.school : req.user.school;
     await absence.deleteOne();
+
+    // Notifier l'interface école pour mettre à jour l'historique
+    const socketHandler = require('../utils/socketHandler');
+    socketHandler.emitToSchool(schoolId, 'absence:deleted', { absenceId: req.params.id });
 
     res.status(200).json({
       message: 'Absence supprimée avec succès',

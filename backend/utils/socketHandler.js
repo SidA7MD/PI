@@ -19,12 +19,20 @@ exports.init = (httpServer) => {
     console.log('🔗 Client connecté:', socket.id);
 
     // Authentification simple via l'ID utilisateur envoyé par le client
-    socket.on('join', (userId) => {
+    socket.on('join', (data) => {
+      // data can be an ID string or an object { userId, schoolId }
+      const userId = typeof data === 'string' ? data : data.userId;
+      const schoolId = typeof data === 'object' ? data.schoolId : null;
+
       if (userId) {
         connectedUsers.set(userId, socket.id);
         console.log(`👤 Utilisateur ${userId} associé au socket ${socket.id}`);
-        // Rejoindre une room spécifique à l'utilisateur
         socket.join(`user:${userId}`);
+
+        if (schoolId) {
+          socket.join(`school:${schoolId}`);
+          console.log(`🏢 Utilisateur ${userId} a rejoint la room school:${schoolId}`);
+        }
       }
     });
 
@@ -54,15 +62,15 @@ exports.getIO = () => {
 // Envoyer une notification à un utilisateur spécifique
 exports.emitToUser = (userId, event, data) => {
   if (!io) {
-      console.error('❌ Socket.io not initialized when trying to emit', event);
-      return;
+    console.error('❌ Socket.io not initialized when trying to emit', event);
+    return;
   }
-  
+
   // Utiliser la room user:userId
   const room = `user:${userId}`;
   io.to(room).emit(event, data);
   console.log(`📤 Emitting ${event} to room ${room} for user ${userId}`);
-  
+
   // Debug: check if room has members
   const roomSize = io.sockets.adapter.rooms.get(room)?.size || 0;
   console.log(`ℹ️ Room ${room} has ${roomSize} connected clients`);
@@ -70,5 +78,13 @@ exports.emitToUser = (userId, event, data) => {
 
 // Helper spécifique pour les notifications d'absence
 exports.emitAbsenceNotification = (parentId, notificationData) => {
-    exports.emitToUser(parentId, 'notification:absence', notificationData);
+  exports.emitToUser(parentId, 'notification:absence', notificationData);
+};
+
+// Envoyer un événement à toute l'école
+exports.emitToSchool = (schoolId, event, data) => {
+  if (!io) return;
+  const room = `school:${schoolId}`;
+  io.to(room).emit(event, data);
+  console.log(`📤 Emitting ${event} to school room ${room}`);
 };

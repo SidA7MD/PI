@@ -25,10 +25,15 @@ const studentSchema = new mongoose.Schema(
         ref: 'Class',
       },
     ],
-    // Parent lié
-    parent: {
+    // Parents liés (Many-to-Many)
+    parents: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
+    }],
+    // Téléphone du parent (synchronisé lors de la liaison)
+    parentPhone: {
+      type: String,
+      trim: true,
     },
     // École
     school: {

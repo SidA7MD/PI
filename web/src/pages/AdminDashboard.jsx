@@ -3,11 +3,12 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
-import { 
-  FiUsers, FiBook, FiCheckSquare, FiUserPlus, 
-  FiTrendingUp, FiClock, FiAlertCircle 
+import {
+  FiUsers, FiBook, FiCheckSquare, FiUserPlus,
+  FiTrendingUp, FiClock, FiAlertCircle
 } from 'react-icons/fi';
 import { LuSchool, LuUserPlus, LuBookOpen } from 'react-icons/lu';
+import { useSocket } from '../context/SocketContext';
 import '../styles/Dashboard.css';
 
 const AdminDashboard = () => {
@@ -19,37 +20,40 @@ const AdminDashboard = () => {
     todayAbsences: 0,
   });
   const [loading, setLoading] = useState(true);
+  const socket = useSocket();
+
+  const fetchStats = async () => {
+    try {
+      const res = await api.get('/admin/stats');
+      setStats(res.data);
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const [teachers, students, classes] = await Promise.all([
-          api.get('/admin/teachers'),
-          api.get('/student'),
-          api.get('/class'),
-        ]);
-
-        setStats({
-          teachers: teachers.data.teachers?.length || 0,
-          students: students.data.students?.length || 0,
-          classes: classes.data.classes?.length || 0,
-          todayAbsences: 0,
-        });
-      } catch (error) {
-        console.error('Error fetching stats:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchStats();
   }, []);
+
+  useEffect(() => {
+    if (socket) {
+      socket.on('absence:deleted', () => {
+        console.log('🗑️ Data updated, refreshing dashboard stats...');
+        fetchStats();
+      });
+      return () => socket.off('absence:deleted');
+    }
+  }, [socket]);
 
   return (
     <>
       <div className="welcome-section">
         <div className="welcome-content">
-          <h1>Bonjour, {user?.username} 👋</h1>
+          <h1>
+            Bonjour {user?.role === 'school' ? `École ${user?.school?.name || ''}` : user?.username} 👋
+          </h1>
           <p>Bienvenue sur votre tableau de bord administrateur</p>
         </div>
         <LuSchool className="welcome-decoration" />
@@ -132,7 +136,7 @@ const AdminDashboard = () => {
           </div>
         </Link>
 
-         <Link to="/admin/absences" className="action-card">
+        <Link to="/admin/absences" className="action-card">
           <div className="action-icon" style={{ background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)' }}>
             <FiCheckSquare />
           </div>
