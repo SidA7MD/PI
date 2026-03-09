@@ -1,10 +1,11 @@
-// src/pages/Dashboard.jsx - Redirects based on user role
 import { useContext } from 'react';
 import { Navigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { LanguageContext } from '../context/LanguageContext';
 
 const Dashboard = () => {
   const { user, loading } = useContext(AuthContext);
+  const { t } = useContext(LanguageContext);
 
   if (loading) {
     return (
@@ -17,7 +18,7 @@ const Dashboard = () => {
         color: '#64748b',
         background: '#f0f4f8'
       }}>
-        Chargement...
+        {t('loading')}
       </div>
     );
   }

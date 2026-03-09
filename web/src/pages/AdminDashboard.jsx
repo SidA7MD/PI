@@ -9,10 +9,12 @@ import {
 } from 'react-icons/fi';
 import { LuSchool, LuUserPlus, LuBookOpen } from 'react-icons/lu';
 import { useSocket } from '../context/SocketContext';
+import { LanguageContext } from '../context/LanguageContext';
 import '../styles/Dashboard.css';
 
 const AdminDashboard = () => {
   const { user } = useContext(AuthContext);
+  const { t, language } = useContext(LanguageContext);
   const [stats, setStats] = useState({
     teachers: 0,
     students: 0,
@@ -51,10 +53,15 @@ const AdminDashboard = () => {
     <>
       <div className="welcome-section">
         <div className="welcome-content">
-          <h1>
-            Bonjour {user?.role === 'school' ? `École ${user?.school?.name || ''}` : user?.username} 👋
-          </h1>
-          <p>Bienvenue sur votre tableau de bord administrateur</p>
+          <div className="welcome-avatar">
+            {user?.school?.name?.charAt(0).toUpperCase() || (user?.username?.charAt(0).toUpperCase() || 'A')}
+          </div>
+          <div className="greeting-text-container">
+            <h1>
+              {language === 'ar' ? 'مرحباً' : 'Bonjour'} {user?.role === 'school' ? (language === 'ar' ? `مدرسة ${user?.school?.name || ''}` : `École ${user?.school?.name || ''}`) : user?.username} {language === 'ar' ? '👋' : '👋'}
+            </h1>
+            <p>{t('welcome_admin')}</p>
+          </div>
         </div>
         <LuSchool className="welcome-decoration" />
       </div>
@@ -67,7 +74,7 @@ const AdminDashboard = () => {
               <FiUsers />
             </div>
           </div>
-          <div className="stat-label">Professeurs</div>
+          <div className="stat-label">{t('teachers')}</div>
         </div>
 
         <div className="stat-card">
@@ -77,7 +84,7 @@ const AdminDashboard = () => {
               <FiBook />
             </div>
           </div>
-          <div className="stat-label">Classes</div>
+          <div className="stat-label">{t('classes')}</div>
         </div>
 
         <div className="stat-card">
@@ -87,7 +94,7 @@ const AdminDashboard = () => {
               <LuSchool />
             </div>
           </div>
-          <div className="stat-label">Élèves</div>
+          <div className="stat-label">{t('students')}</div>
         </div>
 
         <div className="stat-card">
@@ -97,12 +104,12 @@ const AdminDashboard = () => {
               <FiAlertCircle />
             </div>
           </div>
-          <div className="stat-label">Absences Auj.</div>
+          <div className="stat-label">{t('today_absences')}</div>
         </div>
       </div>
 
       <h2 className="page-title" style={{ fontSize: '20px', marginBottom: '20px' }}>
-        <FiTrendingUp /> Actions Rapides
+        <FiTrendingUp /> {t('quick_actions')}
       </h2>
 
       <div className="actions-grid">
@@ -111,8 +118,8 @@ const AdminDashboard = () => {
             <LuUserPlus />
           </div>
           <div className="action-info">
-            <h3>Ajouter un prof</h3>
-            <p>Créer un compte enseignant</p>
+            <h3>{t('add_teacher')}</h3>
+            <p>{t('create_teacher_account')}</p>
           </div>
         </Link>
 
@@ -121,8 +128,8 @@ const AdminDashboard = () => {
             <LuBookOpen />
           </div>
           <div className="action-info">
-            <h3>Nouvelle classe</h3>
-            <p>Ajouter une classe</p>
+            <h3>{t('new_class')}</h3>
+            <p>{t('add_class')}</p>
           </div>
         </Link>
 
@@ -131,8 +138,8 @@ const AdminDashboard = () => {
             <FiUserPlus />
           </div>
           <div className="action-info">
-            <h3>Inscrire un élève</h3>
-            <p>Ajouter un élève à une classe</p>
+            <h3>{t('enroll_student')}</h3>
+            <p>{t('add_student_to_class')}</p>
           </div>
         </Link>
 
@@ -141,8 +148,8 @@ const AdminDashboard = () => {
             <FiCheckSquare />
           </div>
           <div className="action-info">
-            <h3>Gérer Absences</h3>
-            <p>Voir les rapports d'absence</p>
+            <h3>{t('manage_absences')}</h3>
+            <p>{t('view_absence_reports')}</p>
           </div>
         </Link>
       </div>

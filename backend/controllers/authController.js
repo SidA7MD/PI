@@ -189,6 +189,7 @@ exports.register = async (req, res) => {
         phone: user.phone,
         email: user.email,
         role: user.role,
+        language: user.language,
       },
       token,
     });
@@ -203,21 +204,42 @@ exports.register = async (req, res) => {
 // @access  Public
 exports.login = async (req, res) => {
   try {
-    const { email, username, phone, password } = req.body;
+    const { email, username, phone, identifier, password } = req.body;
 
     // Validation
     if (!password) {
       return res.status(400).json({ message: 'Le mot de passe est requis' });
     }
 
-    if (!email) {
+    if (!email && !username && !phone && !identifier) {
       return res.status(400).json({
-        message: 'L\'email est requis'
+        message: 'L\'identifiant (email, nom d\'utilisateur ou téléphone) est requis'
       });
     }
 
-    // Build query to find user by email
-    const query = { email: email.toLowerCase() };
+    // Build query to find user
+    let query = {};
+
+    if (identifier) {
+      // If a generic identifier is provided, search across all possible fields
+      const searchVal = identifier.toLowerCase();
+      query = {
+        $or: [
+          { email: searchVal },
+          { username: identifier }, // Username might be case sensitive or not, using original
+          { phone: identifier }
+        ]
+      };
+    } else {
+      // Backward compatibility for specific fields
+      query = {
+        $or: [
+          email ? { email: email.toLowerCase() } : null,
+          username ? { username: username } : null,
+          phone ? { phone: phone } : null,
+        ].filter(Boolean)
+      };
+    }
 
     // Find user and include password field
     const user = await User.findOne(query)
@@ -250,6 +272,7 @@ exports.login = async (req, res) => {
       school: user.school,
       classes: user.classes,
       students: user.students,
+      language: user.language,
     };
 
     res.status(200).json({
@@ -289,6 +312,7 @@ exports.getMe = async (req, res) => {
         classes: user.classes,
         students: user.students,
         pushToken: user.pushToken,
+        language: user.language,
       },
     });
   } catch (error) {
@@ -302,8 +326,8 @@ exports.getMe = async (req, res) => {
 // @access  Private
 exports.updateMe = async (req, res) => {
   try {
-    // Allow updating pushToken separately or with other fields
-    const { username, phone, email, currentPassword, newPassword, pushToken } = req.body;
+    // Allow updating pushToken and language separately or with other fields
+    const { username, phone, email, currentPassword, newPassword, pushToken, language } = req.body;
 
     const user = await User.findById(req.user._id).select('+password');
 
@@ -338,6 +362,7 @@ exports.updateMe = async (req, res) => {
     if (username) user.username = username;
     if (phone) user.phone = phone;
     if (email) user.email = email.toLowerCase();
+    if (language) user.language = language;
 
     await user.save();
 
@@ -350,6 +375,7 @@ exports.updateMe = async (req, res) => {
         phone: user.phone,
         email: user.email,
         role: user.role,
+        language: user.language,
       },
     });
   } catch (error) {

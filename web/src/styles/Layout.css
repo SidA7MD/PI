@@ -181,6 +181,105 @@
   border-color: var(--danger-bg);
 }
 
+.lang-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--gray-100);
+  border: 1px solid var(--gray-200);
+  border-radius: 50px;
+  color: var(--gray-700);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.lang-toggle-btn:hover {
+  background: var(--gray-200);
+  border-color: var(--gray-300);
+  color: var(--gray-900);
+}
+
+.lang-toggle-btn svg {
+  font-size: 16px;
+}
+
+/* RTL Support */
+body.rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+body.rtl .header-left {
+  flex-direction: row-reverse;
+}
+
+body.rtl .header-right {
+  flex-direction: row-reverse;
+}
+
+body.rtl .nav-link-top,
+body.rtl .nav-link-top-dropdown,
+body.rtl .user-profile-link {
+  flex-direction: row-reverse;
+}
+
+body.rtl .nav-link-top {
+  padding: 8px 16px;
+}
+
+body.rtl .user-profile-link {
+  padding: 6px 6px 6px 16px;
+}
+
+body.rtl .mobile-nav-link {
+  flex-direction: row-reverse;
+}
+
+body.rtl .logo-icon {
+  margin-left: 0;
+}
+
+/* RTL Search & Form Specifics */
+body.rtl .search-icon {
+  left: auto;
+  right: 14px;
+}
+
+body.rtl .search-input-wrapper .search-input {
+  padding: 12px 42px 12px 16px;
+}
+
+body.rtl .form-input-wrapper .form-input {
+  padding: 12px 42px 12px 16px;
+}
+
+body.rtl .form-input-icon {
+  left: auto;
+  right: 14px;
+}
+
+body.rtl .form-group label {
+  margin-left: 0;
+  margin-right: 4px;
+}
+
+body.rtl .btn-submit svg,
+body.rtl .btn-add svg,
+body.rtl .btn-secondary svg,
+body.rtl .btn-danger svg {
+  margin-left: 8px;
+  margin-right: 0;
+}
+
+body.rtl select.form-control {
+  background-position: left 16px center;
+  padding-left: 40px;
+  padding-right: 16px;
+}
+
 /* Mobile Menu */
 .mobile-menu-toggle {
   display: none;

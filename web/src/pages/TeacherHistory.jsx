@@ -1,6 +1,5 @@
-// src/pages/TeacherHistory.jsx
-import React, { useState, useEffect } from 'react';
-// Header and Sidebar imports removed
+import React, { useState, useEffect, useContext } from 'react';
+import { LanguageContext } from '../context/LanguageContext';
 import api from '../services/api';
 import { FiCalendar, FiUser, FiClock, FiAlertCircle, FiFilter } from 'react-icons/fi';
 import { useSocket } from '../context/SocketContext';
@@ -8,6 +7,7 @@ import '../styles/Dashboard.css';
 import '../styles/Components.css';
 
 const TeacherHistory = () => {
+  const { t, language } = useContext(LanguageContext);
   const [absences, setAbsences] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -58,17 +58,17 @@ const TeacherHistory = () => {
         <div>
           <h1 className="page-title">
             <FiClock className="text-primary-600" />
-            Historique des Absences
+            {t('absences_history')}
           </h1>
-          <p className="page-subtitle">Consultez les absences signalées</p>
+          <p className="page-subtitle">{t('view_reported_absences')}</p>
         </div>
       </div>
 
       <div className="filter-bar">
         {[
-          { id: 'all', label: 'Tout', icon: <FiFilter /> },
-          { id: 'today', label: 'Aujourd\'hui', icon: <FiCalendar /> },
-          { id: 'week', label: 'Cette semaine', icon: <FiClock /> }
+          { id: 'all', label: t('filter_all'), icon: <FiFilter /> },
+          { id: 'today', label: t('filter_today'), icon: <FiCalendar /> },
+          { id: 'week', label: t('filter_week'), icon: <FiClock /> }
         ].map(f => (
           <button
             key={f.id}
@@ -92,8 +92,8 @@ const TeacherHistory = () => {
         {filteredAbsences.length === 0 ? (
           <div className="empty-state">
             <FiAlertCircle className="empty-icon" style={{ color: 'var(--success)' }} />
-            <div className="empty-text">Aucune absence</div>
-            <div className="empty-subtext">Aucune absence trouvée pour cette période</div>
+            <div className="empty-text">{t('no_absences_recorded')}</div>
+            <div className="empty-subtext">{language === 'ar' ? 'لم يتم العثور على غيابات لهذه الفترة' : 'Aucune absence trouvée pour cette période'}</div>
           </div>
         ) : (
           filteredAbsences.map(absence => (
@@ -106,7 +106,7 @@ const TeacherHistory = () => {
                   background: absence.status === 'retard' ? 'var(--warning-bg)' : 'var(--danger-bg)',
                   color: absence.status === 'retard' ? 'var(--warning)' : 'var(--danger)'
                 }}>
-                  {absence.status === 'retard' ? 'Retard' : 'Absent'}
+                  {absence.status === 'retard' ? t('late') : t('absent')}
                 </div>
               </div>
 

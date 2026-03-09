@@ -12,6 +12,7 @@ import { Card } from '../../src/components/ui/Card';
 import { Button } from '../../src/components/ui/Button';
 import { Avatar } from '../../src/components/ui/Avatar';
 import { spacing, shadows } from '../../src/theme';
+import { formatDisplayName } from '../../src/utils/formatters';
 import * as parentService from '../../src/services/parentService';
 
 export default function ParentHomeScreen() {
@@ -50,14 +51,14 @@ export default function ParentHomeScreen() {
     // Listen for real-time updates
     useEffect(() => {
         if (!socket) return;
-        
+
         const handleNewAbsence = () => {
-             console.log('🔄 Real-time stats update received, refreshing data...');
-             fetchData();
+            console.log('🔄 Real-time stats update received, refreshing data...');
+            fetchData();
         };
 
         socket.on('notification:absence', handleNewAbsence);
-        
+
         return () => {
             socket.off('notification:absence', handleNewAbsence);
         };
@@ -84,7 +85,7 @@ export default function ParentHomeScreen() {
     };
 
     const StatCard = ({ icon, value, label, color, onPress }: any) => (
-        <TouchableOpacity 
+        <TouchableOpacity
             style={[styles.statCard, { backgroundColor: colors.background.card }]}
             onPress={onPress}
             activeOpacity={0.7}
@@ -103,7 +104,7 @@ export default function ParentHomeScreen() {
     );
 
     const ChildCard = ({ child }: any) => {
-        const attendanceRate = child.totalAbsences > 0 
+        const attendanceRate = child.totalAbsences > 0
             ? Math.max(0, 100 - (child.totalAbsences / 30 * 100))
             : 100;
         const attendanceColor = attendanceRate >= 90 ? colors.success : attendanceRate >= 75 ? colors.warning : colors.danger;
@@ -127,7 +128,7 @@ export default function ParentHomeScreen() {
                                 <View style={styles.classInfo}>
                                     <Ionicons name="school" size={14} color={colors.primary} />
                                     <Text style={[styles.classText, { color: colors.text.secondary }]}>
-                                        {child.classes?.map((c:any) => c.name).join(', ') || child.class?.name} • {child.classes?.[0]?.level || child.class?.level}
+                                        {child.classes?.map((c: any) => c.name).join(', ') || child.class?.name} • {child.classes?.[0]?.level || child.class?.level}
                                     </Text>
                                 </View>
                             )}
@@ -139,7 +140,7 @@ export default function ParentHomeScreen() {
                             </Text>
                         </View>
                     </View>
-                    
+
                     <View style={styles.childFooter}>
                         <View style={styles.childStat}>
                             <Ionicons name="calendar-outline" size={16} color={colors.text.tertiary} />
@@ -176,173 +177,175 @@ export default function ParentHomeScreen() {
         <>
             <SafeAreaView style={{ flex: 0, backgroundColor: colors.primary }} />
             <View style={[styles.container, { backgroundColor: colors.background.secondary }]}>
-            <ScrollView 
-                contentContainerStyle={{ paddingBottom: spacing['2xl'] }}
-                showsVerticalScrollIndicator={false}
-                refreshControl={
-                    <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={onRefresh}
-                        tintColor={colors.primary}
-                        colors={[colors.primary]}
-                    />
-                }
-            >
-                {/* Premium Header */}
-                <LinearGradient
-                    colors={[colors.primary, colors.primaryDark]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={[styles.header, { paddingTop: insets.top + spacing.lg }]}
+                <ScrollView
+                    contentContainerStyle={{ paddingBottom: spacing['2xl'] }}
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={onRefresh}
+                            tintColor={colors.primary}
+                            colors={[colors.primary]}
+                        />
+                    }
                 >
-                    <View style={styles.headerContent}>
-                        <View>
-                            <Text style={styles.greeting}>
-                                {getTimeBasedGreeting()} {getGreetingEmoji()}
-                            </Text>
-                            <Text style={styles.userName}>{user?.username || 'Parent'}</Text>
-                        </View>
-                        <TouchableOpacity 
-                            style={styles.profileButton}
-                            onPress={() => router.push('/(parent)/profile')}
-                        >
-                            <LinearGradient
-                                colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.15)']}
-                                style={styles.profileGradient}
-                            >
-                                <Ionicons name="person" size={20} color="#FFF" />
-                            </LinearGradient>
-                        </TouchableOpacity>
-                    </View>
-                </LinearGradient>
-
-                {/* Stats Cards */}
-                <View style={styles.statsContainer}>
-                    <View style={styles.statsRow}>
-                        <StatCard
-                            icon="people"
-                            value={stats?.totalChildren || 0}
-                            label={t('totalChildren')}
-                            color={colors.primary}
-                        />
-                        <StatCard
-                            icon="calendar"
-                            value={stats?.totalAbsences || 0}
-                            label={t('totalAbsences')}
-                            color={colors.danger}
-                        />
-                    </View>
-                    <View style={styles.statsRow}>
-                        <StatCard
-                            icon="time"
-                            value={stats?.recentAbsences || 0}
-                            label={t('thisWeek')}
-                            color={colors.warning}
-                            onPress={() => router.push('/(parent)/absences')}
-                        />
-                        <StatCard
-                            icon="stats-chart"
-                            value={stats?.totalChildren ? Math.round((1 - (stats.recentAbsences / (stats.totalChildren * 5))) * 100) + '%' : '100%'}
-                            label={t('attendanceRate')}
-                            color={colors.success}
-                        />
-                    </View>
-                </View>
-
-                {/* Children Section */}
-                <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <View>
-                            <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
-                                {t('myChildren')}
-                            </Text>
-                            <Text style={[styles.sectionSubtitle, { color: colors.text.tertiary }]}>
-                                {stats?.children?.length || 0} {t('totalChildren')}
-                            </Text>
-                        </View>
-                        <TouchableOpacity 
-                            style={[styles.addButton, { backgroundColor: colors.primary + '15' }]}
-                            onPress={() => router.push('/(parent)/link-child')}
-                        >
-                            <Ionicons name="add" size={24} color={colors.primary} />
-                        </TouchableOpacity>
-                    </View>
-
-                    {error && (
-                        <Card style={[styles.errorCard, { backgroundColor: colors.danger + '10' }]}>
-                            <Ionicons name="alert-circle" size={20} color={colors.danger} />
-                            <Text style={[styles.errorText, { color: colors.danger }]}>{error}</Text>
-                        </Card>
-                    )}
-
-                    {stats?.children && stats.children.length > 0 ? (
-                        stats.children.map((child: any) => (
-                            <ChildCard key={child.id} child={child} />
-                        ))
-                    ) : (
-                        <Card style={styles.emptyCard}>
-                            <View style={[styles.emptyIcon, { backgroundColor: colors.primary + '10' }]}>
-                                <Ionicons name="people-outline" size={48} color={colors.primary} />
+                    {/* Premium Header */}
+                    <LinearGradient
+                        colors={[colors.primary, colors.primaryDark]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={[styles.header, { paddingTop: insets.top + spacing.lg }]}
+                    >
+                        <View style={styles.headerContent}>
+                            <View>
+                                <Text style={styles.greeting}>
+                                    {new Date().getHours() < 12 ? t('goodMorning') || 'Bonjour' : (new Date().getHours() < 18 ? t('hello') || 'Bonjour' : t('goodEvening') || 'Bonsoir')} 👋
+                                </Text>
+                                <Text style={styles.userName}>
+                                    {formatDisplayName(user?.username || 'Parent')}
+                                </Text>
                             </View>
-                            <Text style={[styles.emptyTitle, { color: colors.text.primary }]}>
-                                {t('noChildrenLinked')}
-                            </Text>
-                            <Text style={[styles.emptyText, { color: colors.text.secondary }]}>
-                                {t('startLinking')}
-                            </Text>
-                            <Button
-                                title={t('linkFirstChild')}
-                                onPress={() => router.push('/(parent)/link-child')}
-                                style={styles.emptyButton}
-                                icon={<Ionicons name="link" size={20} color="#FFF" />}
-                            />
-                        </Card>
-                    )}
-                </View>
-
-                {/* Quick Actions */}
-                {stats?.children && stats.children.length > 0 && (
-                    <View style={styles.section}>
-                        <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
-                            {t('quickActions')}
-                        </Text>
-                        <View style={styles.quickActionsGrid}>
-                            <TouchableOpacity 
-                                style={[styles.quickActionCard, { backgroundColor: colors.background.card }]}
-                                onPress={() => router.push('/(parent)/absences')}
-                                activeOpacity={0.7}
+                            <TouchableOpacity
+                                style={styles.profileButton}
+                                onPress={() => router.push('/(parent)/profile')}
                             >
-                                <View style={[styles.quickActionContent]}>
-                                    <View style={[styles.quickActionIcon, { backgroundColor: colors.danger + '15' }]}>
-                                        <Ionicons name="calendar" size={24} color={colors.danger} />
-                                    </View>
-                                    <View>
-                                        <Text style={[styles.quickActionTitle, { color: colors.text.primary }]}>{t('absences')}</Text>
-                                        <Text style={[styles.quickActionDesc, { color: colors.text.secondary }]}>{t('viewHistory')}</Text>
-                                    </View>
-                                </View>
-                            </TouchableOpacity>
-                            
-                            <TouchableOpacity 
-                                style={[styles.quickActionCard, { backgroundColor: colors.background.card }]}
-                                onPress={() => router.push('/(parent)/link-child')}
-                                activeOpacity={0.7}
-                            >
-                                <View style={[styles.quickActionContent]}>
-                                    <View style={[styles.quickActionIcon, { backgroundColor: colors.primary + '15' }]}>
-                                        <Ionicons name="person-add" size={24} color={colors.primary} />
-                                    </View>
-                                    <View>
-                                        <Text style={[styles.quickActionTitle, { color: colors.text.primary }]}>{t('linkChild')}</Text>
-                                        <Text style={[styles.quickActionDesc, { color: colors.text.secondary }]}>{t('addNew')}</Text>
-                                    </View>
-                                </View>
+                                <LinearGradient
+                                    colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.15)']}
+                                    style={styles.profileGradient}
+                                >
+                                    <Ionicons name="person" size={20} color="#FFF" />
+                                </LinearGradient>
                             </TouchableOpacity>
                         </View>
+                    </LinearGradient>
+
+                    {/* Stats Cards */}
+                    <View style={styles.statsContainer}>
+                        <View style={styles.statsRow}>
+                            <StatCard
+                                icon="people"
+                                value={stats?.totalChildren || 0}
+                                label={t('totalChildren')}
+                                color={colors.primary}
+                            />
+                            <StatCard
+                                icon="calendar"
+                                value={stats?.totalAbsences || 0}
+                                label={t('totalAbsences')}
+                                color={colors.danger}
+                            />
+                        </View>
+                        <View style={styles.statsRow}>
+                            <StatCard
+                                icon="time"
+                                value={stats?.recentAbsences || 0}
+                                label={t('thisWeek')}
+                                color={colors.warning}
+                                onPress={() => router.push('/(parent)/absences')}
+                            />
+                            <StatCard
+                                icon="stats-chart"
+                                value={stats?.totalChildren ? Math.round((1 - (stats.recentAbsences / (stats.totalChildren * 5))) * 100) + '%' : '100%'}
+                                label={t('attendanceRate')}
+                                color={colors.success}
+                            />
+                        </View>
                     </View>
-                )}
-            </ScrollView>
-        </View>
+
+                    {/* Children Section */}
+                    <View style={styles.section}>
+                        <View style={styles.sectionHeader}>
+                            <View>
+                                <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
+                                    {t('myChildren')}
+                                </Text>
+                                <Text style={[styles.sectionSubtitle, { color: colors.text.tertiary }]}>
+                                    {stats?.children?.length || 0} {t('totalChildren')}
+                                </Text>
+                            </View>
+                            <TouchableOpacity
+                                style={[styles.addButton, { backgroundColor: colors.primary + '15' }]}
+                                onPress={() => router.push('/(parent)/link-child')}
+                            >
+                                <Ionicons name="add" size={24} color={colors.primary} />
+                            </TouchableOpacity>
+                        </View>
+
+                        {error && (
+                            <Card style={[styles.errorCard, { backgroundColor: colors.danger + '10' }]}>
+                                <Ionicons name="alert-circle" size={20} color={colors.danger} />
+                                <Text style={[styles.errorText, { color: colors.danger }]}>{error}</Text>
+                            </Card>
+                        )}
+
+                        {stats?.children && stats.children.length > 0 ? (
+                            stats.children.map((child: any) => (
+                                <ChildCard key={child.id} child={child} />
+                            ))
+                        ) : (
+                            <Card style={styles.emptyCard}>
+                                <View style={[styles.emptyIcon, { backgroundColor: colors.primary + '10' }]}>
+                                    <Ionicons name="people-outline" size={48} color={colors.primary} />
+                                </View>
+                                <Text style={[styles.emptyTitle, { color: colors.text.primary }]}>
+                                    {t('noChildrenLinked')}
+                                </Text>
+                                <Text style={[styles.emptyText, { color: colors.text.secondary }]}>
+                                    {t('startLinking')}
+                                </Text>
+                                <Button
+                                    title={t('linkFirstChild')}
+                                    onPress={() => router.push('/(parent)/link-child')}
+                                    style={styles.emptyButton}
+                                    icon={<Ionicons name="link" size={20} color="#FFF" />}
+                                />
+                            </Card>
+                        )}
+                    </View>
+
+                    {/* Quick Actions */}
+                    {stats?.children && stats.children.length > 0 && (
+                        <View style={styles.section}>
+                            <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
+                                {t('quickActions')}
+                            </Text>
+                            <View style={styles.quickActionsGrid}>
+                                <TouchableOpacity
+                                    style={[styles.quickActionCard, { backgroundColor: colors.background.card }]}
+                                    onPress={() => router.push('/(parent)/absences')}
+                                    activeOpacity={0.7}
+                                >
+                                    <View style={[styles.quickActionContent]}>
+                                        <View style={[styles.quickActionIcon, { backgroundColor: colors.danger + '15' }]}>
+                                            <Ionicons name="calendar" size={24} color={colors.danger} />
+                                        </View>
+                                        <View>
+                                            <Text style={[styles.quickActionTitle, { color: colors.text.primary }]}>{t('absences')}</Text>
+                                            <Text style={[styles.quickActionDesc, { color: colors.text.secondary }]}>{t('viewHistory')}</Text>
+                                        </View>
+                                    </View>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={[styles.quickActionCard, { backgroundColor: colors.background.card }]}
+                                    onPress={() => router.push('/(parent)/link-child')}
+                                    activeOpacity={0.7}
+                                >
+                                    <View style={[styles.quickActionContent]}>
+                                        <View style={[styles.quickActionIcon, { backgroundColor: colors.primary + '15' }]}>
+                                            <Ionicons name="person-add" size={24} color={colors.primary} />
+                                        </View>
+                                        <View>
+                                            <Text style={[styles.quickActionTitle, { color: colors.text.primary }]}>{t('linkChild')}</Text>
+                                            <Text style={[styles.quickActionDesc, { color: colors.text.secondary }]}>{t('addNew')}</Text>
+                                        </View>
+                                    </View>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    )}
+                </ScrollView>
+            </View>
         </>
     );
 }
@@ -371,15 +374,19 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     greeting: {
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: '600',
-        color: 'rgba(255,255,255,0.9)',
-        marginBottom: 4,
+        color: 'rgba(255,255,255,0.85)',
+        marginBottom: 2,
     },
     userName: {
         fontSize: 28,
         fontWeight: '800',
         color: '#FFF',
+        letterSpacing: 0.5,
+        textShadowColor: 'rgba(0,0,0,0.2)',
+        textShadowOffset: { width: 0, height: 2 },
+        textShadowRadius: 6,
     },
     profileButton: {
         borderRadius: 14,

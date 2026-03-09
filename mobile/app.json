@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "Kbarwilly",
-    "slug": "kbarwilly",
+    "name": "Khbarwelli",
+    "slug": "khbarwelli",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "kbarwilly",
+    "scheme": "khbarwelli",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.kbarwilly.app"
+      "bundleIdentifier": "com.khbarwelli.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -18,7 +18,7 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "package": "com.kbarwilly.app",
+      "package": "com.khbarwelli.app",
       "permissions": [
         "NOTIFICATIONS",
         "VIBRATE"

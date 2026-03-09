@@ -19,6 +19,16 @@ export const capitalize = (str: string): string => {
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
 
+/** Format username for display: "john doe" → "John Doe", "mohamed" → "Mohamed" */
+export const formatDisplayName = (name: string): string => {
+    if (!name || !name.trim()) return '';
+    return name
+        .trim()
+        .split(/\s+/)
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+};
+
 export const truncate = (str: string, maxLength: number): string => {
     if (str.length <= maxLength) return str;
     return str.slice(0, maxLength) + '...';

@@ -21,14 +21,14 @@ const generateOTP = () => {
 const normalizePhone = (phone) => {
     // Remove spaces, dashes, dots
     let cleanPhone = phone.replace(/[\s\-\.]/g, '');
-    
+
     // If it doesn't start with +222, prepend it
     if (!cleanPhone.startsWith('+222')) {
         // Remove leading 0 if present
         cleanPhone = cleanPhone.replace(/^0+/, '');
         cleanPhone = '+222' + cleanPhone;
     }
-    
+
     return cleanPhone;
 };
 
@@ -38,17 +38,17 @@ const normalizePhone = (phone) => {
 const storeOTP = async (phone, otp) => {
     const normalizedPhone = normalizePhone(phone);
     const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
-    
+
     // Delete any existing unverified OTPs for this phone
     await OTP.deleteMany({ phone: normalizedPhone, verified: false });
-    
+
     // Create new OTP
     const otpDoc = new OTP({
         phone: normalizedPhone,
         otp,
         expiresAt,
     });
-    
+
     await otpDoc.save();
     return otpDoc;
 };
@@ -59,19 +59,19 @@ const storeOTP = async (phone, otp) => {
  */
 const sendOTP = async (phone, otp) => {
     const normalizedPhone = normalizePhone(phone);
-    
+
     // PLACEHOLDER: Log OTP for development
     console.log(`[OTP Service] Would send OTP to ${normalizedPhone}: ${otp}`);
-    console.log(`[OTP Service] Message: Your Kbarwilly verification code is: ${otp}. Valid for ${OTP_EXPIRY_MINUTES} minutes.`);
-    
+    console.log(`[OTP Service] Message: Votre code de vérification Khbarwelli est : ${otp}. Valide pendant ${OTP_EXPIRY_MINUTES} minutes.`);
+
     // TODO: When SMS provider is ready, replace with actual SMS sending
     // Example with Twilio:
     // await twilioClient.messages.create({
-    //     body: `Your Kbarwilly verification code is: ${otp}. Valid for ${OTP_EXPIRY_MINUTES} minutes.`,
+    //     body: `Votre code de vérification Khbarwelli est : ${otp}. Valide pendant ${OTP_EXPIRY_MINUTES} minutes.`,
     //     from: process.env.TWILIO_PHONE_NUMBER,
     //     to: normalizedPhone
     // });
-    
+
     return {
         success: true,
         message: 'OTP generated (SMS sending not configured)',
@@ -87,7 +87,7 @@ const requestOTP = async (phone) => {
         const otp = generateOTP();
         await storeOTP(phone, otp);
         const result = await sendOTP(phone, otp);
-        
+
         return {
             success: true,
             message: 'OTP sent successfully',
@@ -105,21 +105,21 @@ const requestOTP = async (phone) => {
 const verifyOTP = async (phone, otp) => {
     try {
         const normalizedPhone = normalizePhone(phone);
-        
+
         // Find the most recent unverified OTP for this phone
         const otpDoc = await OTP.findOne({
             phone: normalizedPhone,
             verified: false,
             expiresAt: { $gt: new Date() }, // Not expired
         }).sort({ createdAt: -1 });
-        
+
         if (!otpDoc) {
             return {
                 success: false,
                 message: 'OTP not found or expired',
             };
         }
-        
+
         // Check attempts
         if (otpDoc.attempts >= MAX_ATTEMPTS) {
             return {
@@ -127,11 +127,11 @@ const verifyOTP = async (phone, otp) => {
                 message: 'Maximum verification attempts exceeded',
             };
         }
-        
+
         // Increment attempts
         otpDoc.attempts += 1;
         await otpDoc.save();
-        
+
         // Verify OTP
         if (otpDoc.otp !== otp) {
             return {
@@ -140,11 +140,11 @@ const verifyOTP = async (phone, otp) => {
                 attemptsRemaining: MAX_ATTEMPTS - otpDoc.attempts,
             };
         }
-        
+
         // Mark as verified
         otpDoc.verified = true;
         await otpDoc.save();
-        
+
         return {
             success: true,
             message: 'OTP verified successfully',
@@ -161,13 +161,13 @@ const verifyOTP = async (phone, otp) => {
  */
 const hasVerifiedOTP = async (phone) => {
     const normalizedPhone = normalizePhone(phone);
-    
+
     const verifiedOTP = await OTP.findOne({
         phone: normalizedPhone,
         verified: true,
         expiresAt: { $gt: new Date() },
     });
-    
+
     return !!verifiedOTP;
 };
 

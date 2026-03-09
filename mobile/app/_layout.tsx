@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
-import { ThemeProvider } from '../src/context/ThemeContext';
+import { ThemeProvider, useTheme } from '../src/context/ThemeContext';
 import { NotificationProvider } from '../src/context/NotificationContext';
 import { LanguageProvider } from '../src/context/LanguageContext';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
@@ -11,6 +11,7 @@ function RootLayoutNav() {
     const { isAuthenticated, isLoading, user } = useAuth();
     const segments = useSegments();
     const router = useRouter();
+    const { colors } = useTheme();
 
     useEffect(() => {
         if (isLoading) return;
@@ -55,8 +56,8 @@ function RootLayoutNav() {
 
     if (isLoading) {
         return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#3B82F6" />
+            <View style={[styles.loadingContainer, { backgroundColor: colors.background.primary }]}>
+                <ActivityIndicator size="large" color={colors.primary} />
             </View>
         );
     }
@@ -90,6 +91,5 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#ffffff',
     },
 });

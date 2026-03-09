@@ -7,6 +7,7 @@ export interface User {
   classes?: string[];
   students?: string[];
   school: string;
+  language?: string;
   createdAt: Date;
   updatedAt: Date;
 }

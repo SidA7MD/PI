@@ -1,6 +1,7 @@
 // src/components/admin/ClassForm.jsx
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { LanguageContext } from '../../context/LanguageContext';
 // Header and Sidebar imports removed
 import api from '../../services/api';
 import {
@@ -14,6 +15,7 @@ import '../../styles/Auth.css'; // For inputs
 const ClassForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t, language } = useContext(LanguageContext);
   const [formData, setFormData] = useState({ name: '', level: '', schoolYear: '', teachers: [] });
   const [teachers, setTeachers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -32,12 +34,12 @@ const ClassForm = () => {
             name: cls.data.class?.name || '',
             level: cls.data.class?.level || '',
             schoolYear: cls.data.class?.schoolYear || '',
-            teachers: cls.data.class?.teachers?.map(t => String(t._id || t)) || [],
+            teachers: cls.data.class?.teachers?.map(tc => String(tc._id || tc)) || [],
           });
         }
       } catch (err) {
         console.error('Erreur', err);
-        setError('Erreur lors du chargement des données');
+        setError(t('error_loading'));
       }
     };
     loadData();
@@ -79,7 +81,7 @@ const ClassForm = () => {
   };
 
   const handleDelete = async () => {
-    if (window.confirm('Voulez-vous vraiment supprimer cette classe ?')) {
+    if (window.confirm(t('confirm_delete_class'))) {
       setLoading(true);
       try {
         await api.delete(`/class/${id}`);
@@ -105,9 +107,9 @@ const ClassForm = () => {
             <div className="form-icon">
               <FiBook />
             </div>
-            <h2 className="form-title">{id ? 'Modifier Classe' : 'Nouvelle Classe'}</h2>
+            <h2 className="form-title">{id ? t('edit_class') : t('new_class_form')}</h2>
             <p className="form-subtitle">
-              {id ? 'Mettre à jour les informations' : 'Créer une nouvelle classe'}
+              {id ? (language === 'ar' ? 'تحديث المعلومات' : 'Mettre à jour les informations') : t('add_class')}
             </p>
           </div>
 
@@ -120,10 +122,10 @@ const ClassForm = () => {
 
           <form onSubmit={handleSubmit}>
             <div className="form-section">
-              <h3 className="section-title"><LuSchool /> Informations</h3>
+              <h3 className="section-title"><LuSchool /> {language === 'ar' ? 'معلومات' : 'Informations'}</h3>
 
               <div className="form-group">
-                <label className="form-label">Nom de la classe *</label>
+                <label className="form-label">{language === 'ar' ? 'اسم الفصل' : 'Nom de la classe'} *</label>
                 <div className="form-input-wrapper">
                   <FiBook className="form-input-icon" />
                   <input
@@ -140,7 +142,7 @@ const ClassForm = () => {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">Niveau *</label>
+                  <label className="form-label">{language === 'ar' ? 'المستوى' : 'Niveau'} *</label>
                   <div className="form-input-wrapper">
                     <FiBook className="form-input-icon" />
                     <select
@@ -150,16 +152,16 @@ const ClassForm = () => {
                       className="form-input"
                       required
                     >
-                      <option value="">Sélectionner</option>
-                      <option value="Primaire">Primaire</option>
-                      <option value="Collège">Collège</option>
-                      <option value="Lycée">Lycée</option>
+                      <option value="">{language === 'ar' ? 'اختر' : 'Sélectionner'}</option>
+                      <option value="Primaire">{language === 'ar' ? 'ابتدائي' : 'Primaire'}</option>
+                      <option value="Collège">{language === 'ar' ? 'إعدادي' : 'Collège'}</option>
+                      <option value="Lycée">{language === 'ar' ? 'ثانوي' : 'Lycée'}</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Année Scolaire</label>
+                  <label className="form-label">{language === 'ar' ? 'السنة الدراسية' : 'Année Scolaire'}</label>
                   <div className="form-input-wrapper">
                     <FiBook className="form-input-icon" />
                     <input
@@ -176,17 +178,17 @@ const ClassForm = () => {
             </div>
 
             <div className="form-section">
-              <h3 className="section-title"><FiUser /> Professeurs</h3>
+              <h3 className="section-title"><FiUser /> {t('teachers')}</h3>
               <div className="chips-input-container">
                 {selectedTeachers.length > 0 && (
                   <div className="selected-chips">
-                    {selectedTeachers.map(t => (
+                    {selectedTeachers.map(teacher => (
                       <div
-                        key={t._id}
+                        key={teacher._id}
                         className="active-chip"
-                        onClick={() => toggleTeacher(t._id)}
+                        onClick={() => toggleTeacher(teacher._id)}
                       >
-                        <span>{t.username}</span>
+                        <span>{teacher.username}</span>
                         <FiX size={14} />
                       </div>
                     ))}
@@ -197,9 +199,9 @@ const ClassForm = () => {
                   <FiSearch className="search-icon" style={{ left: 0 }} />
                   <input
                     type="text"
-                    placeholder="Rechercher un professeur..."
+                    placeholder={t('search_teachers')}
                     className="search-input"
-                    style={{ paddingLeft: '28px', border: 'none', background: 'transparent' }}
+                    style={{ paddingLeft: language === 'ar' ? 0 : '28px', paddingRight: language === 'ar' ? '28px' : 0, border: 'none', background: 'transparent' }}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -209,16 +211,16 @@ const ClassForm = () => {
                   <div className="search-dropdown">
                     {availableTeachers.length === 0 ? (
                       <div className="dropdown-item" style={{ color: '#999', cursor: 'default' }}>
-                        Aucun résultat
+                        {language === 'ar' ? 'لا توجد نتائج' : 'Aucun résultat'}
                       </div>
                     ) : (
-                      availableTeachers.map(t => (
+                      availableTeachers.map(teacher => (
                         <div
-                          key={t._id}
+                          key={teacher._id}
                           className="dropdown-item"
-                          onClick={() => toggleTeacher(t._id)}
+                          onClick={() => toggleTeacher(teacher._id)}
                         >
-                          {t.username}
+                          {teacher.username}
                         </div>
                       ))
                     )}
@@ -229,7 +231,7 @@ const ClassForm = () => {
 
             <div className="form-actions">
               <button type="submit" className="btn-primary" disabled={loading} style={{ flex: 2 }}>
-                {loading ? 'Enregistrement...' : <><FiSave /> {id ? 'Mettre à jour' : 'Enregistrer'}</>}
+                {loading ? t('saving') : <><FiSave /> {id ? t('save') : t('save')}</>}
               </button>
               {id && (
                 <button
@@ -239,7 +241,7 @@ const ClassForm = () => {
                   disabled={loading}
                   style={{ flex: 1 }}
                 >
-                  <FiTrash2 /> Supprimer
+                  <FiTrash2 /> {t('delete')}
                 </button>
               )}
               <button
@@ -248,7 +250,7 @@ const ClassForm = () => {
                 onClick={() => navigate('/admin/classes')}
                 style={{ flex: 1 }}
               >
-                <FiArrowLeft /> Annuler
+                <FiArrowLeft /> {t('cancel')}
               </button>
             </div>
           </form>

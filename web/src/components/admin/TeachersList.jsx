@@ -1,6 +1,7 @@
 // src/components/admin/TeachersList.jsx
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
+import { LanguageContext } from '../../context/LanguageContext';
 // Header and Sidebar imports removed
 import api from '../../services/api';
 import { FiPlus, FiSearch, FiTrash2, FiEdit2, FiUser, FiPhone, FiMail } from 'react-icons/fi';
@@ -9,6 +10,7 @@ import '../../styles/Dashboard.css';
 import '../../styles/Components.css';
 
 const TeachersList = () => {
+  const { t, language } = useContext(LanguageContext);
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,7 +31,7 @@ const TeachersList = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Voulez-vous vraiment supprimer ce professeur ?')) {
+    if (window.confirm(t('confirm_delete_teacher'))) {
       try {
         await api.delete(`/admin/teachers/${id}`);
         setTeachers(teachers.filter((t) => t._id !== id));
@@ -39,7 +41,7 @@ const TeachersList = () => {
     }
   };
 
-  const filteredTeachers = teachers.filter(t => 
+  const filteredTeachers = teachers.filter(t =>
     t.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     t.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -50,18 +52,18 @@ const TeachersList = () => {
         <div>
           <h1 className="page-title">
             <FiUser className="text-primary-600" />
-            Gestion des Professeurs
+            {t('teachers_management')}
           </h1>
-          <p className="page-subtitle">{teachers.length} professeurs enregistrés</p>
+          <p className="page-subtitle">{teachers.length} {t('registered_count')}</p>
         </div>
       </div>
 
       <div className="filter-bar">
         <div className="search-input-wrapper">
           <FiSearch className="search-icon" />
-          <input 
-            type="text" 
-            placeholder="Rechercher un professeur..." 
+          <input
+            type="text"
+            placeholder={t('search_teachers')}
             className="search-input"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -69,7 +71,7 @@ const TeachersList = () => {
         </div>
         <Link to="/admin/teachers/create" className="btn-add">
           <FiPlus size={20} />
-          <span>Nouveau prof</span>
+          <span>{t('add_teacher')}</span>
         </Link>
       </div>
 
@@ -77,16 +79,16 @@ const TeachersList = () => {
         {filteredTeachers.length === 0 ? (
           <div className="empty-state">
             <FiUser className="empty-icon" />
-            <div className="empty-text">Aucun professeur trouvé</div>
-            <div className="empty-subtext">Ajoutez votre premier enseignant</div>
+            <div className="empty-text">{t('no_items_found')}</div>
+            <div className="empty-subtext">{t('add_first')}</div>
           </div>
         ) : (
           filteredTeachers.map((teacher) => (
             <div key={teacher._id} className="item-card">
               <div className="card-header">
-                <div className="item-badge" style={{ 
+                <div className="item-badge" style={{
                   background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
-                  color: 'white' 
+                  color: 'white'
                 }}>
                   {teacher.username?.charAt(0)}
                 </div>

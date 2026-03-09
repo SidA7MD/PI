@@ -2,6 +2,7 @@ import React, { createContext, useContext, useReducer, useEffect, ReactNode } fr
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import * as authService from '../services/authService';
+import { useLanguage } from './LanguageContext';
 import { User } from '../types';
 import { AuthState, LoginCredentials, RegisterData } from '../types/auth.types';
 
@@ -53,6 +54,7 @@ const initialState: AuthState = {
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [state, dispatch] = useReducer(authReducer, initialState);
     const router = useRouter();
+    const { setLanguage } = useLanguage();
 
     useEffect(() => {
         checkAuthStatus();
@@ -65,6 +67,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (user) {
                 const token = await AsyncStorage.getItem('token');
                 console.log('✅ User found:', user.username, 'Role:', user.role);
+
+                // Apply user language preference if available
+                if (user.language) {
+                    console.log('🌐 Applying user language:', user.language);
+                    await setLanguage(user.language as any);
+                }
+
                 dispatch({ type: 'SET_USER', payload: { user, token: token || '' } });
             } else {
                 console.log('❌ No user found');
@@ -82,6 +91,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             console.log('🔐 Logging in...');
             const { user, token } = await authService.login(credentials);
             console.log('✅ Login successful:', user.username, 'Role:', user.role);
+
+            // Apply user language preference if available
+            if (user.language) {
+                console.log('🌐 Applying user language:', user.language);
+                await setLanguage(user.language as any);
+            }
 
             dispatch({ type: 'SET_USER', payload: { user, token } });
 
@@ -112,27 +127,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         dispatch({ type: 'SET_LOADING', payload: true });
         try {
             console.log('📝 Registering new user...');
-            const { user, token } = await authService.register(data);
-            console.log('✅ Registration successful:', user.username, 'Role:', user.role);
+            await authService.register(data);
+            console.log('✅ Registration successful');
 
-            dispatch({ type: 'SET_USER', payload: { user, token } });
-
-            // Navigate based on role
-            if (user.role === 'teacher') {
-                console.log('📍 Navigating to teacher home');
-                router.replace('/(teacher)');
-            } else if (user.role === 'parent') {
-                console.log('📍 Navigating to parent home');
-                router.replace('/(parent)');
-            } else if (user.role === 'school') {
-                console.log('⚠️ School accounts are web-only');
-                await authService.logout();
-                dispatch({ type: 'LOGOUT' });
-                throw new Error('Les comptes école ne peuvent se connecter que via l\'interface web');
-            } else {
-                console.log('⚠️ Unknown role:', user.role);
-                router.replace('/(parent)'); // Default fallback
-            }
+            // Ne pas connecter automatiquement : déconnecter et rediriger vers login
+            await authService.logout();
+            dispatch({ type: 'LOGOUT' });
+            router.replace('/(auth)/login');
         } catch (error) {
             console.error('❌ Registration error:', error);
             dispatch({ type: 'SET_LOADING', payload: false });

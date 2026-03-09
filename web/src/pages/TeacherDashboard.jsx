@@ -8,10 +8,12 @@ import {
   FiUsers, FiClock, FiCalendar, FiCheckCircle, FiAlertTriangle
 } from 'react-icons/fi';
 import { LuSchool, LuGraduationCap } from 'react-icons/lu';
+import { LanguageContext } from '../context/LanguageContext';
 import '../styles/Dashboard.css';
 
 const TeacherDashboard = () => {
   const { user } = useContext(AuthContext);
+  const { t, language } = useContext(LanguageContext);
   const [stats, setStats] = useState({
     totalClasses: 0,
     totalStudents: 0,
@@ -49,8 +51,13 @@ const TeacherDashboard = () => {
     <>
       <div className="welcome-section">
         <div className="welcome-content">
-          <h1>Bonjour, {user?.username} 👨‍🏫</h1>
-          <p>Prêt pour faire l'appel aujourd'hui ?</p>
+          <div className="welcome-avatar">
+            {user?.username?.charAt(0).toUpperCase() || 'P'}
+          </div>
+          <div className="greeting-text-container">
+            <h1>{language === 'ar' ? 'مرحباً' : 'Bonjour'}, {user?.username} 👨‍🏫</h1>
+            <p>{t('attendance_ready')}</p>
+          </div>
         </div>
         <LuSchool className="welcome-decoration" />
       </div>
@@ -63,7 +70,7 @@ const TeacherDashboard = () => {
               <LuSchool />
             </div>
           </div>
-          <div className="stat-label">Mes Classes</div>
+          <div className="stat-label">{t('my_classes')}</div>
         </div>
 
         <div className="stat-card">
@@ -73,7 +80,7 @@ const TeacherDashboard = () => {
               <FiUsers />
             </div>
           </div>
-          <div className="stat-label">Total Élèves</div>
+          <div className="stat-label">{t('total_students')}</div>
         </div>
 
         <div className="stat-card">
@@ -83,7 +90,7 @@ const TeacherDashboard = () => {
               <FiAlertTriangle />
             </div>
           </div>
-          <div className="stat-label">Absences Auj.</div>
+          <div className="stat-label">{t('today_absences')}</div>
         </div>
 
         <div className="stat-card">
@@ -93,20 +100,20 @@ const TeacherDashboard = () => {
               <FiClock />
             </div>
           </div>
-          <div className="stat-label">Retards Auj.</div>
+          <div className="stat-label">{t('today_lates')}</div>
         </div>
       </div>
 
       <h2 className="page-title" style={{ fontSize: '20px', marginBottom: '20px' }}>
-        <LuGraduationCap /> Mes Classes
+        <LuGraduationCap /> {t('my_classes')}
       </h2>
 
       <div className="cards-grid">
         {classes.length === 0 ? (
           <div className="empty-state">
             <LuSchool className="empty-icon" />
-            <div className="empty-text">Aucune classe assignée</div>
-            <div className="empty-subtext">Contactez l'administrateur si nécessaire</div>
+            <div className="empty-text">{t('no_classes_assigned')}</div>
+            <div className="empty-subtext">{t('contact_admin')}</div>
           </div>
         ) : (
           classes.map((cls) => (
@@ -116,7 +123,7 @@ const TeacherDashboard = () => {
                   {cls.name.charAt(0)}
                 </div>
                 <div className="chip">
-                  {cls.studentCount} élèves
+                  {cls.studentCount} {language === 'ar' ? 'طلاب' : 'élèves'}
                 </div>
               </div>
 
@@ -124,12 +131,12 @@ const TeacherDashboard = () => {
 
               <div className="item-subtitle" style={{ marginBottom: '12px' }}>
                 <span style={{ color: 'var(--danger)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <FiAlertTriangle size={14} /> {cls.todayAbsences} absents auj.
+                  <FiAlertTriangle size={14} /> {cls.todayAbsences} {language === 'ar' ? 'غيابات اليوم' : 'absents auj.'}
                 </span>
               </div>
 
               <div style={{ marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid var(--gray-100)', color: 'var(--primary-600)', fontWeight: '600', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                Faire l'appel <FiCheckCircle />
+                {t('mark_attendance')} <FiCheckCircle />
               </div>
             </Link>
           ))

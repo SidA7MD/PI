@@ -4,10 +4,13 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useTheme } from '../../src/context/ThemeContext';
 import { useLanguage } from '../../src/context/LanguageContext';
 import { Button } from '../../src/components/ui/Button';
 import { Input } from '../../src/components/ui/Input';
+import { GradientBackground } from '../../src/components/ui/GradientBackground';
+import { GlassCard } from '../../src/components/ui/GlassCard';
 import { spacing, shadows } from '../../src/theme';
 
 export default function ForgotPasswordScreen() {
@@ -42,22 +45,17 @@ export default function ForgotPasswordScreen() {
 
     if (success) {
         return (
-            <>
-                <SafeAreaView style={{ flex: 0, backgroundColor: colors.success }} />
+            <GradientBackground>
                 <StatusBar barStyle="light-content" />
-                <View style={[styles.container, { backgroundColor: colors.background.secondary }]}>
-                    <LinearGradient
-                        colors={[colors.success, colors.successDark || '#28a745']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={styles.successHeader}
+                <SafeAreaView style={{ flex: 1 }}>
+                    <Animated.View
+                        entering={FadeInDown.duration(1000).springify()}
+                        style={styles.successContainer}
                     >
-                        <Text style={styles.successLogoText}>Kbarwilly</Text>
-                        <Ionicons name="checkmark-circle" size={64} color="#FFF" style={{ marginTop: spacing.md }} />
-                    </LinearGradient>
-
-                    <View style={styles.successContent}>
-                        <View style={[styles.successCard, { backgroundColor: colors.background.card, ...shadows.lg }]}>
+                        <GlassCard style={styles.successCard}>
+                            <View style={[styles.successIconContainer, { backgroundColor: colors.status.success + '20', borderColor: colors.status.success }]}>
+                                <Ionicons name="checkmark-circle" size={56} color={colors.status.success} />
+                            </View>
                             <Text style={[styles.successTitle, { color: colors.text.primary }]}>
                                 {t('emailSent')}
                             </Text>
@@ -70,74 +68,75 @@ export default function ForgotPasswordScreen() {
                                 fullWidth
                                 style={{ marginTop: spacing.xl }}
                             />
-                        </View>
-                    </View>
-                </View>
-            </>
+                        </GlassCard>
+                    </Animated.View>
+                </SafeAreaView>
+            </GradientBackground>
         );
     }
 
     return (
-        <>
-            <SafeAreaView style={{ flex: 0, backgroundColor: colors.primary }} />
+        <GradientBackground>
             <StatusBar barStyle="light-content" />
-            <ScrollView
-                style={[styles.container, { backgroundColor: colors.background.secondary }]}
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
-            >
-                {/* Gradient Header */}
-                <LinearGradient
-                    colors={[colors.primary, colors.primaryDark]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.header}
+            <SafeAreaView style={{ flex: 1 }}>
+                <ScrollView
+                    style={styles.container}
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
                 >
-                    <View style={styles.logoContainer}>
-                        <Text style={styles.logoText}>Kbarwilly</Text>
+                    <Animated.View
+                        entering={FadeInDown.delay(100).duration(800).springify()}
+                        style={styles.headerContainer}
+                    >
+                        <View style={styles.iconContainer}>
+                            <Ionicons name="lock-open" size={44} color="#FFF" />
+                        </View>
                         <Text style={styles.title}>
                             {t('forgotPasswordTitle')}
                         </Text>
                         <Text style={styles.subtitle}>
                             {t('forgotPasswordSubtitle')}
                         </Text>
-                    </View>
-                </LinearGradient>
+                    </Animated.View>
 
-                {/* Form Card */}
-                <View style={styles.formContainer}>
-                    <View style={[styles.formCard, { backgroundColor: colors.background.card, ...shadows.lg }]}>
-                        <View style={styles.form}>
-                            <Input
-                                label={t('emailLabel')}
-                                value={email}
-                                onChange={setEmail}
-                                placeholder={t('emailPlaceholder')}
-                                keyboardType="email-address"
-                                autoCapitalize="none"
-                                error={error}
-                            />
+                    <Animated.View
+                        entering={FadeInUp.delay(300).duration(800).springify()}
+                        style={styles.formContainer}
+                    >
+                        <GlassCard style={styles.glassCard}>
+                            <View style={styles.form}>
+                                <Input
+                                    label={t('emailLabel')}
+                                    value={email}
+                                    onChange={setEmail}
+                                    placeholder={t('emailPlaceholder')}
+                                    keyboardType="email-address"
+                                    autoCapitalize="none"
+                                    error={error}
+                                    leftIcon={<Ionicons name="mail-outline" size={20} color={colors.text.secondary} />}
+                                />
 
-                            <Button
-                                title={t('sendResetLink')}
-                                onPress={handleResetPassword}
-                                loading={loading}
-                                fullWidth
-                                style={{ marginTop: spacing.xl }}
-                            />
+                                <Button
+                                    title={t('sendResetLink')}
+                                    onPress={handleResetPassword}
+                                    loading={loading}
+                                    fullWidth
+                                    style={{ marginTop: spacing.xl }}
+                                />
 
-                            <Button
-                                title={t('back')}
-                                onPress={() => router.back()}
-                                variant="ghost"
-                                fullWidth
-                                style={{ marginTop: spacing.md }}
-                            />
-                        </View>
-                    </View>
-                </View>
-            </ScrollView>
-        </>
+                                <Button
+                                    title={t('back')}
+                                    onPress={() => router.back()}
+                                    variant="ghost"
+                                    fullWidth
+                                    style={{ marginTop: spacing.md }}
+                                />
+                            </View>
+                        </GlassCard>
+                    </Animated.View>
+                </ScrollView>
+            </SafeAreaView>
+        </GradientBackground>
     );
 }
 
@@ -147,90 +146,79 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         flexGrow: 1,
+        paddingBottom: spacing.xl,
     },
-    header: {
-        paddingTop: spacing.xl,
-        paddingBottom: spacing['3xl'],
-        paddingHorizontal: spacing.xl,
-        borderBottomLeftRadius: 32,
-        borderBottomRightRadius: 32,
-    },
-    logoContainer: {
+    headerContainer: {
         alignItems: 'center',
+        marginTop: spacing.xl,
+        marginBottom: spacing.lg,
     },
-    logoText: {
-        fontSize: 42,
-        fontWeight: '900',
-        color: '#FFF',
-        marginBottom: spacing.md,
-        letterSpacing: 1,
-        textShadowColor: 'rgba(0,0,0,0.3)',
-        textShadowOffset: { width: 0, height: 2 },
-        textShadowRadius: 4,
+    iconContainer: {
+        width: 80,
+        height: 80,
+        borderRadius: 24,
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: spacing.lg,
+        borderWidth: 2,
+        borderColor: 'rgba(255,255,255,0.25)',
     },
     title: {
-        fontSize: 24,
-        fontWeight: '800',
+        fontSize: 26,
+        fontWeight: '700',
         color: '#FFF',
         marginBottom: spacing.xs,
         textAlign: 'center',
+        textShadowColor: 'rgba(0,0,0,0.2)',
+        textShadowOffset: { width: 0, height: 2 },
+        textShadowRadius: 8,
     },
     subtitle: {
-        fontSize: 14,
-        color: 'rgba(255,255,255,0.9)',
+        fontSize: 15,
+        color: 'rgba(255,255,255,0.85)',
         fontWeight: '500',
         textAlign: 'center',
-        lineHeight: 20,
-    },
-    formContainer: {
-        flex: 1,
-        marginTop: -40,
+        lineHeight: 22,
         paddingHorizontal: spacing.lg,
     },
-    formCard: {
-        borderRadius: 24,
+    formContainer: {
+        paddingHorizontal: spacing.lg,
+    },
+    glassCard: {
         padding: spacing.xl,
-        marginBottom: spacing.xl,
     },
     form: {
         width: '100%',
     },
-    successHeader: {
-        paddingTop: spacing['2xl'],
-        paddingBottom: spacing['3xl'],
-        alignItems: 'center',
-        borderBottomLeftRadius: 32,
-        borderBottomRightRadius: 32,
-    },
-    successLogoText: {
-        fontSize: 42,
-        fontWeight: '900',
-        color: '#FFF',
-        letterSpacing: 1,
-        textShadowColor: 'rgba(0,0,0,0.3)',
-        textShadowOffset: { width: 0, height: 2 },
-        textShadowRadius: 4,
-    },
-    successContent: {
+    successContainer: {
         flex: 1,
-        marginTop: -40,
-        paddingHorizontal: spacing.lg,
+        justifyContent: 'center',
+        padding: spacing.lg,
     },
     successCard: {
-        borderRadius: 24,
         padding: spacing.xl,
         alignItems: 'center',
     },
+    successIconContainer: {
+        width: 96,
+        height: 96,
+        borderRadius: 48,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: spacing.lg,
+        borderWidth: 2,
+    },
     successTitle: {
-        fontSize: 24,
+        fontSize: 22,
         fontWeight: '700',
-        marginBottom: spacing.md,
+        marginBottom: spacing.sm,
         textAlign: 'center',
     },
     successText: {
         fontSize: 16,
         textAlign: 'center',
-        lineHeight: 22,
+        lineHeight: 24,
         marginBottom: spacing.lg,
     },
 });

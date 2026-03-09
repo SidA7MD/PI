@@ -95,12 +95,54 @@ exports.getAllSchools = async (req, res) => {
       .select('-__v')
       .sort({ createdAt: -1 });
 
+    // Ajouter le nombre d'élèves pour chaque école
+    const schoolsWithStats = await Promise.all(schools.map(async (school) => {
+      const studentCount = await Student.countDocuments({ school: school._id });
+      return {
+        ...school.toObject(),
+        studentCount
+      };
+    }));
+
     res.status(200).json({
       count: schools.length,
-      schools,
+      schools: schoolsWithStats,
     });
   } catch (error) {
     console.error('Error in getAllSchools:', error);
+    res.status(500).json({ message: 'Erreur serveur', error: error.message });
+  }
+};
+
+// @desc    Obtenir les statistiques globales (Super Admin seulement)
+// @route   GET /api/superadmin/stats
+// @access  Private/SuperAdmin
+exports.getSuperAdminStats = async (req, res) => {
+  try {
+    const [schoolCount, parentCount] = await Promise.all([
+      School.countDocuments(),
+      User.countDocuments({ role: 'parent' }),
+    ]);
+
+    // Calculer le revenu basé sur le nombre d'élèves uniques liés
+    // (Si deux parents lient le même élève, on ne compte qu'une fois 100 MRU)
+    const result = await User.aggregate([
+      { $match: { role: 'parent' } },
+      { $unwind: "$students" },
+      { $group: { _id: "$students" } },
+      { $count: "uniqueLinkedStudents" }
+    ]);
+
+    const uniqueLinks = result.length > 0 ? result[0].uniqueLinkedStudents : 0;
+
+    res.status(200).json({
+      totalSchools: schoolCount,
+      totalParents: parentCount,
+      totalLinks: uniqueLinks,
+      estimatedRevenue: uniqueLinks * 100, // 100 MRU per unique link
+    });
+  } catch (error) {
+    console.error('Error in getSuperAdminStats:', error);
     res.status(500).json({ message: 'Erreur serveur', error: error.message });
   }
 };
@@ -730,30 +772,46 @@ exports.deleteSchool = async (req, res) => {
 
     console.log(`\n--- STARTING DELETION FOR SCHOOL: ${school.name} (${schoolId}) ---`);
 
-    // 1. Supprimer les report cards
-    const ReportCard = require('../models/ReportCard');
-    const rcRes = await ReportCard.deleteMany({ school: schoolId });
-    console.log(`Deleted ${rcRes.deletedCount} report cards`);
+    // 1. Supprimer les report cards (si le modèle existe)
+    try {
+      const ReportCard = require('../models/ReportCard');
+      const rcRes = await ReportCard.deleteMany({ school: schoolId });
+      console.log(`Deleted ${rcRes.deletedCount} report cards`);
+    } catch (err) {
+      if (err.code !== 'MODULE_NOT_FOUND') throw err;
+      console.log('ReportCard model not found, skipping');
+    }
 
-    // 2. Trouver les classes pour supprimer les absences
+    // 2. Délier les parents des élèves avant suppression
+    const studentsToDelete = await Student.find({ school: schoolId }).select('_id parents');
+    for (const student of studentsToDelete) {
+      if (student.parents && student.parents.length > 0) {
+        await User.updateMany(
+          { _id: { $in: student.parents } },
+          { $pull: { students: student._id } }
+        );
+      }
+    }
+
+    // 3. Trouver les classes pour supprimer les absences
     const classIds = await Class.find({ school: schoolId }).distinct('_id');
     const absRes = await Absence.deleteMany({ class: { $in: classIds } });
     console.log(`Deleted ${absRes.deletedCount} absences`);
 
-    // 3. Supprimer les élèves
+    // 4. Supprimer les élèves
     const studentRes = await Student.deleteMany({ school: schoolId });
     console.log(`Deleted ${studentRes.deletedCount} students`);
 
-    // 4. Supprimer les classes
+    // 5. Supprimer les classes
     const clRes = await Class.deleteMany({ school: schoolId });
     console.log(`Deleted ${clRes.deletedCount} classes`);
 
-    // 5. Supprimer les utilisateurs liés à cette école (admins et enseignants)
+    // 6. Supprimer les utilisateurs liés à cette école (admins et enseignants)
     // Note: On ne supprime pas les parents car ils peuvent avoir des enfants dans d'autres écoles
     const userRes = await User.deleteMany({ school: schoolId, role: { $in: ['school', 'teacher'] } });
     console.log(`Deleted ${userRes.deletedCount} users (school admins & teachers)`);
 
-    // 6. Enfin, supprimer l'école
+    // 7. Enfin, supprimer l'école
     await School.findByIdAndDelete(schoolId);
     console.log(`School ${school.name} deleted`);
 

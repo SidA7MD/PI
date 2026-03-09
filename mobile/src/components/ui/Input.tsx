@@ -3,13 +3,13 @@ import {
     View,
     TextInput,
     Text,
-    StyleSheet,
     TouchableOpacity,
     KeyboardTypeOptions,
     TextStyle,
     ViewStyle,
     I18nManager,
 } from 'react-native';
+import Animated, { useAnimatedStyle, withTiming, useSharedValue } from 'react-native-reanimated';
 import { useTheme } from '../../context/ThemeContext';
 import { spacing, borderRadius } from '../../theme';
 
@@ -34,7 +34,7 @@ interface InputProps {
     centered?: boolean;
     style?: ViewStyle;
     inputStyle?: TextStyle;
-    prefix?: string; // For phone numbers: +222
+    prefix?: string;
 }
 
 export const Input: FC<InputProps> = ({
@@ -63,67 +63,78 @@ export const Input: FC<InputProps> = ({
     const { colors } = useTheme();
     const [isFocused, setIsFocused] = useState(false);
 
+    // Animation for label or border could go here
+    const borderOpacity = useSharedValue(0.3);
+
+    const handleFocus = () => {
+        setIsFocused(true);
+        borderOpacity.value = withTiming(1);
+    };
+
+    const handleBlur = () => {
+        setIsFocused(false);
+        borderOpacity.value = withTiming(0.3);
+    };
+
     const getBorderColor = () => {
-        if (error) return colors.danger;
-        if (success) return colors.success;
+        if (error) return colors.status.error;
+        if (success) return colors.status.success;
         if (isFocused) return colors.primary;
         return colors.border.medium;
     };
 
-    const containerStyle: ViewStyle = {
-        borderWidth: 1,
-        borderColor: getBorderColor(),
-        borderRadius: borderRadius.md,
-        backgroundColor: colors.background.card,
-        flexDirection: 'row',
-        alignItems: multiline ? 'flex-start' : 'center',
-        paddingHorizontal: spacing.md,
-        paddingVertical: large ? spacing.md : spacing.sm,
-        ...(multiline && { minHeight: 100 }),
-    };
-
-    const inputStyle: TextStyle = {
-        flex: 1,
-        fontSize: large ? 18 : 16,
-        color: colors.text.primary,
-        textAlign: centered ? 'center' : (I18nManager.isRTL ? 'right' : 'left'),
-        ...(multiline && { textAlignVertical: 'top', paddingTop: spacing.sm }),
-        ...customInputStyle,
-    };
-
     return (
-        <View style={style}>
+        <View style={[style, { marginBottom: spacing.md }]}>
             {label && (
                 <Text style={{
-                    fontSize: 14,
-                    fontWeight: '500',
+                    fontSize: 13,
+                    fontWeight: '600',
                     color: colors.text.secondary,
-                    marginBottom: spacing.xs,
-                    textAlign: 'left', // Always left-aligned for consistency
+                    marginBottom: spacing.sm,
+                    marginLeft: spacing.xs,
+                    letterSpacing: 0.3,
+                    textTransform: 'uppercase',
                 }}>
                     {label}
                 </Text>
             )}
 
-            <View style={containerStyle}>
-                {leftIcon && <View style={{ marginEnd: spacing.sm }}>{leftIcon}</View>}
-                
+            <Animated.View style={[{
+                flexDirection: 'row',
+                alignItems: multiline ? 'flex-start' : 'center',
+                backgroundColor: colors.background.secondary,
+                borderRadius: borderRadius.lg,
+                borderWidth: 2,
+                borderColor: getBorderColor(),
+                paddingHorizontal: spacing.md,
+                paddingVertical: large ? spacing.md : spacing.sm + 6,
+                minHeight: multiline ? 100 : 52,
+            }]}>
+                {leftIcon && <View style={{ marginRight: spacing.sm }}>{leftIcon}</View>}
+
                 {prefix && (
                     <Text style={{
                         fontSize: large ? 18 : 16,
-                        color: colors.text.secondary,
-                        marginEnd: spacing.xs,
+                        color: colors.text.primary,
+                        marginRight: spacing.xs,
+                        fontWeight: '600',
                     }}>
                         {prefix}
                     </Text>
                 )}
 
                 <TextInput
-                    style={inputStyle}
+                    style={[{
+                        flex: 1,
+                        fontSize: large ? 18 : 16,
+                        color: colors.text.primary,
+                        textAlign: centered ? 'center' : (I18nManager.isRTL ? 'right' : 'left'),
+                        padding: 0, // Remove default padding
+                    }, multiline && { textAlignVertical: 'top', paddingTop: spacing.xs }, customInputStyle]}
                     value={value}
                     onChangeText={onChange}
                     placeholder={placeholder}
-                    placeholderTextColor={colors.text.disabled}
+                    placeholderTextColor={colors.text.tertiary}
                     secureTextEntry={secureTextEntry}
                     keyboardType={keyboardType}
                     autoCapitalize={autoCapitalize}
@@ -131,23 +142,23 @@ export const Input: FC<InputProps> = ({
                     multiline={multiline}
                     numberOfLines={numberOfLines}
                     maxLength={maxLength}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setIsFocused(false)}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
                 />
 
                 {rightIcon && (
-                    <TouchableOpacity onPress={onRightIconPress} style={{ marginStart: spacing.sm }}>
+                    <TouchableOpacity onPress={onRightIconPress} style={{ marginLeft: spacing.sm }}>
                         {rightIcon}
                     </TouchableOpacity>
                 )}
-            </View>
+            </Animated.View>
 
             {error && (
                 <Text style={{
                     fontSize: 12,
-                    color: colors.danger,
+                    color: colors.status.error,
                     marginTop: spacing.xs,
-                    textAlign: I18nManager.isRTL ? 'right' : 'left'
+                    marginLeft: spacing.xs,
                 }}>
                     {error}
                 </Text>

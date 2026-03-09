@@ -1,6 +1,7 @@
 // src/components/admin/TeacherForm.jsx
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { LanguageContext } from '../../context/LanguageContext';
 // Header and Sidebar imports removed
 import api from '../../services/api';
 import { FiUser, FiMail, FiPhone, FiLock, FiSave, FiArrowLeft, FiAlertCircle, FiTrash2 } from 'react-icons/fi';
@@ -10,6 +11,7 @@ import '../../styles/Auth.css'; // For basic form inputs
 const TeacherForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t, language } = useContext(LanguageContext);
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -33,7 +35,7 @@ const TeacherForm = () => {
           });
         } catch (err) {
           console.error('Error', err);
-          setError('Erreur lors du chargement');
+          setError(t('error_loading'));
         }
       };
       fetchTeacher();
@@ -69,7 +71,7 @@ const TeacherForm = () => {
   };
 
   const handleDelete = async () => {
-    if (window.confirm('Voulez-vous vraiment supprimer ce professeur ?')) {
+    if (window.confirm(t('confirm_delete_teacher'))) {
       setLoading(true);
       try {
         await api.delete(`/admin/teachers/${id}`);
@@ -89,9 +91,9 @@ const TeacherForm = () => {
             <div className="form-icon">
               <FiUser />
             </div>
-            <h2 className="form-title">{id ? 'Modifier Professeur' : 'Nouveau Professeur'}</h2>
+            <h2 className="form-title">{id ? t('edit_teacher') : t('new_teacher')}</h2>
             <p className="form-subtitle">
-              {id ? 'Mettre à jour les informations' : 'Créer un compte enseignant'}
+              {id ? (language === 'ar' ? 'تحديث المعلومات' : 'Mettre à jour les informations') : t('create_teacher_account')}
             </p>
           </div>
 
@@ -104,10 +106,10 @@ const TeacherForm = () => {
 
           <form onSubmit={handleSubmit}>
             <div className="form-section">
-              <h3 className="section-title"><FiUser /> Informations Personnelles</h3>
+              <h3 className="section-title"><FiUser /> {t('personal_info')}</h3>
 
               <div className="form-group">
-                <label className="form-label">Nom d'utilisateur *</label>
+                <label className="form-label">{t('username_label')} *</label>
                 <div className="form-input-wrapper">
                   <FiUser className="form-input-icon" />
                   <input
@@ -124,7 +126,7 @@ const TeacherForm = () => {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">Email</label>
+                  <label className="form-label">{t('email_label')}</label>
                   <div className="form-input-wrapper">
                     <FiMail className="form-input-icon" />
                     <input
@@ -139,7 +141,7 @@ const TeacherForm = () => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Téléphone</label>
+                  <label className="form-label">{t('phone_label')}</label>
                   <div className="form-input-wrapper">
                     <FiPhone className="form-input-icon" />
                     <input
@@ -156,10 +158,10 @@ const TeacherForm = () => {
             </div>
 
             <div className="form-section">
-              <h3 className="section-title"><FiLock /> Sécurité</h3>
+              <h3 className="section-title"><FiLock /> {t('security_section')}</h3>
               <div className="form-group">
                 <label className="form-label">
-                  Mot de passe {id ? '(laisser vide pour ne pas changer)' : '*'}
+                  {t('password_label')} {id ? t('password_hint') : '*'}
                 </label>
                 <div className="form-input-wrapper">
                   <FiLock className="form-input-icon" />
@@ -179,7 +181,7 @@ const TeacherForm = () => {
 
             <div className="form-actions">
               <button type="submit" className="btn-primary" disabled={loading} style={{ flex: 2 }}>
-                {loading ? 'Enregistrement...' : <><FiSave /> {id ? 'Mettre à jour' : 'Enregistrer'}</>}
+                {loading ? t('saving') : <><FiSave /> {id ? t('save') : t('save')}</>}
               </button>
               {id && (
                 <button
@@ -189,7 +191,7 @@ const TeacherForm = () => {
                   disabled={loading}
                   style={{ flex: 1 }}
                 >
-                  <FiTrash2 /> Supprimer
+                  <FiTrash2 /> {t('delete')}
                 </button>
               )}
               <button
@@ -198,7 +200,7 @@ const TeacherForm = () => {
                 onClick={() => navigate('/admin/teachers')}
                 style={{ flex: 1 }}
               >
-                <FiArrowLeft /> Annuler
+                <FiArrowLeft /> {t('cancel')}
               </button>
             </div>
           </form>

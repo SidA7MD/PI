@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { I18nManager, Alert } from 'react-native';
+import api from '../services/api';
 
 import { LanguageOption } from '../types/ProfileTypes';
 
@@ -31,6 +32,8 @@ const translations = {
     // Common
     welcome: 'Bienvenue',
     hello: 'Bonjour',
+    goodMorning: 'Bonjour',
+    goodEvening: 'Bonsoir',
     loading: 'Chargement',
     error: 'Erreur',
     success: 'Succès',
@@ -45,7 +48,7 @@ const translations = {
     yes: 'Oui',
     no: 'Non',
     ok: 'OK',
-    
+
     // Navigation
     home: 'Accueil',
     profile: 'Profil',
@@ -55,7 +58,7 @@ const translations = {
     back: 'Retour',
     next: 'Suivant',
     previous: 'Précédent',
-    
+
     // Parent specific
     myChildren: 'Mes Enfants',
     absences: 'Absences',
@@ -82,7 +85,7 @@ const translations = {
     enterCode: 'Entrer le code',
     uniqueCode: 'Code unique',
     submitCode: 'Valider le code',
-    
+
     // Teacher specific
     myClasses: 'Mes Classes',
     markAttendance: 'Faire l\'appel',
@@ -98,14 +101,14 @@ const translations = {
     markAbsent: 'Marquer absent',
     saveAttendance: 'Enregistrer',
     allPresent: 'Tous présents',
-    
+
     // Profile
     personalInfo: 'Informations personnelles',
     contactInfo: 'Coordonnées',
     email: 'Email',
     phone: 'Téléphone',
     address: 'Adresse',
-    
+
     // Settings
     theme: 'Thème',
     language: 'Langue',
@@ -113,45 +116,45 @@ const translations = {
     lightMode: 'Clair',
     french: 'Français',
     arabic: 'العربية',
-    
+
     // Security
     security: 'Sécurité',
     changePassword: 'Changer le mot de passe',
     privacy: 'Confidentialité',
-    
+
     // Support
     support: 'Support',
     help: 'Aide',
     about: 'À propos',
     version: 'Version',
-    
+
     // Dates
     today: 'Aujourd\'hui',
     yesterday: 'Hier',
     thisMonth: 'Ce mois',
     date: 'Date',
     time: 'Heure',
-    
+
     // Actions
     confirm: 'Confirmer',
     close: 'Fermer',
     refresh: 'Actualiser',
     filter: 'Filtrer',
     sort: 'Trier',
-    
+
     // Messages
     noData: 'Aucune donnée disponible',
     loadingData: 'Chargement des données...',
     refreshing: 'Actualisation...',
     errorOccurred: 'Une erreur s\'est produite',
     tryAgain: 'Réessayer',
-    
+
     // Status
     active: 'Actif',
     inactive: 'Inactif',
     pending: 'En attente',
     completed: 'Terminé',
-    
+
     // Notifications
     notificationsTitle: 'Notifications',
     noNotifications: 'Aucune notification',
@@ -160,7 +163,7 @@ const translations = {
     deleteAll: 'Tout supprimer',
     unreadNotifications: 'Non lues',
     readNotifications: 'Lues',
-    
+
     // Absences
     absenceDetails: 'Détails de l\'absence',
     reason: 'Motif',
@@ -172,7 +175,7 @@ const translations = {
     addReason: 'Ajouter un motif',
     justify: 'Justifier',
     unjustified: 'Non justifié',
-    
+
     // History
     absenceHistory: 'Historique des absences',
     filterByClass: 'Filtrer par classe',
@@ -180,7 +183,7 @@ const translations = {
     filterByStatus: 'Filtrer par statut',
     allClasses: 'Toutes les classes',
     allStatuses: 'Tous les statuts',
-    
+
     // Link Child
     linkChildTitle: 'Lier un enfant',
     enterChildCode: 'Entrer le code unique de l\'enfant',
@@ -191,22 +194,22 @@ const translations = {
     childCodeLabel: 'Code Élève',
     childCodePlaceholder: 'Ex : ABC123XYZ',
     askAdminCode: 'Demandez ce code à l\'administration de l\'école',
-    
+
     // Empty states
     noStudents: 'Aucun élève',
     noClasses: 'Aucune classe',
     noHistory: 'Aucun historique',
     startMarking: 'Commencer à pointer',
-    
+
     // Stats
     total: 'Total',
     recent: 'Récent',
     percentage: 'Pourcentage',
     count: 'Nombre',
-    
+
     // Auth
-    appName: 'Kbarwilly',
-    appSubtitle: 'Gestion des absences scolaires en Mauritanie',
+    appName: 'Khbarwelli',
+    appSubtitle: 'Khbarwelli - Gestion des absences scolaires en Mauritanie',
     loginTitle: 'Se connecter',
     registerTitle: 'Créer un compte parent',
     registerSubtitle: 'Suivez les absences de vos enfants',
@@ -245,7 +248,7 @@ const translations = {
     checkEmailInbox: 'Consultez votre boîte email pour réinitialiser votre mot de passe',
     backToLogin: 'Retour à la connexion',
     emailSendError: 'Erreur lors de l\'envoi de l\'email',
-    
+
     // Additional Teacher Home
     markAttendanceDesc: 'Gérer la présence',
     historyDesc: 'Consulter les relevés',
@@ -259,6 +262,8 @@ const translations = {
     // Common
     welcome: 'مرحبا',
     hello: 'أهلا',
+    goodMorning: 'صباح الخير',
+    goodEvening: 'مساء الخير',
     loading: 'جاري التحميل',
     error: 'خطأ',
     success: 'نجح',
@@ -273,7 +278,7 @@ const translations = {
     yes: 'نعم',
     no: 'لا',
     ok: 'موافق',
-    
+
     // Navigation
     home: 'الرئيسية',
     profile: 'الملف الشخصي',
@@ -283,7 +288,7 @@ const translations = {
     back: 'رجوع',
     next: 'التالي',
     previous: 'السابق',
-    
+
     // Parent specific
     myChildren: 'أطفالي',
     absences: 'الغيابات',
@@ -310,7 +315,7 @@ const translations = {
     enterCode: 'أدخل الرمز',
     uniqueCode: 'الرمز الفريد',
     submitCode: 'إرسال الرمز',
-    
+
     // Teacher specific
     myClasses: 'فصولي',
     markAttendance: 'تسجيل الحضور',
@@ -326,14 +331,14 @@ const translations = {
     markAbsent: 'تعليم كغائب',
     saveAttendance: 'حفظ الحضور',
     allPresent: 'الكل حاضر',
-    
+
     // Profile
     personalInfo: 'المعلومات الشخصية',
     contactInfo: 'معلومات الاتصال',
     email: 'البريد الإلكتروني',
     phone: 'الهاتف',
     address: 'العنوان',
-    
+
     // Settings
     theme: 'المظهر',
     language: 'اللغة',
@@ -341,45 +346,45 @@ const translations = {
     lightMode: 'فاتح',
     french: 'Français',
     arabic: 'العربية',
-    
+
     // Security
     security: 'الأمان',
     changePassword: 'تغيير كلمة المرور',
     privacy: 'الخصوصية',
-    
+
     // Support
     support: 'الدعم',
     help: 'المساعدة',
     about: 'حول',
     version: 'الإصدار',
-    
+
     // Dates
     today: 'اليوم',
     yesterday: 'أمس',
     thisMonth: 'هذا الشهر',
     date: 'التاريخ',
     time: 'الوقت',
-    
+
     // Actions
     confirm: 'تأكيد',
     close: 'إغلاق',
     refresh: 'تحديث',
     filter: 'تصفية',
     sort: 'ترتيب',
-    
+
     // Messages
     noData: 'لا توجد بيانات متاحة',
     loadingData: 'جاري تحميل البيانات...',
     refreshing: 'جاري التحديث...',
     errorOccurred: 'حدث خطأ',
     tryAgain: 'حاول مرة أخرى',
-    
+
     // Status
     active: 'نشط',
     inactive: 'غير نشط',
     pending: 'قيد الانتظار',
     completed: 'مكتمل',
-    
+
     // Notifications
     notificationsTitle: 'الإشعارات',
     noNotifications: 'لا توجد إشعارات',
@@ -388,7 +393,7 @@ const translations = {
     deleteAll: 'حذف الكل',
     unreadNotifications: 'غير مقروءة',
     readNotifications: 'مقروءة',
-    
+
     // Absences
     absenceDetails: 'تفاصيل الغياب',
     reason: 'السبب',
@@ -400,7 +405,7 @@ const translations = {
     addReason: 'إضافة سبب',
     justify: 'تبرير',
     unjustified: 'غير مبرر',
-    
+
     // History
     absenceHistory: 'سجل الغيابات',
     filterByClass: 'تصفية حسب الفصل',
@@ -408,7 +413,7 @@ const translations = {
     filterByStatus: 'تصفية حسب الحالة',
     allClasses: 'كل الفصول',
     allStatuses: 'كل الحالات',
-    
+
     // Link Child
     linkChildTitle: 'ربط طفل',
     enterChildCode: 'أدخل الرمز الفريد للطفل',
@@ -419,22 +424,22 @@ const translations = {
     childCodeLabel: 'رمز الطالب',
     childCodePlaceholder: 'مثال: ABC123XYZ',
     askAdminCode: 'اطلب هذا الرمز من إدارة المدرسة',
-    
+
     // Empty states
     noStudents: 'لا يوجد طلاب',
     noClasses: 'لا توجد فصول',
     noHistory: 'لا يوجد سجل',
     startMarking: 'ابدأ التسجيل',
-    
+
     // Stats
     total: 'المجموع',
     recent: 'الأخيرة',
     percentage: 'النسبة المئوية',
     count: 'العدد',
-    
+
     // Auth
-    appName: 'Kbarwilly',
-    appSubtitle: 'إدارة الغياب المدرسي في موريتانيا',
+    appName: 'Khbarwelli',
+    appSubtitle: 'Khbarwelli - إدارة الغياب المدرسي في موريتانيا',
     loginTitle: 'تسجيل الدخول',
     registerTitle: 'إنشاء حساب ولي أمر',
     registerSubtitle: 'تابع غيابات أطفالك',
@@ -487,6 +492,8 @@ const translations = {
     // Common
     welcome: 'Welcome',
     hello: 'Hello',
+    goodMorning: 'Good Morning',
+    goodEvening: 'Good Evening',
     loading: 'Loading',
     error: 'Error',
     success: 'Success',
@@ -501,7 +508,7 @@ const translations = {
     yes: 'Yes',
     no: 'No',
     ok: 'OK',
-    
+
     // Navigation
     home: 'Home',
     profile: 'Profile',
@@ -511,7 +518,7 @@ const translations = {
     back: 'Back',
     next: 'Next',
     previous: 'Previous',
-    
+
     // Parent specific
     myChildren: 'My Children',
     absences: 'Absences',
@@ -538,7 +545,7 @@ const translations = {
     enterCode: 'Enter Code',
     uniqueCode: 'Unique Code',
     submitCode: 'Submit Code',
-    
+
     // Teacher specific
     myClasses: 'My Classes',
     markAttendance: 'Mark Attendance',
@@ -554,14 +561,14 @@ const translations = {
     markAbsent: 'Mark Absent',
     saveAttendance: 'Save',
     allPresent: 'All Present',
-    
+
     // Profile
     personalInfo: 'Personal Information',
     contactInfo: 'Contact Information',
     email: 'Email',
     phone: 'Phone',
     address: 'Address',
-    
+
     // Settings
     theme: 'Theme',
     language: 'Language',
@@ -569,45 +576,45 @@ const translations = {
     lightMode: 'Light',
     french: 'Français',
     arabic: 'Arabic',
-    
+
     // Security
     security: 'Security',
     changePassword: 'Change Password',
     privacy: 'Privacy',
-    
+
     // Support
     support: 'Support',
     help: 'Help',
     about: 'About',
     version: 'Version',
-    
+
     // Dates
     today: 'Today',
     yesterday: 'Yesterday',
     thisMonth: 'This Month',
     date: 'Date',
     time: 'Time',
-    
+
     // Actions
     confirm: 'Confirm',
     close: 'Close',
     refresh: 'Refresh',
     filter: 'Filter',
     sort: 'Sort',
-    
+
     // Messages
     noData: 'No data available',
     loadingData: 'Loading data...',
     refreshing: 'Refreshing...',
     errorOccurred: 'An error occurred',
     tryAgain: 'Try Again',
-    
+
     // Status
     active: 'Active',
     inactive: 'Inactive',
     pending: 'Pending',
     completed: 'Completed',
-    
+
     // Notifications
     notificationsTitle: 'Notifications',
     noNotifications: 'No notifications',
@@ -616,7 +623,7 @@ const translations = {
     deleteAll: 'Delete all',
     unreadNotifications: 'Unread',
     readNotifications: 'Read',
-    
+
     // Absences
     absenceDetails: 'Absence Details',
     reason: 'Reason',
@@ -628,7 +635,7 @@ const translations = {
     addReason: 'Add Reason',
     justify: 'Justify',
     unjustified: 'Unjustified',
-    
+
     // History
     absenceHistory: 'Absence History',
     filterByClass: 'Filter by class',
@@ -636,7 +643,7 @@ const translations = {
     filterByStatus: 'Filter by status',
     allClasses: 'All Classes',
     allStatuses: 'All Statuses',
-    
+
     // Link Child
     linkChildTitle: 'Link Child',
     enterChildCode: 'Enter child\'s unique code',
@@ -647,22 +654,22 @@ const translations = {
     childCodeLabel: 'Student Code',
     childCodePlaceholder: 'Ex: ABC123XYZ',
     askAdminCode: 'Ask school administration for this code',
-    
+
     // Empty states
     noStudents: 'No students',
     noClasses: 'No classes',
     noHistory: 'No history',
     startMarking: 'Start Marking',
-    
+
     // Stats
     total: 'Total',
     recent: 'Recent',
     percentage: 'Percentage',
     count: 'Count',
-    
+
     // Auth
-    appName: 'Kbarwilly',
-    appSubtitle: 'School Absence Management in Mauritania',
+    appName: 'Khbarwelli',
+    appSubtitle: 'Khbarwelli - School Absence Management in Mauritania',
     loginTitle: 'Login',
     registerTitle: 'Create Parent Account',
     registerSubtitle: 'Track your children\'s absences',
@@ -701,7 +708,7 @@ const translations = {
     checkEmailInbox: 'Check your email inbox to reset your password',
     backToLogin: 'Back to Login',
     emailSendError: 'Error sending email',
-    
+
     // Additional Teacher Home
     markAttendanceDesc: 'Manage Attendance',
     historyDesc: 'View Records',
@@ -712,16 +719,16 @@ const translations = {
     avatarUpdated: 'Profile photo updated',
   },
   es: {
-      // Minimal Spanish fallback for now
-      welcome: 'Bienvenido',
-      hello: 'Hola',
-      loading: 'Cargando',
-      error: 'Error',
-      success: 'Éxito',
-      locale: 'es-ES',
-      save: 'Guardar',
-      cancel: 'Cancelar',
-      // ... (We can expand later)
+    // Minimal Spanish fallback for now
+    welcome: 'Bienvenido',
+    hello: 'Hola',
+    loading: 'Cargando',
+    error: 'Error',
+    success: 'Éxito',
+    locale: 'es-ES',
+    save: 'Guardar',
+    cancel: 'Cancelar',
+    // ... (We can expand later)
   }
 } as const;
 
@@ -754,14 +761,25 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
       const needsRTL = lang === 'ar';
       setIsRTL(needsRTL);
 
+      // Sync with backend if authenticated
+      try {
+        const token = await AsyncStorage.getItem('token');
+        if (token) {
+          await api.put('/auth/me', { language: lang });
+          console.log(`🌐 Language preference '${lang}' synced with server`);
+        }
+      } catch (syncError) {
+        console.log('🌐 Failed to sync language with server (not critical)');
+      }
+
       // Check if RTL needs to change
       if (needsRTL !== I18nManager.isRTL) {
         I18nManager.forceRTL(needsRTL);
         // Alert user to restart the app
         Alert.alert(
           needsRTL ? 'إعادة التشغيل مطلوبة' : 'Redémarrage requis',
-          needsRTL 
-            ? 'يرجى إعادة تشغيل التطبيق لتطبيق التغييرات' 
+          needsRTL
+            ? 'يرجى إعادة تشغيل التطبيق لتطبيق التغييرات'
             : 'Veuillez redémarrer l\'application pour appliquer les changements',
           [{ text: 'OK' }]
         );

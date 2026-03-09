@@ -45,4 +45,7 @@ const notificationSchema = new mongoose.Schema(
 notificationSchema.index({ recipient: 1, createdAt: -1 });
 notificationSchema.index({ recipient: 1, read: 1 });
 
+// Index TTL pour supprimer les notifications après 24 heures (86400 secondes)
+notificationSchema.index({ createdAt: 1 }, { expireAfterSeconds: 86400 });
+
 module.exports = mongoose.model('Notification', notificationSchema);

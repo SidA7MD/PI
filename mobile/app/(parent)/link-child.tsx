@@ -44,7 +44,7 @@ export default function LinkChildScreen() {
     return (
         <View style={[styles.container, { backgroundColor: colors.background.secondary }]}>
             <StatusBar barStyle="light-content" />
-            <KeyboardAvoidingView 
+            <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={{ flex: 1 }}
             >

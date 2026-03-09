@@ -7,28 +7,31 @@ const School = require('../models/School');
 const Notification = require('../models/Notification');
 const socketHandler = require('../utils/socketHandler');
 const pushHandler = require('../utils/pushNotificationHandler');
+const translationService = require('../services/translationService');
 
 // Helper pour envoyer une notification (Socket.io + DB + Push)
 async function sendAbsenceNotification(parentId, student, status, date, subject, startTime) {
   try {
-    const formattedDate = new Date(date).toLocaleDateString('fr-FR');
-    let title = '';
-    let message = '';
-    let type = '';
+    const parentUser = await User.findById(parentId);
+    const lang = parentUser?.language || 'fr';
 
-    if (status === 'absent') {
-      title = 'Nouvelle absence';
-      message = `Votre enfant ${student.firstName} ${student.lastName} a été marqué absent`;
-      type = 'absence';
-    } else if (status === 'retard') {
-      title = 'Nouveau retard';
-      message = `Votre enfant ${student.firstName} ${student.lastName} a été marqué en retard`;
-      type = 'late';
-    }
+    const formattedDate = new Date(date).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'fr-FR');
 
-    if (subject) message += ` en ${subject}`;
-    if (startTime) message += ` à ${startTime}`;
-    message += ` le ${formattedDate}.`;
+    const parts = translationService.getParts(lang, subject, startTime);
+
+    const titleKey = status === 'absent' ? 'absence_title' : 'late_title';
+    const bodyKey = status === 'absent' ? 'absence_body' : 'late_body';
+
+    const title = translationService.t(lang, titleKey);
+    const message = translationService.t(lang, bodyKey, {
+      firstName: student.firstName,
+      lastName: student.lastName,
+      subject: parts.subject,
+      startTime: parts.startTime,
+      date: formattedDate
+    });
+
+    const type = status === 'absent' ? 'absence' : 'late';
 
     // 1. Créer la notification en base
     const notification = await Notification.create({
@@ -50,16 +53,8 @@ async function sendAbsenceNotification(parentId, student, status, date, subject,
     socketHandler.emitAbsenceNotification(parentId, notification);
 
     // 3. Envoyer une notification Push (Expo)
-    // Fetch parent to get pushToken (student.parent might not have it populated if not requested)
-    // We already have parentId. Let's assume we need to fetch user if token not available?
-    // Actually, in markBulkAbsence we populated parent. Check if parent object has pushToken.
-    // Ideally we should pass the FULL parent object or fetch it.
-    // Refactoring helper to fetch parent if needed or assume passed object has token.
-
-    // For now, let's just fetch the parent to be safe and ensure we have the token
-    const parentUser = await User.findById(parentId);
     if (parentUser && parentUser.pushToken) {
-      console.log(`📱 Sending Push Notification to ${parentUser.username}`);
+      console.log(`📱 Sending Push Notification to ${parentUser.username} in ${lang}`);
       await pushHandler.sendPushToUser(parentUser, title, message, {
         notificationId: notification._id,
         studentId: student._id,

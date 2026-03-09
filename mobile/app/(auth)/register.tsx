@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useAuth } from '../../src/context/AuthContext';
 import { useTheme } from '../../src/context/ThemeContext';
 import { useLanguage } from '../../src/context/LanguageContext';
 import { Button } from '../../src/components/ui/Button';
 import { Input } from '../../src/components/ui/Input';
+import { GradientBackground } from '../../src/components/ui/GradientBackground';
+import { GlassCard } from '../../src/components/ui/GlassCard';
 import { spacing, shadows } from '../../src/theme';
 import { validateEmail, validatePhone, validatePassword } from '../../src/utils/validators';
 
@@ -90,173 +92,178 @@ export default function RegisterScreen() {
     };
 
     return (
-        <>
-            <SafeAreaView style={{ flex: 0, backgroundColor: colors.primary }} />
+        <GradientBackground>
             <StatusBar barStyle="light-content" />
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={[styles.container, { backgroundColor: colors.background.secondary }]}
-            >
-                <ScrollView
-                    contentContainerStyle={styles.scrollContent}
-                    showsVerticalScrollIndicator={false}
-                    keyboardShouldPersistTaps="handled"
+            <SafeAreaView style={{ flex: 1 }}>
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    style={styles.container}
                 >
-                    {/* Gradient Header */}
-                    <LinearGradient
-                        colors={[colors.primary, colors.primaryDark]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={styles.header}
+                    <ScrollView
+                        contentContainerStyle={styles.scrollContent}
+                        showsVerticalScrollIndicator={false}
+                        keyboardShouldPersistTaps="handled"
                     >
-                        <View style={styles.logoContainer}>
-                            <Text style={styles.logoText}>Kbarwilly</Text>
+                        <Animated.View
+                            entering={FadeInDown.delay(100).duration(800).springify()}
+                            style={styles.headerContainer}
+                        >
+                            <View style={styles.iconContainer}>
+                                <Ionicons name="person-add" size={44} color="#FFF" />
+                            </View>
                             <Text style={styles.title}>
                                 {t('registerTitle')}
                             </Text>
                             <Text style={styles.subtitle}>
                                 {t('registerSubtitle')}
                             </Text>
-                        </View>
-                    </LinearGradient>
+                        </Animated.View>
 
-                    {/* Form Card */}
-                    <View style={styles.formContainer}>
-                        <View style={[styles.formCard, { backgroundColor: colors.background.card, ...shadows.lg }]}>
-                            <View style={styles.form}>
-                                <Input
-                                    label={t('usernameLabel')}
-                                    value={formData.username}
-                                    onChange={(text) => {
-                                        setFormData({ ...formData, username: text });
-                                        if (errors.username) {
-                                            setErrors({ ...errors, username: '' });
+                        <Animated.View
+                            entering={FadeInUp.delay(300).duration(800).springify()}
+                            style={styles.formContainer}
+                        >
+                            <GlassCard style={styles.glassCard}>
+                                <View style={styles.form}>
+                                    <Input
+                                        label={t('usernameLabel')}
+                                        value={formData.username}
+                                        onChange={(text) => {
+                                            setFormData({ ...formData, username: text });
+                                            if (errors.username) {
+                                                setErrors({ ...errors, username: '' });
+                                            }
+                                        }}
+                                        placeholder={t('usernamePlaceholder')}
+                                        autoCapitalize="none"
+                                        error={errors.username}
+                                        leftIcon={<Ionicons name="person-outline" size={20} color={colors.text.secondary} />}
+                                    />
+
+                                    <Input
+                                        label={t('phoneLabel')}
+                                        value={formData.phone}
+                                        onChange={(text) => {
+                                            // Only allow digits, max 8 characters
+                                            const digitsOnly = text.replace(/\D/g, '').slice(0, 8);
+                                            setFormData({ ...formData, phone: digitsOnly });
+                                            if (errors.phone) {
+                                                setErrors({ ...errors, phone: '' });
+                                            }
+                                        }}
+                                        placeholder="XX XX XX XX"
+                                        keyboardType="phone-pad"
+                                        error={errors.phone}
+                                        style={{ marginTop: spacing.md }}
+                                        prefix="+222"
+                                        maxLength={11}
+                                        leftIcon={<Ionicons name="call-outline" size={20} color={colors.text.secondary} />}
+                                    />
+
+                                    <Input
+                                        label={t('emailLabel')}
+                                        value={formData.email}
+                                        onChange={(text) => {
+                                            setFormData({ ...formData, email: text });
+                                            if (errors.email) {
+                                                setErrors({ ...errors, email: '' });
+                                            }
+                                        }}
+                                        placeholder={t('emailPlaceholder')}
+                                        keyboardType="email-address"
+                                        autoCapitalize="none"
+                                        error={errors.email}
+                                        style={{ marginTop: spacing.md }}
+                                        leftIcon={<Ionicons name="mail-outline" size={20} color={colors.text.secondary} />}
+                                    />
+
+                                    <Input
+                                        label={t('passwordLabel')}
+                                        value={formData.password}
+                                        onChange={(text) => {
+                                            setFormData({ ...formData, password: text });
+                                            if (errors.password) {
+                                                setErrors({ ...errors, password: '' });
+                                            }
+                                        }}
+                                        placeholder={t('passwordPlaceholder')}
+                                        secureTextEntry={!showPassword}
+                                        leftIcon={<Ionicons name="lock-closed-outline" size={20} color={colors.text.secondary} />}
+                                        rightIcon={
+                                            <Ionicons
+                                                name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                                                size={20}
+                                                color={colors.text.tertiary}
+                                            />
                                         }
-                                    }}
-                                    placeholder={t('usernamePlaceholder')}
-                                    autoCapitalize="none"
-                                    error={errors.username}
-                                />
+                                        onRightIconPress={() => setShowPassword(!showPassword)}
+                                        error={errors.password}
+                                        style={{ marginTop: spacing.md }}
+                                    />
 
-                                <Input
-                                    label={t('phoneLabel')}
-                                    value={formData.phone}
-                                    onChange={(text) => {
-                                        // Only allow digits, max 8 characters
-                                        const digitsOnly = text.replace(/\D/g, '').slice(0, 8);
-                                        setFormData({ ...formData, phone: digitsOnly });
-                                        if (errors.phone) {
-                                            setErrors({ ...errors, phone: '' });
+                                    <Input
+                                        label={t('confirmPasswordLabel')}
+                                        value={formData.confirmPassword}
+                                        onChange={(text) => {
+                                            setFormData({ ...formData, confirmPassword: text });
+                                            if (errors.confirmPassword) {
+                                                setErrors({ ...errors, confirmPassword: '' });
+                                            }
+                                        }}
+                                        placeholder={t('confirmPasswordPlaceholder')}
+                                        secureTextEntry={!showConfirmPassword}
+                                        leftIcon={<Ionicons name="lock-closed-outline" size={20} color={colors.text.secondary} />}
+                                        rightIcon={
+                                            <Ionicons
+                                                name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
+                                                size={20}
+                                                color={colors.text.tertiary}
+                                            />
                                         }
-                                    }}
-                                    placeholder="XX XX XX XX"
-                                    keyboardType="phone-pad"
-                                    error={errors.phone}
-                                    style={{ marginTop: spacing.md }}
-                                    prefix="+222"
-                                    maxLength={11}
-                                />
+                                        onRightIconPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        error={errors.confirmPassword}
+                                        style={{ marginTop: spacing.md }}
+                                    />
 
-                                <Input
-                                    label={t('emailLabel')}
-                                    value={formData.email}
-                                    onChange={(text) => {
-                                        setFormData({ ...formData, email: text });
-                                        if (errors.email) {
-                                            setErrors({ ...errors, email: '' });
-                                        }
-                                    }}
-                                    placeholder={t('emailPlaceholder')}
-                                    keyboardType="email-address"
-                                    autoCapitalize="none"
-                                    error={errors.email}
-                                    style={{ marginTop: spacing.md }}
-                                />
+                                    {errors.general && (
+                                        <View style={[styles.errorContainer, { backgroundColor: colors.status.error + '15' }]}>
+                                            <Ionicons name="alert-circle" size={20} color={colors.status.error} />
+                                            <Text style={[styles.errorText, { color: colors.status.error }]}>
+                                                {errors.general}
+                                            </Text>
+                                        </View>
+                                    )}
 
-                                <Input
-                                    label={t('passwordLabel')}
-                                    value={formData.password}
-                                    onChange={(text) => {
-                                        setFormData({ ...formData, password: text });
-                                        if (errors.password) {
-                                            setErrors({ ...errors, password: '' });
-                                        }
-                                    }}
-                                    placeholder={t('passwordPlaceholder')}
-                                    secureTextEntry={!showPassword}
-                                    rightIcon={
-                                        <Ionicons
-                                            name={showPassword ? 'eye-off' : 'eye'}
-                                            size={20}
-                                            color={colors.text.tertiary}
-                                        />
-                                    }
-                                    onRightIconPress={() => setShowPassword(!showPassword)}
-                                    error={errors.password}
-                                    style={{ marginTop: spacing.md }}
-                                />
+                                    <Button
+                                        title={t('createAccount')}
+                                        onPress={handleRegister}
+                                        loading={loading}
+                                        disabled={loading}
+                                        fullWidth
+                                        style={{ marginTop: spacing.xl }}
+                                    />
 
-                                <Input
-                                    label={t('confirmPasswordLabel')}
-                                    value={formData.confirmPassword}
-                                    onChange={(text) => {
-                                        setFormData({ ...formData, confirmPassword: text });
-                                        if (errors.confirmPassword) {
-                                            setErrors({ ...errors, confirmPassword: '' });
-                                        }
-                                    }}
-                                    placeholder={t('confirmPasswordPlaceholder')}
-                                    secureTextEntry={!showConfirmPassword}
-                                    rightIcon={
-                                        <Ionicons
-                                            name={showConfirmPassword ? 'eye-off' : 'eye'}
-                                            size={20}
-                                            color={colors.text.tertiary}
-                                        />
-                                    }
-                                    onRightIconPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    error={errors.confirmPassword}
-                                    style={{ marginTop: spacing.md }}
-                                />
-
-                                {errors.general && (
-                                    <View style={[styles.errorContainer, { backgroundColor: colors.danger + '15' }]}>
-                                        <Ionicons name="alert-circle" size={20} color={colors.danger} />
-                                        <Text style={[styles.errorText, { color: colors.danger }]}>
-                                            {errors.general}
+                                    <View style={[styles.infoContainer, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' }]}>
+                                        <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
+                                        <Text style={[styles.infoText, { color: colors.text.secondary }]}>
+                                            {t('teacherAccountNote')}
                                         </Text>
                                     </View>
-                                )}
 
-                                <Button
-                                    title={t('createAccount')}
-                                    onPress={handleRegister}
-                                    loading={loading}
-                                    disabled={loading}
-                                    fullWidth
-                                    style={{ marginTop: spacing.xl }}
-                                />
-
-                                <View style={[styles.infoContainer, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' }]}>
-                                    <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
-                                    <Text style={[styles.infoText, { color: colors.text.secondary }]}>
-                                        {t('teacherAccountNote')}
-                                    </Text>
+                                    <Button
+                                        title={t('alreadyHaveAccount')}
+                                        onPress={() => router.back()}
+                                        variant="ghost"
+                                        fullWidth
+                                        style={{ marginTop: spacing.md }}
+                                    />
                                 </View>
-
-                                <Button
-                                    title={t('alreadyHaveAccount')}
-                                    onPress={() => router.back()}
-                                    variant="ghost"
-                                    fullWidth
-                                    style={{ marginTop: spacing.md }}
-                                />
-                            </View>
-                        </View>
-                    </View>
-                </ScrollView>
-            </KeyboardAvoidingView>
-        </>
+                            </GlassCard>
+                        </Animated.View>
+                    </ScrollView>
+                </KeyboardAvoidingView>
+            </SafeAreaView>
+        </GradientBackground>
     );
 }
 
@@ -268,48 +275,44 @@ const styles = StyleSheet.create({
         flexGrow: 1,
         paddingBottom: spacing.xl,
     },
-    header: {
-        paddingTop: spacing.xl,
-        paddingBottom: spacing['3xl'],
-        paddingHorizontal: spacing.xl,
-        borderBottomLeftRadius: 32,
-        borderBottomRightRadius: 32,
-    },
-    logoContainer: {
+    headerContainer: {
         alignItems: 'center',
+        marginTop: spacing.xl,
+        marginBottom: spacing.lg,
     },
-    logoText: {
-        fontSize: 42,
-        fontWeight: '900',
-        color: '#FFF',
-        marginBottom: spacing.md,
-        letterSpacing: 1,
-        textShadowColor: 'rgba(0,0,0,0.3)',
-        textShadowOffset: { width: 0, height: 2 },
-        textShadowRadius: 4,
+    iconContainer: {
+        width: 80,
+        height: 80,
+        borderRadius: 24,
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: spacing.lg,
+        borderWidth: 2,
+        borderColor: 'rgba(255,255,255,0.25)',
     },
     title: {
         fontSize: 28,
-        fontWeight: '800',
+        fontWeight: '700',
         color: '#FFF',
         marginBottom: spacing.xs,
         textAlign: 'center',
+        textShadowColor: 'rgba(0,0,0,0.2)',
+        textShadowOffset: { width: 0, height: 2 },
+        textShadowRadius: 8,
     },
     subtitle: {
-        fontSize: 14,
-        color: 'rgba(255,255,255,0.9)',
+        fontSize: 15,
+        color: 'rgba(255,255,255,0.85)',
         fontWeight: '500',
         textAlign: 'center',
+        letterSpacing: 0.5,
     },
     formContainer: {
-        flex: 1,
-        marginTop: -40,
         paddingHorizontal: spacing.lg,
     },
-    formCard: {
-        borderRadius: 24,
+    glassCard: {
         padding: spacing.xl,
-        marginBottom: spacing.xl,
     },
     form: {
         width: '100%',
@@ -318,7 +321,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         padding: spacing.md,
-        borderRadius: 12,
+        borderRadius: 14,
         marginTop: spacing.md,
         gap: spacing.sm,
     },
@@ -332,7 +335,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginTop: spacing.md,
         padding: spacing.md,
-        borderRadius: 12,
+        borderRadius: 14,
         borderWidth: 1,
         gap: spacing.sm,
     },

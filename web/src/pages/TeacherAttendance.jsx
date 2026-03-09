@@ -1,15 +1,16 @@
 // src/pages/TeacherAttendance.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-// Header and Sidebar imports removed
+import { LanguageContext } from '../context/LanguageContext';
 import api from '../services/api';
 import { FiCheckCircle, FiXCircle, FiClock, FiSave, FiArrowLeft, FiAlertCircle } from 'react-icons/fi';
 import '../styles/Dashboard.css';
-import '../styles/Components.css'; 
+import '../styles/Components.css';
 
 const TeacherAttendance = () => {
   const { classId } = useParams();
   const navigate = useNavigate();
+  const { t, language } = useContext(LanguageContext);
   const [subjects, setSubjects] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState('');
   const [startTime, setStartTime] = useState('08:00');
@@ -29,7 +30,7 @@ const TeacherAttendance = () => {
           setSubjects(res.data.subjects);
           setSelectedSubject(res.data.subjects[0]);
         }
-        
+
         // Initialize attendance state (default present)
         const initialAttendance = {};
         res.data.students.forEach(s => {
@@ -74,9 +75,9 @@ const TeacherAttendance = () => {
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'present': return 'Présent';
-      case 'absent': return 'Absent';
-      case 'late': return 'Retard';
+      case 'present': return t('present');
+      case 'absent': return t('absent');
+      case 'late': return t('late');
       default: return '';
     }
   };
@@ -97,10 +98,10 @@ const TeacherAttendance = () => {
       // Let's send all non-present students.
 
       if (studentStatuses.length === 0) {
-          if (!window.confirm("Tout le monde est présent ?")) {
-              setSubmitting(false);
-              return;
-          }
+        if (!window.confirm(t('confirm_all_present'))) {
+          setSubmitting(false);
+          return;
+        }
       }
 
       await api.post('/teacher/mark-bulk-absence', {
@@ -109,11 +110,11 @@ const TeacherAttendance = () => {
         subject: selectedSubject,
         startTime
       });
-      alert('Appel enregistré avec succès !');
+      alert(t('attendance_success'));
       navigate('/teacher/dashboard');
     } catch (err) {
       console.error(err);
-      alert('Erreur lors de l\'enregistrement: ' + (err.response?.data?.message || err.message));
+      alert(t('error_saving_attendance') + ': ' + (err.response?.data?.message || err.message));
     } finally {
       setSubmitting(false);
     }
@@ -127,16 +128,16 @@ const TeacherAttendance = () => {
             <button onClick={() => navigate('/teacher/dashboard')} className="btn-icon">
               <FiArrowLeft size={20} />
             </button>
-            <h1 className="page-title" style={{ margin: 0 }}>Faire l'appel - {className}</h1>
+            <h1 className="page-title" style={{ margin: 0 }}>{t('mark_attendance_title')} - {className}</h1>
           </div>
-          <p className="page-subtitle">Touchez les élèves pour changer leur statut</p>
+          <p className="page-subtitle">{t('tap_students_hint')}</p>
         </div>
-        
+
       </div>
 
       <div className="selection-section" style={{ padding: '0 24px 24px 24px' }}>
         <div style={{ marginBottom: '16px' }}>
-          <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '8px' }}>Matière</h3>
+          <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '8px' }}>{t('subject_label')}</h3>
           <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' }}>
             {subjects.map(sub => (
               <button
@@ -162,18 +163,18 @@ const TeacherAttendance = () => {
         </div>
 
         <div style={{ marginBottom: '24px' }}>
-          <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '8px' }}>Heure de début</h3>
+          <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '8px' }}>{t('start_time_label')}</h3>
           <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' }}>
-            {['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'].map(t => (
+            {['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'].map(time => (
               <button
-                key={t}
-                onClick={() => setStartTime(t)}
+                key={time}
+                onClick={() => setStartTime(time)}
                 style={{
                   padding: '8px 16px',
                   borderRadius: '20px',
-                  border: `1px solid ${startTime === t ? 'var(--primary-600)' : 'var(--gray-300)'}`,
-                  background: startTime === t ? 'var(--primary-600)' : 'white',
-                  color: startTime === t ? 'white' : 'var(--gray-900)',
+                  border: `1px solid ${startTime === time ? 'var(--primary-600)' : 'var(--gray-300)'}`,
+                  background: startTime === time ? 'var(--primary-600)' : 'white',
+                  color: startTime === time ? 'white' : 'var(--gray-900)',
                   cursor: 'pointer',
                   fontSize: '14px',
                   fontWeight: '500',
@@ -181,7 +182,7 @@ const TeacherAttendance = () => {
                   transition: 'all 0.2s ease'
                 }}
               >
-                {t}
+                {time}
               </button>
             ))}
           </div>
@@ -190,7 +191,7 @@ const TeacherAttendance = () => {
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <button onClick={handleSubmit} className="btn-add" disabled={submitting} style={{ padding: '10px 24px', borderRadius: '12px' }}>
             <FiSave size={20} />
-            <span>{submitting ? 'Enregistrement...' : 'Valider l\'appel'}</span>
+            <span>{submitting ? t('saving') : (language === 'ar' ? 'تأكيد الحضور' : 'Valider l\'appel')}</span>
           </button>
         </div>
       </div>
@@ -199,11 +200,11 @@ const TeacherAttendance = () => {
         {students.map((student) => {
           const status = attendance[student._id];
           return (
-            <div 
-              key={student._id} 
+            <div
+              key={student._id}
               className={`item-card attendance-card ${status}`}
               onClick={() => toggleStatus(student._id)}
-              style={{ 
+              style={{
                 cursor: 'pointer',
                 borderColor: status === 'present' ? 'transparent' : getStatusColor(status),
                 backgroundColor: status === 'present' ? 'white' : getStatusColor(status).replace('rgb', 'rgba').replace(')', ', 0.1)'), /* Fallback if hex/var used differently */
@@ -213,23 +214,23 @@ const TeacherAttendance = () => {
                 <div className="item-badge" style={{ background: 'var(--gray-100)' }}>
                   {student.firstName.charAt(0)}{student.lastName.charAt(0)}
                 </div>
-                <div 
-                   className="chip"
-                   style={{ 
-                     background: getStatusColor(status), 
-                     color: status === 'present' ? 'var(--success)' : (status === 'absent' ? 'var(--danger)' : 'var(--warning)'),
-                     fontWeight: '600'
-                   }}
+                <div
+                  className="chip"
+                  style={{
+                    background: getStatusColor(status),
+                    color: status === 'present' ? 'var(--success)' : (status === 'absent' ? 'var(--danger)' : 'var(--warning)'),
+                    fontWeight: '600'
+                  }}
                 >
                   {getStatusText(status)}
                 </div>
               </div>
-              
+
               <div className="item-title">{student.firstName} {student.lastName}</div>
               <div className="item-subtitle">{student.uniqueCode}</div>
-              
+
               <div style={{ marginTop: '12px', textAlign: 'center' }}>
-                 {getStatusIcon(status)}
+                {getStatusIcon(status)}
               </div>
             </div>
           );

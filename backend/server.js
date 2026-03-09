@@ -19,7 +19,14 @@ const otpRoutes = require('./routes/otp');
 // Report card routes import removed
 
 const http = require('http');
+const cron = require('node-cron');
 const socketHandler = require('./utils/socketHandler');
+const dailySummaryService = require('./services/dailySummaryService');
+
+// Planification des résumés quotidiens (chaque jour à 18h00)
+cron.schedule('0 18 * * *', () => {
+  dailySummaryService.sendDailySummaries();
+});
 
 const app = express();
 const server = http.createServer(app);
@@ -29,16 +36,20 @@ socketHandler.init(server);
 
 connectDB();
 
-// CORS configuration - allow all common development origins
+// CORS configuration
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:8081',
+    /^http:\/\/192\.168\.\d+\.\d+:\d+$/,
+    /^exp:\/\/192\.168\.\d+\.\d+:\d+$/,
+  ];
+
 app.use(cors({
-  origin: [
-    'http://localhost:3000',      // React default
-    'http://localhost:5173',      // Vite default
-    'http://localhost:5174',      // Vite alternate
-    'http://localhost:8081',      // Expo web
-    /^http:\/\/192\.168\.\d+\.\d+:\d+$/,  // Local network IPs
-    /^exp:\/\/192\.168\.\d+\.\d+:\d+$/,   // Expo scheme
-  ],
+  origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
@@ -70,7 +81,7 @@ app.get('/api/test', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.json({ message: 'API Kbarwilly - Gestion des absences scolaires en Mauritanie' });
+  res.json({ message: 'API Khbarwelli - Gestion des absences scolaires en Mauritanie' });
 });
 
 app.use((req, res) => {

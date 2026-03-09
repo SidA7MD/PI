@@ -2,11 +2,13 @@
 import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { FiMail, FiLock, FiLogIn, FiAlertCircle } from 'react-icons/fi';
+import { FiMail, FiLock, FiLogIn, FiAlertCircle, FiGlobe } from 'react-icons/fi';
 import { LuGraduationCap } from 'react-icons/lu';
+import { LanguageContext } from '../context/LanguageContext';
 import '../styles/Auth.css';
 
 const Login = () => {
+  const { language, setLanguage, t } = useContext(LanguageContext);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -28,7 +30,7 @@ const Login = () => {
       await login(formData.email, formData.password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Identifiants invalides');
+      setError(err.response?.data?.message || t('invalid_credentials'));
       setLoading(false);
     }
   };
@@ -40,8 +42,8 @@ const Login = () => {
           <div className="auth-icon-wrapper">
             <LuGraduationCap />
           </div>
-          <h1 className="auth-title">Bon retour !</h1>
-          <p className="auth-subtitle">Connectez-vous pour gérer votre établissement</p>
+          <h1 className="auth-title">{t('welcome_back')}</h1>
+          <p className="auth-subtitle">{t('login_subtitle')}</p>
         </div>
 
         {error && (
@@ -53,7 +55,7 @@ const Login = () => {
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
-            <label className="form-label">Email</label>
+            <label className="form-label">{t('email_label')}</label>
             <div className="form-input-wrapper">
               <FiMail className="form-input-icon" />
               <input
@@ -69,7 +71,7 @@ const Login = () => {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Mot de passe</label>
+            <label className="form-label">{t('password_label')}</label>
             <div className="form-input-wrapper">
               <FiLock className="form-input-icon" />
               <input
@@ -78,25 +80,32 @@ const Login = () => {
                 value={formData.password}
                 onChange={handleChange}
                 className="form-input"
-                placeholder="Votre mot de passe"
+                placeholder="********"
                 required
               />
             </div>
           </div>
 
           <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? 'Connexion...' : (
+            {loading ? t('logging_in') : (
               <>
-                <span>Se connecter</span>
+                <span>{t('login_button')}</span>
                 <FiLogIn size={18} />
               </>
             )}
           </button>
         </form>
 
-        <div className="auth-footer">
-          
-          
+        <div className="auth-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
+          <button
+            type="button"
+            onClick={() => setLanguage(language === 'fr' ? 'ar' : 'fr')}
+            className="lang-toggle-btn"
+            style={{ border: 'none', background: 'var(--gray-50)' }}
+          >
+            <FiGlobe />
+            <span>{language === 'fr' ? 'العربية' : 'Français'}</span>
+          </button>
         </div>
       </div>
     </div>

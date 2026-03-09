@@ -1,8 +1,12 @@
-const mongoose = require('mongoose');
+const path = require('path');
+const dotenv = require('dotenv');
+
+// Load env vars
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 async function run() {
     try {
-        await mongoose.connect('mongodb://localhost:27017/absence_management');
+        await mongoose.connect(process.env.MONGODB_URI);
         const db = mongoose.connection.db;
         const users = db.collection('users');
         const count = await users.countDocuments({ phone: { $type: 10 } });

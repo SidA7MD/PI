@@ -1,9 +1,11 @@
 // src/components/admin/AbsencesDashboard.jsx
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import api from '../../services/api';
 import { useSocket } from '../../context/SocketContext';
+import { LanguageContext } from '../../context/LanguageContext';
 
 const AbsencesDashboard = () => {
+  const { t, language } = useContext(LanguageContext);
   const [absences, setAbsences] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -64,7 +66,7 @@ const AbsencesDashboard = () => {
           color: '#718096',
           fontWeight: '500',
         }}>
-          Chargement des absences...
+          {t('loading_absences')}
         </div>
       </div>
     );
@@ -91,16 +93,18 @@ const AbsencesDashboard = () => {
             margin: '0 0 6px 0',
             fontWeight: '600',
             letterSpacing: '-0.5px',
+            textAlign: language === 'ar' ? 'right' : 'left'
           }}>
-            Historique des absences
+            {t('absences_history')}
           </h1>
           <p style={{
             color: '#718096',
             fontSize: '14px',
             margin: 0,
             fontWeight: '400',
+            textAlign: language === 'ar' ? 'right' : 'left'
           }}>
-            Suivi des absences des élèves
+            {t('tracking_absences')}
           </p>
         </div>
       </div>
@@ -123,7 +127,7 @@ const AbsencesDashboard = () => {
               boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
               border: '1px solid #e2e8f0',
             }}>
-              Aucune absence enregistrée
+              {t('no_absences_recorded')}
             </div>
           ) : (
             absences.map(absence => (
@@ -169,7 +173,7 @@ const AbsencesDashboard = () => {
                     color: absence.justified ? '#22543d' : '#742a2a',
                     whiteSpace: 'nowrap',
                   }}>
-                    {absence.justified ? 'Justifié' : 'Non justifié'}
+                    {absence.justified ? t('justified_label') : t('not_justified_label')}
                   </span>
                 </div>
 
@@ -199,7 +203,7 @@ const AbsencesDashboard = () => {
                         fontSize: '14px',
                         color: '#2d3748',
                       }}>
-                        {new Date(absence.date).toLocaleDateString('fr-FR')}
+                        {new Date(absence.date).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'fr-FR')}
                       </div>
                     </div>
 
@@ -212,7 +216,7 @@ const AbsencesDashboard = () => {
                         letterSpacing: '0.5px',
                         marginBottom: '4px',
                       }}>
-                        Professeur
+                        {language === 'ar' ? 'أستاذ' : 'Professeur'}
                       </div>
                       <div style={{
                         fontSize: '14px',
@@ -258,7 +262,7 @@ const AbsencesDashboard = () => {
                     textTransform: 'uppercase',
                     letterSpacing: '0.5px',
                     whiteSpace: 'nowrap',
-                  }}>Élève</th>
+                  }}>{t('students')}</th>
                   <th style={{
                     padding: '16px 24px',
                     textAlign: 'left',
@@ -268,7 +272,7 @@ const AbsencesDashboard = () => {
                     textTransform: 'uppercase',
                     letterSpacing: '0.5px',
                     whiteSpace: 'nowrap',
-                  }}>Classe</th>
+                  }}>{language === 'ar' ? 'الفصل' : 'Classe'}</th>
                   <th style={{
                     padding: '16px 24px',
                     textAlign: 'left',
@@ -278,7 +282,7 @@ const AbsencesDashboard = () => {
                     textTransform: 'uppercase',
                     letterSpacing: '0.5px',
                     whiteSpace: 'nowrap',
-                  }}>Professeur</th>
+                  }}>{language === 'ar' ? 'الأستاذ' : 'Professeur'}</th>
                   <th style={{
                     padding: '16px 24px',
                     textAlign: 'left',
@@ -298,7 +302,7 @@ const AbsencesDashboard = () => {
                     textTransform: 'uppercase',
                     letterSpacing: '0.5px',
                     whiteSpace: 'nowrap',
-                  }}>Status</th>
+                  }}>{language === 'ar' ? 'الحالة' : 'Status'}</th>
                 </tr>
               </thead>
               <tbody style={{ background: '#ffffff' }}>
@@ -310,7 +314,7 @@ const AbsencesDashboard = () => {
                       color: '#a0aec0',
                       fontSize: '14px',
                     }}>
-                      Aucune absence enregistrée
+                      {t('no_absences_recorded')}
                     </td>
                   </tr>
                 ) : (
@@ -359,7 +363,7 @@ const AbsencesDashboard = () => {
                         color: '#2d3748',
                         verticalAlign: 'middle',
                       }}>
-                        {new Date(absence.date).toLocaleDateString('fr-FR')}
+                        {new Date(absence.date).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'fr-FR')}
                       </td>
                       <td style={{
                         padding: '20px 24px',
@@ -377,7 +381,7 @@ const AbsencesDashboard = () => {
                           background: absence.justified ? '#c6f6d5' : '#fed7d7',
                           color: absence.justified ? '#22543d' : '#742a2a',
                         }}>
-                          {absence.justified ? 'Justifié' : 'Non justifié'}
+                          {absence.justified ? t('justified_label') : t('not_justified_label')}
                         </span>
                       </td>
                     </tr>

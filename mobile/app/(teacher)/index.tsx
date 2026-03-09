@@ -15,6 +15,7 @@ import { useTheme } from '../../src/context/ThemeContext';
 import { useLanguage } from '../../src/context/LanguageContext';
 import { Button } from '../../src/components/ui/Button';
 import { spacing, shadows } from '../../src/theme';
+import { formatDisplayName } from '../../src/utils/formatters';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
@@ -97,7 +98,7 @@ export default function TeacherHomeScreen() {
   const router = useRouter();
   const { t, language } = useLanguage();
   const insets = useSafeAreaInsets();
-  
+
   const [stats, setStats] = useState<TeacherStats | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -112,7 +113,7 @@ export default function TeacherHomeScreen() {
     } catch (err) {
       console.error('Error loading stats:', err);
       setError(t('errorLoadingStats') || 'Failed to load statistics');
-      
+
       // Show alert for critical errors
       Alert.alert(
         t('error') || 'Error',
@@ -127,7 +128,7 @@ export default function TeacherHomeScreen() {
   // Load stats on mount and focus
   useFocusEffect(
     useCallback(() => {
-        loadStats();
+      loadStats();
     }, [loadStats])
   );
 
@@ -242,24 +243,26 @@ export default function TeacherHomeScreen() {
             >
               <View style={styles.headerContent}>
                 <View style={styles.headerTextContainer}>
-                  <Text style={styles.welcomeLabel}>{t('hello')},</Text>
+                  <Text style={styles.welcomeLabel}>
+                    {new Date().getHours() < 12 ? t('goodMorning') || 'Bonjour' : (new Date().getHours() < 18 ? t('hello') || 'Bonjour' : t('goodEvening') || 'Bonsoir')} 👋
+                  </Text>
                   <Text style={styles.userName} numberOfLines={1} ellipsizeMode="tail">
-                    {user?.username || t('teacher')}
+                    {formatDisplayName(user?.username || t('teacher'))}
                   </Text>
                   <View style={styles.headerStatsRow}>
-                     <Text style={styles.dateText}>
-                        {new Date().toLocaleDateString(language === 'ar' ? 'ar-EG' : 'fr-FR', {
+                    <Text style={styles.dateText}>
+                      {new Date().toLocaleDateString(language === 'ar' ? 'ar-EG' : 'fr-FR', {
                         weekday: 'long',
                         day: 'numeric',
                         month: 'long',
-                        })}
+                      })}
                     </Text>
                     <View style={styles.dotSeparator} />
                     <View style={styles.classCountBadge}>
-                        <Ionicons name="school" size={12} color="#FFF" />
-                        <Text style={styles.classCountText}>
-                            {stats?.totalClasses || 0} {t('classes') || 'Classes'}
-                        </Text>
+                      <Ionicons name="school" size={12} color="#FFF" />
+                      <Text style={styles.classCountText}>
+                        {stats?.totalClasses || 0} {t('classes') || 'Classes'}
+                      </Text>
                     </View>
                   </View>
                 </View>
@@ -390,16 +393,20 @@ const styles = StyleSheet.create({
     marginRight: spacing.md,
   },
   welcomeLabel: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.8)',
-    fontWeight: '500',
-    marginBottom: 4,
+    fontSize: 18,
+    color: 'rgba(255,255,255,0.85)',
+    fontWeight: '600',
+    marginBottom: 2,
   },
   userName: {
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#FFF',
-    marginBottom: 4,
+    marginBottom: 6,
+    letterSpacing: 0.5,
+    textShadowColor: 'rgba(0,0,0,0.2)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
   },
   dateText: {
     fontSize: 14,

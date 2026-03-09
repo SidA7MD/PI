@@ -59,6 +59,11 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'School',
     },
+    language: {
+      type: String,
+      enum: ['fr', 'ar', 'en'],
+      default: 'fr',
+    },
   },
   {
     timestamps: true,

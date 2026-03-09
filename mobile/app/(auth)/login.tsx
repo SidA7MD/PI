@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, StatusBar, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useAuth } from '../../src/context/AuthContext';
 import { useTheme } from '../../src/context/ThemeContext';
 import { useLanguage } from '../../src/context/LanguageContext';
 import { Button } from '../../src/components/ui/Button';
 import { Input } from '../../src/components/ui/Input';
+import { GradientBackground } from '../../src/components/ui/GradientBackground';
+import { GlassCard } from '../../src/components/ui/GlassCard';
 import { spacing, shadows } from '../../src/theme';
 
 export default function LoginScreen() {
@@ -17,7 +19,7 @@ export default function LoginScreen() {
     const { colors } = useTheme();
     const { t } = useLanguage();
 
-    const [email, setEmail] = useState('');
+    const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -26,14 +28,14 @@ export default function LoginScreen() {
     const handleLogin = async () => {
         setError('');
 
-        if (!email || !password) {
+        if (!identifier || !password) {
             setError(t('fillAllFields'));
             return;
         }
 
         setLoading(true);
         try {
-            await login({ email, password });
+            await login({ identifier, password });
         } catch (err: any) {
             setError(err.response?.data?.message || t('loginError'));
         } finally {
@@ -42,100 +44,105 @@ export default function LoginScreen() {
     };
 
     return (
-        <>
-            <SafeAreaView style={{ flex: 0, backgroundColor: colors.primary }} />
+        <GradientBackground>
             <StatusBar barStyle="light-content" />
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={[styles.container, { backgroundColor: colors.background.secondary }]}
-            >
-                <ScrollView
-                    contentContainerStyle={styles.scrollContent}
-                    showsVerticalScrollIndicator={false}
-                    keyboardShouldPersistTaps="handled"
+            <SafeAreaView style={{ flex: 1 }}>
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    style={styles.container}
                 >
-                    {/* Gradient Header */}
-                    <LinearGradient
-                        colors={[colors.primary, colors.primaryDark]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={styles.header}
+                    <ScrollView
+                        contentContainerStyle={styles.scrollContent}
+                        showsVerticalScrollIndicator={false}
+                        keyboardShouldPersistTaps="handled"
                     >
-                        <View style={styles.logoContainer}>
-                            <Text style={styles.logoText}>Kbarwilly</Text>
+                        <Animated.View
+                            entering={FadeInDown.delay(100).duration(800).springify()}
+                            style={styles.logoContainer}
+                        >
+                            <View style={styles.iconContainer}>
+                                <Ionicons name="school" size={56} color="#FFF" />
+                            </View>
+                            <Text style={styles.logoText}>{t('appName')}</Text>
                             <Text style={styles.subtitle}>
                                 {t('appSubtitle')}
                             </Text>
-                        </View>
-                    </LinearGradient>
+                        </Animated.View>
 
-                    {/* Form Card */}
-                    <View style={styles.formContainer}>
-                        <View style={[styles.formCard, { backgroundColor: colors.background.card, ...shadows.lg }]}>
-                            <Text style={[styles.formTitle, { color: colors.text.primary }]}>
-                                {t('loginTitle')}
-                            </Text>
-                            <Text style={[styles.formSubtitle, { color: colors.text.secondary }]}>
-                                {t('welcomeBack') || 'Bienvenue'}
-                            </Text>
+                        <Animated.View
+                            entering={FadeInUp.delay(300).duration(800).springify()}
+                            style={styles.formContainer}
+                        >
+                            <GlassCard style={styles.glassCard}>
+                                <View style={styles.formHeader}>
+                                    <Text style={[styles.formTitle, { color: colors.text.primary }]}>
+                                        {t('loginTitle')}
+                                    </Text>
+                                    <Text style={[styles.formSubtitle, { color: colors.text.secondary }]}>
+                                        {t('welcomeBack') || 'Bienvenue'}
+                                    </Text>
+                                </View>
 
-                            <View style={styles.form}>
-                                <Input
-                                    label={t('emailLabel')}
-                                    value={email}
-                                    onChange={setEmail}
-                                    placeholder={t('emailPlaceholder')}
-                                    autoCapitalize="none"
-                                    keyboardType="email-address"
-                                    error={error}
-                                />
+                                <View style={styles.form}>
+                                    <Input
+                                        label={t('identifierLabel')}
+                                        value={identifier}
+                                        onChange={setIdentifier}
+                                        placeholder={t('identifierPlaceholder')}
+                                        autoCapitalize="none"
+                                        keyboardType="default"
+                                        error={error}
+                                        leftIcon={<Ionicons name="person-outline" size={20} color={colors.text.secondary} />}
+                                    />
 
-                                <Input
-                                    label={t('passwordLabel')}
-                                    value={password}
-                                    onChange={setPassword}
-                                    placeholder={t('passwordPlaceholder')}
-                                    secureTextEntry={!showPassword}
-                                    rightIcon={
-                                        <Ionicons
-                                            name={showPassword ? 'eye-off' : 'eye'}
-                                            size={20}
-                                            color={colors.text.tertiary}
-                                        />
-                                    }
-                                    onRightIconPress={() => setShowPassword(!showPassword)}
-                                    style={{ marginTop: spacing.md }}
-                                />
+                                    <Input
+                                        label={t('passwordLabel')}
+                                        value={password}
+                                        onChange={setPassword}
+                                        placeholder={t('passwordPlaceholder')}
+                                        secureTextEntry={!showPassword}
+                                        leftIcon={<Ionicons name="lock-closed-outline" size={20} color={colors.text.secondary} />}
+                                        rightIcon={
+                                            <Ionicons
+                                                name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                                                size={20}
+                                                color={colors.text.tertiary}
+                                            />
+                                        }
+                                        onRightIconPress={() => setShowPassword(!showPassword)}
+                                        style={{ marginTop: spacing.sm }}
+                                    />
 
-                                <Button
-                                    title={t('loginTitle')}
-                                    onPress={handleLogin}
-                                    loading={loading}
-                                    fullWidth
-                                    style={{ marginTop: spacing.xl }}
-                                />
+                                    <Button
+                                        title={t('loginTitle')}
+                                        onPress={handleLogin}
+                                        loading={loading}
+                                        fullWidth
+                                        style={{ marginTop: spacing.xl }}
+                                    />
 
-                                <Button
-                                    title={t('createAccount')}
-                                    onPress={() => router.push('/(auth)/register')}
-                                    variant="outline"
-                                    fullWidth
-                                    style={{ marginTop: spacing.md }}
-                                />
+                                    <Button
+                                        title={t('createAccount')}
+                                        onPress={() => router.push('/(auth)/register')}
+                                        variant="outline"
+                                        fullWidth
+                                        style={{ marginTop: spacing.md }}
+                                    />
 
-                                <Button
-                                    title={t('forgotPassword')}
-                                    onPress={() => router.push('/(auth)/forgot-password')}
-                                    variant="ghost"
-                                    fullWidth
-                                    style={{ marginTop: spacing.sm }}
-                                />
-                            </View>
-                        </View>
-                    </View>
-                </ScrollView>
-            </KeyboardAvoidingView>
-        </>
+                                    <Button
+                                        title={t('forgotPassword')}
+                                        onPress={() => router.push('/(auth)/forgot-password')}
+                                        variant="ghost"
+                                        fullWidth
+                                        style={{ marginTop: spacing.sm }}
+                                    />
+                                </View>
+                            </GlassCard>
+                        </Animated.View>
+                    </ScrollView>
+                </KeyboardAvoidingView>
+            </SafeAreaView>
+        </GradientBackground>
     );
 }
 
@@ -145,56 +152,61 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         flexGrow: 1,
-    },
-    header: {
-        paddingTop: spacing.xl,
-        paddingBottom: spacing['3xl'],
-        paddingHorizontal: spacing.xl,
-        borderBottomLeftRadius: 32,
-        borderBottomRightRadius: 32,
+        justifyContent: 'center',
+        paddingVertical: spacing['2xl'],
+        paddingHorizontal: spacing.lg,
     },
     logoContainer: {
         alignItems: 'center',
+        marginBottom: spacing.xl,
+    },
+    iconContainer: {
+        width: 88,
+        height: 88,
+        borderRadius: 24,
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: spacing.lg,
+        borderWidth: 2,
+        borderColor: 'rgba(255,255,255,0.25)',
     },
     logoText: {
-        fontSize: 48,
-        fontWeight: '900',
-        color: '#FFF',
-        marginBottom: spacing.md,
-        letterSpacing: 1,
-        textShadowColor: 'rgba(0,0,0,0.3)',
-        textShadowOffset: { width: 0, height: 2 },
-        textShadowRadius: 4,
-    },
-    title: {
-        fontSize: 32,
+        fontSize: 36,
         fontWeight: '800',
         color: '#FFF',
         marginBottom: spacing.xs,
+        letterSpacing: 2,
+        textShadowColor: 'rgba(0,0,0,0.2)',
+        textShadowOffset: { width: 0, height: 2 },
+        textShadowRadius: 8,
     },
     subtitle: {
-        fontSize: 16,
-        color: 'rgba(255,255,255,0.9)',
+        fontSize: 15,
+        color: 'rgba(255,255,255,0.85)',
         fontWeight: '500',
+        letterSpacing: 0.5,
     },
     formContainer: {
-        flex: 1,
-        marginTop: -40,
         paddingHorizontal: spacing.lg,
     },
-    formCard: {
-        borderRadius: 24,
-        padding: spacing.xl,
+    glassCard: {
+        paddingVertical: spacing.xl,
+        paddingHorizontal: spacing.xl,
+    },
+    formHeader: {
         marginBottom: spacing.xl,
     },
     formTitle: {
-        fontSize: 24,
+        fontSize: 26,
         fontWeight: '700',
         marginBottom: spacing.xs,
+        textAlign: 'center',
     },
     formSubtitle: {
-        fontSize: 14,
-        marginBottom: spacing.xl,
+        fontSize: 15,
+        textAlign: 'center',
+        opacity: 0.8,
     },
     form: {
         width: '100%',

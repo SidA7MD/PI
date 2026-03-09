@@ -1,6 +1,7 @@
 // src/components/admin/ClassesList.jsx
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
+import { LanguageContext } from '../../context/LanguageContext';
 // Header and Sidebar imports removed
 import api from '../../services/api';
 import { FiPlus, FiSearch, FiTrash2, FiEdit2, FiBook, FiUser } from 'react-icons/fi';
@@ -9,6 +10,7 @@ import '../../styles/Dashboard.css';
 import '../../styles/Components.css'; // Shared component styles
 
 const ClassesList = () => {
+  const { t, language } = useContext(LanguageContext);
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,7 +31,7 @@ const ClassesList = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Voulez-vous vraiment supprimer cette classe ?')) {
+    if (window.confirm(t('confirm_delete_class'))) {
       try {
         await api.delete(`/class/${id}`);
         setClasses(classes.filter((c) => c._id !== id));
@@ -50,9 +52,9 @@ const ClassesList = () => {
         <div>
           <h1 className="page-title">
             <FiBook className="text-primary-600" />
-            Gestion des Classes
+            {t('classes_management')}
           </h1>
-          <p className="page-subtitle">{classes.length} classes enregistrées</p>
+          <p className="page-subtitle">{classes.length} {t('registered_count')}</p>
         </div>
       </div>
 
@@ -61,7 +63,7 @@ const ClassesList = () => {
           <FiSearch className="search-icon" />
           <input
             type="text"
-            placeholder="Rechercher une classe..."
+            placeholder={t('search_classes')}
             className="search-input"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -69,7 +71,7 @@ const ClassesList = () => {
         </div>
         <Link to="/admin/classes/create" className="btn-add">
           <FiPlus size={20} />
-          <span>Nouvelle classe</span>
+          <span>{t('new_class')}</span>
         </Link>
       </div>
 
@@ -77,8 +79,8 @@ const ClassesList = () => {
         {filteredClasses.length === 0 ? (
           <div className="empty-state">
             <LuSchool className="empty-icon" />
-            <div className="empty-text">Aucune classe trouvée</div>
-            <div className="empty-subtext">Créez une nouvelle classe pour commencer</div>
+            <div className="empty-text">{t('no_items_found')}</div>
+            <div className="empty-subtext">{t('add_first')}</div>
           </div>
         ) : (
           filteredClasses.map((cls) => (
@@ -98,16 +100,16 @@ const ClassesList = () => {
               </div>
 
               <div className="item-title">{cls.name}</div>
-              <div className="item-subtitle">Niveau: {cls.level}</div>
+              <div className="item-subtitle">{language === 'ar' ? 'المستوى' : 'Niveau'}: {cls.level}</div>
 
               <div className="chips-container">
                 <div className="chip">
                   <FiUser className="chip-icon" />
-                  {cls.students?.length || 0} Élèves
+                  {cls.students?.length || 0} {t('students')}
                 </div>
-                {cls.teachers?.slice(0, 2).map(t => (
-                  <div key={t._id} className="chip">
-                    {t.username}
+                {cls.teachers?.slice(0, 2).map(teacher => (
+                  <div key={teacher._id} className="chip">
+                    {teacher.username}
                   </div>
                 ))}
                 {cls.teachers?.length > 2 && (

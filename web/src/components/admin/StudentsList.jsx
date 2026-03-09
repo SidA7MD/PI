@@ -1,6 +1,7 @@
 // src/components/admin/StudentsList.jsx
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
+import { LanguageContext } from '../../context/LanguageContext';
 // Header and Sidebar imports removed
 import api from '../../services/api';
 import { FiPlus, FiSearch, FiTrash2, FiEdit2, FiUser, FiCalendar, FiBook } from 'react-icons/fi';
@@ -9,6 +10,7 @@ import '../../styles/Dashboard.css';
 import '../../styles/Components.css';
 
 const StudentsList = () => {
+  const { t, language } = useContext(LanguageContext);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,7 +31,7 @@ const StudentsList = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Voulez-vous vraiment supprimer cet élève ?')) {
+    if (window.confirm(t('confirm_delete_student'))) {
       try {
         await api.delete(`/student/${id}`);
         setStudents(students.filter((s) => s._id !== id));
@@ -51,9 +53,9 @@ const StudentsList = () => {
         <div>
           <h1 className="page-title">
             <LuGraduationCap className="text-primary-600" />
-            Gestion des Élèves
+            {t('students_management')}
           </h1>
-          <p className="page-subtitle">{students.length} élèves inscrits</p>
+          <p className="page-subtitle">{students.length} {t('registered_count')}</p>
         </div>
       </div>
 
@@ -62,7 +64,7 @@ const StudentsList = () => {
           <FiSearch className="search-icon" />
           <input
             type="text"
-            placeholder="Rechercher un élève..."
+            placeholder={t('search_students')}
             className="search-input"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -70,7 +72,7 @@ const StudentsList = () => {
         </div>
         <Link to="/admin/students/create" className="btn-add">
           <FiPlus size={20} />
-          <span>Inscrire un élève</span>
+          <span>{t('enroll_student')}</span>
         </Link>
       </div>
 
@@ -78,8 +80,8 @@ const StudentsList = () => {
         {filteredStudents.length === 0 ? (
           <div className="empty-state">
             <LuGraduationCap className="empty-icon" />
-            <div className="empty-text">Aucun élève trouvé</div>
-            <div className="empty-subtext">Ajoutez de nouveaux élèves pour commencer</div>
+            <div className="empty-text">{t('no_items_found')}</div>
+            <div className="empty-subtext">{t('add_first')}</div>
           </div>
         ) : (
           filteredStudents.map((student) => (
@@ -100,10 +102,10 @@ const StudentsList = () => {
 
               <div className="item-title">{student.firstName} {student.lastName}</div>
               <div className="item-subtitle">
-                <FiUser size={14} /> Parent(s): {
+                <FiUser size={14} /> {language === 'ar' ? 'ولي الأمر' : 'Parent(s)'}: {
                   student.parents && student.parents.length > 0
                     ? student.parents.map(p => p.username).join(', ')
-                    : (student.parent?.username || 'Aucun')
+                    : (student.parent?.username || (language === 'ar' ? 'لا يوجد' : 'Aucun'))
                 }
                 {(student.parentPhone) && ` - ${student.parentPhone}`}
               </div>

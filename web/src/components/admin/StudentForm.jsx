@@ -1,6 +1,7 @@
 // src/components/admin/StudentForm.jsx
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { LanguageContext } from '../../context/LanguageContext';
 // Header and Sidebar imports removed
 import api from '../../services/api';
 import {
@@ -14,6 +15,7 @@ import '../../styles/Auth.css';
 const StudentForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t, language } = useContext(LanguageContext);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -45,7 +47,7 @@ const StudentForm = () => {
         }
       } catch (err) {
         console.error('Erreur chargement données', err);
-        setError('Erreur lors du chargement des données');
+        setError(t('error_loading'));
       }
     };
     loadData();
@@ -87,7 +89,7 @@ const StudentForm = () => {
   };
 
   const handleDelete = async () => {
-    if (window.confirm('Voulez-vous vraiment supprimer cet élève ?')) {
+    if (window.confirm(t('confirm_delete_student'))) {
       setLoading(true);
       try {
         await api.delete(`/student/${id}`);
@@ -113,9 +115,9 @@ const StudentForm = () => {
             <div className="form-icon">
               <LuGraduationCap />
             </div>
-            <h2 className="form-title">{id ? 'Modifier Élève' : 'Inscrire Élève'}</h2>
+            <h2 className="form-title">{id ? t('edit_student') : t('new_student')}</h2>
             <p className="form-subtitle">
-              {id ? 'Mettre à jour le dossier' : 'Créer un nouveau profil élève'}
+              {id ? (language === 'ar' ? 'تحديث الملف' : 'Mettre à jour le dossier') : (language === 'ar' ? 'إنشاء ملف تعريف طالب جديد' : 'Créer un nouveau profil élève')}
             </p>
           </div>
 
@@ -128,7 +130,7 @@ const StudentForm = () => {
 
           <form onSubmit={handleSubmit}>
             <div className="form-section">
-              <h3 className="section-title"><FiUser /> Informations Personnelles</h3>
+              <h3 className="section-title"><FiUser /> {t('personal_info')}</h3>
 
               {id && formData.uniqueCode && (
                 <div style={{
@@ -143,7 +145,7 @@ const StudentForm = () => {
                 }}>
                   <span style={{ fontSize: '24px' }}>🔗</span>
                   <div>
-                    <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--primary-700)', marginBottom: '4px' }}>CODE DE LIAISON</div>
+                    <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--primary-700)', marginBottom: '4px' }}>{language === 'ar' ? 'رمز الارتباط' : 'CODE DE LIAISON'}</div>
                     <div style={{ fontSize: '20px', fontWeight: '800', color: 'var(--primary-900)', letterSpacing: '2px' }}>{formData.uniqueCode}</div>
                   </div>
                 </div>
@@ -151,7 +153,7 @@ const StudentForm = () => {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">Prénom *</label>
+                  <label className="form-label">{language === 'ar' ? 'الاسم' : 'Prénom'} *</label>
                   <div className="form-input-wrapper">
                     <FiUser className="form-input-icon" />
                     <input
@@ -167,7 +169,7 @@ const StudentForm = () => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Nom *</label>
+                  <label className="form-label">{language === 'ar' ? 'النسب' : 'Nom'} *</label>
                   <div className="form-input-wrapper">
                     <FiUser className="form-input-icon" />
                     <input
@@ -184,7 +186,7 @@ const StudentForm = () => {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Date de naissance</label>
+                <label className="form-label">{language === 'ar' ? 'تاريخ الميلاد' : 'Date de naissance'}</label>
                 <div className="form-input-wrapper">
                   <FiCalendar className="form-input-icon" />
                   <input
@@ -199,7 +201,7 @@ const StudentForm = () => {
             </div>
 
             <div className="form-section">
-              <h3 className="section-title"><FiBook /> Classes</h3>
+              <h3 className="section-title"><FiBook /> {t('classes')}</h3>
               <div className="chips-input-container">
                 {selectedClasses.length > 0 && (
                   <div className="selected-chips">
@@ -220,9 +222,9 @@ const StudentForm = () => {
                   <FiSearch className="search-icon" style={{ left: 0 }} />
                   <input
                     type="text"
-                    placeholder="Rechercher une classe..."
+                    placeholder={t('search_classes')}
                     className="search-input"
-                    style={{ paddingLeft: '28px', border: 'none', background: 'transparent' }}
+                    style={{ paddingLeft: language === 'ar' ? 0 : '28px', paddingRight: language === 'ar' ? '28px' : 0, border: 'none', background: 'transparent' }}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -232,7 +234,7 @@ const StudentForm = () => {
                   <div className="search-dropdown">
                     {availableClasses.length === 0 ? (
                       <div className="dropdown-item" style={{ color: '#999', cursor: 'default' }}>
-                        Aucun résultat
+                        {language === 'ar' ? 'لا توجد نتائج' : 'Aucun résultat'}
                       </div>
                     ) : (
                       availableClasses.map(c => (
@@ -252,7 +254,7 @@ const StudentForm = () => {
 
             <div className="form-actions">
               <button type="submit" className="btn-primary" disabled={loading} style={{ flex: 2 }}>
-                {loading ? 'Enregistrement...' : <><FiSave /> {id ? 'Mettre à jour' : 'Enregistrer'}</>}
+                {loading ? t('saving') : <><FiSave /> {id ? t('save') : t('save')}</>}
               </button>
               {id && (
                 <button
@@ -262,7 +264,7 @@ const StudentForm = () => {
                   disabled={loading}
                   style={{ flex: 1 }}
                 >
-                  <FiTrash2 /> Supprimer
+                  <FiTrash2 /> {t('delete')}
                 </button>
               )}
               <button
@@ -271,7 +273,7 @@ const StudentForm = () => {
                 onClick={() => navigate('/admin/students')}
                 style={{ flex: 1 }}
               >
-                <FiArrowLeft /> Annuler
+                <FiArrowLeft /> {t('cancel')}
               </button>
             </div>
           </form>

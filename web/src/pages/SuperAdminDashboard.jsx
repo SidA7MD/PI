@@ -1,6 +1,7 @@
 // src/pages/SuperAdminDashboard.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import { LanguageContext } from '../context/LanguageContext';
 // Header and SuperAdminSidebar imports removed
 import api from '../services/api';
 import { FaPlus } from 'react-icons/fa';
@@ -13,7 +14,9 @@ import '../styles/Auth.css';
 
 const SuperAdminDashboard = () => {
   const { user } = useContext(AuthContext);
+  const { t, language } = useContext(LanguageContext);
   const [schools, setSchools] = useState([]);
+  const [stats, setStats] = useState({ totalSchools: 0, totalParents: 0, estimatedRevenue: 0 });
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -26,6 +29,7 @@ const SuperAdminDashboard = () => {
 
   useEffect(() => {
     fetchSchools();
+    fetchStats();
   }, []);
 
   const fetchSchools = async () => {
@@ -36,6 +40,15 @@ const SuperAdminDashboard = () => {
       console.error('Erreur lors du chargement des écoles', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const res = await api.get('/superadmin/stats');
+      setStats(res.data);
+    } catch (err) {
+      console.error('Erreur lors du chargement des statistiques', err);
     }
   };
 
@@ -75,6 +88,7 @@ const SuperAdminDashboard = () => {
       setFormData({ name: '', email: '', password: '' });
       setShowForm(false);
       fetchSchools();
+      fetchStats();
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Erreur lors de la création de l\'école');
     } finally {
@@ -87,6 +101,7 @@ const SuperAdminDashboard = () => {
       try {
         await api.delete(`/superadmin/schools/${schoolId}`);
         fetchSchools();
+        fetchStats();
       } catch (err) {
         alert(err.response?.data?.message || 'Erreur lors de la suppression de l\'école');
       }
@@ -96,45 +111,66 @@ const SuperAdminDashboard = () => {
   if (loading) {
     return (
       <div className="loading-container">
-        <div className="loading">Chargement...</div>
+        <div className="loading">{t('loading')}</div>
       </div>
     );
   }
 
   return (
     <>
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">
-            <LuSchool className="text-primary-600" />
-            Super Administrateur
-          </h1>
-          <p className="page-subtitle">Gestion globale des établissements scolaires</p>
+      <div className="welcome-section">
+        <div className="welcome-content">
+          <div className="welcome-avatar">SA</div>
+          <div className="greeting-text-container">
+            <h1>{language === 'ar' ? 'مرحباً' : 'Bonjour'}, {user?.username || 'SuperAdmin'} 🛡️</h1>
+            <p>{language === 'ar' ? 'الإدارة العامة للمؤسسات التعليمية' : 'Gestion globale des établissements scolaires'}</p>
+          </div>
         </div>
+        <LuSchool className="welcome-decoration" />
       </div>
 
       <div className="stats-grid">
         <div className="stat-card">
           <div className="stat-header">
-            <div className="stat-value">{schools.length}</div>
+            <div className="stat-value">{stats.totalSchools}</div>
             <div className="stat-icon info">
               <LuSchool />
             </div>
           </div>
-          <div className="stat-label">Écoles Inscrites</div>
+          <div className="stat-label">{t('registered_schools')}</div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-header">
+            <div className="stat-value">{stats.totalParents}</div>
+            <div className="stat-icon info">
+              <FiTrendingUp />
+            </div>
+          </div>
+          <div className="stat-label">{t('parent_users')}</div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-header">
+            <div className="stat-value">{stats.estimatedRevenue?.toLocaleString()} MRU</div>
+            <div className="stat-icon success">
+              <FiTrendingUp />
+            </div>
+          </div>
+          <div className="stat-label">{t('total_revenue')} (100 MRU/{language === 'ar' ? 'طالب مربوط' : 'Élève Lié'})</div>
         </div>
       </div>
 
       <div className="filter-bar" style={{ justifyContent: 'space-between' }}>
         <h2 className="page-title" style={{ fontSize: '20px', margin: 0 }}>
-          <FiTrendingUp /> Écoles ({schools.length})
+          <FiTrendingUp /> {language === 'ar' ? 'المدارس' : 'Écoles'} ({schools.length})
         </h2>
         <button
           onClick={() => setShowForm(!showForm)}
           className="btn-add"
         >
           {showForm ? <FiMinus /> : <FaPlus />}
-          <span>{showForm ? 'Fermer le formulaire' : 'Nouvelle école'}</span>
+          <span>{showForm ? (language === 'ar' ? 'إغلاق الاستمارة' : 'Fermer le formulaire') : (language === 'ar' ? 'مدرسة جديدة' : 'Nouvelle école')}</span>
         </button>
       </div>
 
@@ -145,8 +181,8 @@ const SuperAdminDashboard = () => {
               <div className="form-icon">
                 <LuSchool />
               </div>
-              <h2 className="form-title">Créer une nouvelle école</h2>
-              <p className="form-subtitle">Ajouter un établissement à la plateforme</p>
+              <h2 className="form-title">{t('create_school')}</h2>
+              <p className="form-subtitle">{language === 'ar' ? 'إضافة مؤسسة إلى المنصة' : 'Ajouter un établissement à la plateforme'}</p>
             </div>
 
             {error && (
@@ -158,10 +194,10 @@ const SuperAdminDashboard = () => {
 
             <form onSubmit={handleSubmit}>
               <div className="form-section">
-                <h3 className="section-title"><LuSchool /> Informations de l'établissement</h3>
+                <h3 className="section-title"><LuSchool /> {language === 'ar' ? 'معلومات المؤسسة' : 'Informations de l\'établissement'}</h3>
 
                 <div className="form-group">
-                  <label className="form-label">Nom de l'école *</label>
+                  <label className="form-label">{t('school_name')} *</label>
                   <div className="form-input-wrapper">
                     <LuSchool className="form-input-icon" />
                     <input
@@ -217,7 +253,7 @@ const SuperAdminDashboard = () => {
 
               <div className="form-actions">
                 <button type="submit" className="btn-submit" disabled={submitting}>
-                  {submitting ? 'Création en cours...' : 'Créer l\'école'}
+                  {submitting ? (language === 'ar' ? 'جاري الإنشاء...' : 'Création en cours...') : t('create_school')}
                 </button>
                 <button
                   type="button"
@@ -229,7 +265,7 @@ const SuperAdminDashboard = () => {
                   }}
                   disabled={submitting}
                 >
-                  Annuler
+                  {t('cancel')}
                 </button>
               </div>
             </form>
@@ -279,6 +315,10 @@ const SuperAdminDashboard = () => {
                 <div className="chip">
                   <FiCalendar size={12} />
                   Inscrit le {new Date(school.createdAt).toLocaleDateString('fr-FR')}
+                </div>
+                <div className="chip success">
+                  <FiTrendingUp size={12} />
+                  {school.studentCount || 0} Élèves
                 </div>
               </div>
             </div>
